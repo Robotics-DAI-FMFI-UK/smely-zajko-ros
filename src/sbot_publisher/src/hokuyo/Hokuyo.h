@@ -8,13 +8,13 @@
 
 class Hokuyo : public AbstractHokuyo {
     static const int BUFFER_SIZE = 5000;
-    static const int RANGE_DATA_COUNT = 1081;
     int sockfd;
     int *data;
     unsigned char read_buf[BUFFER_SIZE];
     pthread_mutex_t m_read;
 
 public:
+    static const int RANGE_DATA_COUNT = 1081;
 
     void init();
 

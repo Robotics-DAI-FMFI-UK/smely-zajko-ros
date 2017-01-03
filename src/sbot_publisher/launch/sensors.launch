@@ -1,8 +1,8 @@
 <launch>
 
-  <group ns="smely_zajko">
-    <node pkg="camera" name="camera_publisher_node" type="camera_publisher_node"/>
-    <node pkg="camera" name="camera_subscriber_node" type="camera_subscriber_node"/>
+  <group ns="sensors">
+    <node pkg="sbot_publisher" name="hokuyo_publisher_node" type="hokuyo_publisher_node"/>
+    <node pkg="sbot_publisher" name="hokuyo_subscriber_node" type="hokuyo_subscriber_node"/>
   </group>
 
 </launch>

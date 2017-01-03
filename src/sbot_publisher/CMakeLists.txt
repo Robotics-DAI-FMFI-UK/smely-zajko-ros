@@ -123,6 +123,7 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 ## Declare a C++ executable
 add_executable(sbot_publisher_node src/sbot_publisher_node.cpp)
 add_executable(hokuyo_publisher_node src/hokuyo_publisher_node.cpp src/hokuyo/AbstractHokuyo.h src/hokuyo/Hokuyo.cpp src/hokuyo/Hokuyo.h)
+add_executable(hokuyo_subscriber_node src/hokuyo_subscriber_node.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -131,6 +132,7 @@ add_executable(hokuyo_publisher_node src/hokuyo_publisher_node.cpp src/hokuyo/Ab
 ## Specify libraries to link a library or executable target against
 target_link_libraries(sbot_publisher_node ${catkin_LIBRARIES})
 target_link_libraries(hokuyo_publisher_node ${catkin_LIBRARIES})
+target_link_libraries(hokuyo_subscriber_node ${catkin_LIBRARIES})
 
 #############
 ## Install ##
