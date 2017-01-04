@@ -8,8 +8,8 @@ using namespace std;
 int main(int argc, char **argv) {
 
     ros::init(argc, argv, "hokuyo_publisher");
-    ros::NodeHandle n;
-    ros::Publisher hokuyo_publisher = n.advertise<std_msgs::Int32MultiArray>("hokuyo_publisher", 100);
+    ros::NodeHandle nh;
+    ros::Publisher hokuyo_publisher = nh.advertise<std_msgs::Int32MultiArray>("hokuyo_publisher", 100);
 
     ros::Rate loop_rate(10);
 

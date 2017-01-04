@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>sbot_publisher</name>
+  <name>sensors_publishers</name>
   <version>0.0.0</version>
-  <description>The sbot_publisher package</description>
+  <description>The sensors_publishers package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->

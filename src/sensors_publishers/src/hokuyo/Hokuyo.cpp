@@ -63,8 +63,9 @@ void Hokuyo::readData() {
         }
         readptr += nread;
 
-        if (readptr < 2)
+        if (readptr < 2) {
             continue;
+        }
     } while ((read_buf[readptr - 1] != 10) || (read_buf[readptr - 2] != 10));
 
     int searchptr = 0;

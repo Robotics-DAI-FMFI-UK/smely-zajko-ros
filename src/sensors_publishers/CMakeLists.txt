@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(sbot_publisher)
+project(sensors_publishers)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS roscpp)
+find_package(catkin REQUIRED COMPONENTS roscpp cv_bridge image_transport)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -97,7 +97,7 @@ find_package(catkin REQUIRED COMPONENTS roscpp)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES sbot_publisher
+#  LIBRARIES sensors_publishers
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
@@ -111,19 +111,21 @@ catkin_package(
 include_directories(include ${catkin_INCLUDE_DIRS})
 
 ## Declare a C++ library
-# add_library(sbot_publisher
-#   src/${PROJECT_NAME}/sbot_publisher.cpp
+# add_library(sensors_publishers
+#   src/${PROJECT_NAME}/sensors_publishers.cpp
 # )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(sbot_publisher ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(sensors_publishers ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
 add_executable(sbot_publisher_node src/sbot_publisher_node.cpp)
 add_executable(hokuyo_publisher_node src/hokuyo_publisher_node.cpp src/hokuyo/AbstractHokuyo.h src/hokuyo/Hokuyo.cpp src/hokuyo/Hokuyo.h)
 add_executable(hokuyo_subscriber_node src/hokuyo_subscriber_node.cpp)
+add_executable(camera_subscriber_node src/camera_subscriber_node.cpp)
+add_executable(camera_publisher_node src/camera_publisher_node.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -133,6 +135,8 @@ add_executable(hokuyo_subscriber_node src/hokuyo_subscriber_node.cpp)
 target_link_libraries(sbot_publisher_node ${catkin_LIBRARIES})
 target_link_libraries(hokuyo_publisher_node ${catkin_LIBRARIES})
 target_link_libraries(hokuyo_subscriber_node ${catkin_LIBRARIES})
+target_link_libraries(camera_subscriber_node ${catkin_LIBRARIES})
+target_link_libraries(camera_publisher_node ${catkin_LIBRARIES})
 
 #############
 ## Install ##
@@ -149,7 +153,7 @@ target_link_libraries(hokuyo_subscriber_node ${catkin_LIBRARIES})
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS sbot_publisher sbot_publisher_node
+# install(TARGETS sensors_publishers sbot_publisher_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
