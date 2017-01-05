@@ -122,10 +122,15 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 
 ## Declare a C++ executable
 add_executable(sbot_publisher_node src/sbot_publisher_node.cpp)
+
 add_executable(hokuyo_publisher_node src/hokuyo_publisher_node.cpp src/hokuyo/AbstractHokuyo.h src/hokuyo/Hokuyo.cpp src/hokuyo/Hokuyo.h)
 add_executable(hokuyo_subscriber_node src/hokuyo_subscriber_node.cpp)
+
 add_executable(camera_subscriber_node src/camera_subscriber_node.cpp)
 add_executable(camera_publisher_node src/camera_publisher_node.cpp src/camera/AbstractCamera.h src/camera/Camera.cpp src/camera/Camera.h)
+
+add_executable(gps_publisher_node src/gps_publisher_node.cpp src/gps/AbstractGps.h src/gps/Gps.cpp src/gps/Gps.h)
+add_executable(gps_subscriber_node src/gps_subscriber_node.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -137,6 +142,8 @@ target_link_libraries(hokuyo_publisher_node ${catkin_LIBRARIES})
 target_link_libraries(hokuyo_subscriber_node ${catkin_LIBRARIES})
 target_link_libraries(camera_subscriber_node ${catkin_LIBRARIES})
 target_link_libraries(camera_publisher_node ${catkin_LIBRARIES})
+target_link_libraries(gps_publisher_node ${catkin_LIBRARIES})
+target_link_libraries(gps_subscriber_node ${catkin_LIBRARIES})
 
 #############
 ## Install ##

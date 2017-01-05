@@ -5,6 +5,8 @@
     <node pkg="sensors_publishers" name="hokuyo_subscriber_node" type="hokuyo_subscriber_node"/>
     <node pkg="sensors_publishers" name="camera_publisher_node" type="camera_publisher_node"/>
     <node pkg="sensors_publishers" name="camera_subscriber_node" type="camera_subscriber_node"/>
+    <node pkg="sensors_publishers" name="gps_publisher_node" type="gps_publisher_node"/>
+    <node pkg="sensors_publishers" name="gps_subscriber_node" type="gps_subscriber_node"/>
   </group>
 
 </launch>
