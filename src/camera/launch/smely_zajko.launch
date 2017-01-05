@@ -1,8 +1,0 @@
-<launch>
-
-  <group ns="smely_zajko">
-    <node pkg="camera" name="camera_publisher_node" type="camera_publisher_node"/>
-    <node pkg="camera" name="camera_subscriber_node" type="camera_subscriber_node"/>
-  </group>
-
-</launch>

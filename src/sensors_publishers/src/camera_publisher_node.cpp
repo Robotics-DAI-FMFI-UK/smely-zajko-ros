@@ -1,6 +1,7 @@
 #include "ros/ros.h"
+#include "camera/AbstractCamera.h"
+#include "camera/Camera.h"
 #include <image_transport/image_transport.h>
-#include <opencv2/opencv.hpp>
 #include <cv_bridge/cv_bridge.h>
 
 using namespace std;
@@ -15,27 +16,19 @@ int main(int argc, char **argv) {
 
     cv::waitKey(30);
 
-    cv::VideoCapture cap(0); // open the default camera
-    if (!cap.isOpened()) {
-        ROS_ERROR("Camera is not initialized");
-
-        return -1;
-    }
-
     cv::Mat image;
+
+    AbstractCamera *camera = new Camera();
+    camera->init();
+
     sensor_msgs::ImagePtr msg;
     while (nh.ok()) {
 
-        cv::Mat frame;
-        cap >> frame;
-        cv::cvtColor(frame, image, CV_BGR2BGRA);
-        // detect edges in image, maybe usable...
-        /*cv::GaussianBlur(image, image, cv::Size(7, 7), 1.5, 1.5);
-        cv::Canny(image, image, 0, 30, 3);*/
+        camera->readData();
+        image = camera->getData();
 
-        if (!frame.empty()) {
-            cv::flip(image, image, 1);
-            msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", image).toImageMsg();
+        if (!image.empty()) {
+            msg = cv_bridge::CvImage(std_msgs::Header(), sensor_msgs::image_encodings::BGR8, image).toImageMsg();
             pub.publish(msg);
             cv::waitKey(30);
         }
