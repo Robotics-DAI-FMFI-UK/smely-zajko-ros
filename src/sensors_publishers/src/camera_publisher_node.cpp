@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
         image = camera->getData();
 
         if (!image.empty()) {
-            msg = cv_bridge::CvImage(std_msgs::Header(), sensor_msgs::image_encodings::BGR8, image).toImageMsg();
+            msg = cv_bridge::CvImage(std_msgs::Header(), sensor_msgs::image_encodings::BGRA8, image).toImageMsg();
             pub.publish(msg);
             cv::waitKey(30);
         }
