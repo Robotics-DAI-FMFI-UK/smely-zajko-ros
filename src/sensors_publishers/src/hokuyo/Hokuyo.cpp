@@ -107,7 +107,7 @@ void Hokuyo::readData() {
                                ((((int) read_buf[searchptr + 1]) - 0x30) << 6) |
                                (((int) read_buf[searchptr + 2]) - 0x30);
             searchptr += 3;
-           }
+        }
 
         beam_index--;
     }

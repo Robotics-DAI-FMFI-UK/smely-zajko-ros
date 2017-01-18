@@ -9,6 +9,7 @@ find_package(catkin REQUIRED
         roscpp
         cv_bridge
         message_types
+        std_msgs
         image_transport)
 
 ## System dependencies are found with CMake's conventions
@@ -102,7 +103,7 @@ find_package(catkin REQUIRED
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-  LIBRARIES message_types
+#  LIBRARIES message_types
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
@@ -127,8 +128,16 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 
 ## Declare a C++ executable
 add_executable(sbot_publisher_node src/sbot_publisher_node.cpp src/sbot/AbstractSbot.h src/sbot/Sbot.cpp src/sbot/Sbot.h)
+add_dependencies(sbot_publisher_node message_types_gencpp)
 
-add_executable(hokuyo_publisher_node src/hokuyo_publisher_node.cpp src/hokuyo/AbstractHokuyo.h src/hokuyo/Hokuyo.cpp src/hokuyo/Hokuyo.h)
+add_executable(hokuyo_publisher_node
+        src/hokuyo_publisher_node.cpp
+        src/hokuyo/AbstractHokuyo.h
+        src/hokuyo/Hokuyo.cpp
+        src/hokuyo/Hokuyo.h
+        src/hokuyo/HokuyoFile.cpp
+        src/hokuyo/HokuyoFile.h)
+
 add_executable(hokuyo_subscriber_node src/hokuyo_subscriber_node.cpp)
 
 add_executable(camera_subscriber_node src/camera_subscriber_node.cpp)

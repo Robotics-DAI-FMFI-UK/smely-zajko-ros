@@ -6,7 +6,7 @@
 
 
 void arrayCallback(const std_msgs::Int32MultiArray::ConstPtr &array) {
-    int arr[Hokuyo::RANGE_DATA_COUNT];
+    int arr[AbstractHokuyo::RANGE_DATA_COUNT];
     int i = 0;
     for (std::vector<int>::const_iterator it = array->data.begin(); it != array->data.end(); ++it) {
         arr[i] = *it;

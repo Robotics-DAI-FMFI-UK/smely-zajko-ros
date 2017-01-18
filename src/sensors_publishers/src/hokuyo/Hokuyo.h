@@ -14,7 +14,6 @@ class Hokuyo : public AbstractHokuyo {
     pthread_mutex_t m_read;
 
 public:
-    static const int RANGE_DATA_COUNT = 1081;
 
     void init();
 

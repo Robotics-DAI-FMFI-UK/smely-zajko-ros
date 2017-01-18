@@ -13,6 +13,8 @@ public:
     virtual void readData() = 0;
 
     virtual Int32MultiArray getData() = 0;
+
+    static const int RANGE_DATA_COUNT = 1081;
 };
 
 

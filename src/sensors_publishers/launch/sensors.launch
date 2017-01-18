@@ -2,7 +2,7 @@
 
   <group ns="sensors">
     <node pkg="sensors_publishers" name="hokuyo_publisher_node" type="hokuyo_publisher_node"/>
-    <node pkg="sensors_publishers" name="hokuyo_subscriber_node" type="hokuyo_subscriber_node"/>
+    <node pkg="sensors_gui" name="hokuyo_gui" type="hokuyo_gui"/>
     <node pkg="sensors_publishers" name="camera_publisher_node" type="camera_publisher_node"/>
     <node pkg="sensors_publishers" name="camera_subscriber_node" type="camera_subscriber_node"/>
     <node pkg="sensors_publishers" name="gps_publisher_node" type="gps_publisher_node"/>

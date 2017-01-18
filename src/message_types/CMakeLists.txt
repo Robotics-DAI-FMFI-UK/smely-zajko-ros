@@ -6,7 +6,6 @@ project(message_types)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
         roscpp
-        rospy
         std_msgs
         message_generation
 )
@@ -102,7 +101,7 @@ generate_messages(
 catkin_package(
         #  INCLUDE_DIRS include
         #  LIBRARIES message_types
-        CATKIN_DEPENDS message_runtime
+        #  CATKIN_DEPENDS std_msgs message_runtime
         #  DEPENDS system_lib
 )
 
