@@ -9,13 +9,13 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
         cv::waitKey(30);
     }
     catch (cv_bridge::Exception &e) {
-        ROS_ERROR("Could not convert from '%s' to 'bgr8'.", msg->encoding.c_str());
+        ROS_ERROR("Could not convert from '%s' to 'bgra8'.", msg->encoding.c_str());
     }
 }
 
 int main(int argc, char **argv) {
 
-    ros::init(argc, argv, "camera_listener");
+    ros::init(argc, argv, "camera_gui");
     ros::NodeHandle nh;
 
     cv::namedWindow("view");

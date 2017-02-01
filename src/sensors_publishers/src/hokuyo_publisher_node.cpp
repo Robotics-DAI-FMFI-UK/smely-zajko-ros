@@ -2,7 +2,7 @@
 #include "std_msgs/Int32MultiArray.h"
 
 #include "hokuyo/Hokuyo.h"
-#include "hokuyo/HokuyoFile.h"
+#include "hokuyo/HokuyoSynthetic.h"
 
 using namespace std;
 
@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
 
     ros::Rate loop_rate(10);
 
-    AbstractHokuyo *hokuyo = new HokuyoFile();
+    AbstractHokuyo *hokuyo = new HokuyoSynthetic();
     hokuyo->init();
 
     ros::Duration(0.5).sleep();

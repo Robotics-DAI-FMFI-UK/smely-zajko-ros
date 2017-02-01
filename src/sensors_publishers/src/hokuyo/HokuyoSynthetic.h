@@ -3,7 +3,7 @@
 
 #include "AbstractHokuyo.h"
 
-class HokuyoFile : public AbstractHokuyo {
+class HokuyoSynthetic : public AbstractHokuyo {
 public:
     void init();
 

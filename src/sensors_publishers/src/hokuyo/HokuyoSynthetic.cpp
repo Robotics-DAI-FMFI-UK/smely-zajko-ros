@@ -1,14 +1,14 @@
-#include "HokuyoFile.h"
+#include "HokuyoSynthetic.h"
 
-void HokuyoFile::init() {
-
-}
-
-void HokuyoFile::readData() {
+void HokuyoSynthetic::init() {
 
 }
 
-Int32MultiArray HokuyoFile::getData() {
+void HokuyoSynthetic::readData() {
+
+}
+
+Int32MultiArray HokuyoSynthetic::getData() {
 
     Int32MultiArray result;
     int r = rand() % 5;

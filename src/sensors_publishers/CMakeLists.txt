@@ -10,6 +10,7 @@ find_package(catkin REQUIRED
         cv_bridge
         message_types
         std_msgs
+        sensor_msgs
         image_transport)
 
 ## System dependencies are found with CMake's conventions
@@ -102,10 +103,10 @@ find_package(catkin REQUIRED
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES message_types
-#  CATKIN_DEPENDS other_catkin_pkg
-#  DEPENDS system_lib
+        #  INCLUDE_DIRS include
+        #  LIBRARIES message_types
+        #  CATKIN_DEPENDS other_catkin_pkg
+        #  DEPENDS system_lib
 )
 
 ###########
@@ -135,8 +136,8 @@ add_executable(hokuyo_publisher_node
         src/hokuyo/AbstractHokuyo.h
         src/hokuyo/Hokuyo.cpp
         src/hokuyo/Hokuyo.h
-        src/hokuyo/HokuyoFile.cpp
-        src/hokuyo/HokuyoFile.h)
+        src/hokuyo/HokuyoSynthetic.cpp
+        src/hokuyo/HokuyoSynthetic.h)
 
 add_executable(hokuyo_subscriber_node src/hokuyo_subscriber_node.cpp)
 
@@ -144,6 +145,9 @@ add_executable(camera_publisher_node src/camera_publisher_node.cpp src/camera/Ab
 
 add_executable(gps_publisher_node src/gps_publisher_node.cpp src/gps/AbstractGps.h src/gps/Gps.cpp src/gps/Gps.h)
 add_executable(gps_subscriber_node src/gps_subscriber_node.cpp)
+
+add_executable(imu_publisher_node src/imu_publisher_node.cpp src/imu/AbstractImu.h src/imu/Imu.cpp src/imu/Imu.h)
+add_executable(imu_subscriber_node src/imu_subscriber_node.cpp )
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -156,6 +160,8 @@ target_link_libraries(hokuyo_subscriber_node ${catkin_LIBRARIES})
 target_link_libraries(camera_publisher_node ${catkin_LIBRARIES})
 target_link_libraries(gps_publisher_node ${catkin_LIBRARIES})
 target_link_libraries(gps_subscriber_node ${catkin_LIBRARIES})
+target_link_libraries(imu_publisher_node ${catkin_LIBRARIES})
+target_link_libraries(imu_subscriber_node ${catkin_LIBRARIES})
 
 #############
 ## Install ##
