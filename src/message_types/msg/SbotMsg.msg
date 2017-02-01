@@ -1,2 +1,12 @@
 Header header
-uint8 test
+float64 lstep
+float64 rstep
+float64 lspeed
+float64 rspeed
+float64 blocked
+float64 obstacle
+float64 distRR
+float64 distFR
+float64 distM
+float64 distFL
+float64 distRL

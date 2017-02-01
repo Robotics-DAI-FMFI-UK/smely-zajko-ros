@@ -10,6 +10,7 @@ class Sbot : public AbstractSbot {
     int fdW[2];
     int child;
     pthread_mutex_t m_read;
+    message_types::SbotMsg result;
 public:
 
     void init();

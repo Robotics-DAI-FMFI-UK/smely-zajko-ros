@@ -84,34 +84,22 @@ void Sbot::readData() {
     }
     line[lineIndex] = '\0';
 
-    message_types::SbotMsg result;
-
-    int blocked, obstacle;
-/*
-    sscanf(line, "@ %d %d %d %d %d %d %d %d %d %d %d", &result->lstep,
-           &result->rstep, &result->lspeed, &result->rspeed, &blocked,
-           &obstacle, &result->distRR, &result->distFR, &result->distM,
-           &result->distFL, &result->distRL);
-
-    result->blocked = (blocked);
-    result->obstacle = (obstacle);
-
-    if ((result->distRL < 35) && (result->distRL > 14))
+    sscanf(line, "@ %d %d %d %d %d %d %d %d %d %d %d", &result.lstep,
+           &result.rstep, &result.lspeed, &result.rspeed, &result.blocked,
+           &result.obstacle, &result.distRR, &result.distFR, &result.distM,
+           &result.distFL, &result.distRL);
+    int away_from_left, away_from_right;
+    if ((result.distRL < 35) && (result.distRL > 14))
         away_from_left = 1;
     else
         away_from_left = 0;
-    if ((result->distRR < 35) && (result->distRR > 14))
+    if ((result.distRR < 35) && (result.distRR > 14))
         away_from_right = 1;
     else
         away_from_right = 0;
-
-    pthread_mutex_lock(&m_read);
-    SbotThread::data = *result;
-    pthread_mutex_unlock(&m_read);
-    */
-    //delete result;
 };
 
 message_types::SbotMsg Sbot::getData() {
 
+    return result;
 };
