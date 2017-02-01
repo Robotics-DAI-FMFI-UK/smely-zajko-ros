@@ -140,7 +140,6 @@ add_executable(hokuyo_publisher_node
 
 add_executable(hokuyo_subscriber_node src/hokuyo_subscriber_node.cpp)
 
-add_executable(camera_subscriber_node src/camera_subscriber_node.cpp)
 add_executable(camera_publisher_node src/camera_publisher_node.cpp src/camera/AbstractCamera.h src/camera/Camera.cpp src/camera/Camera.h)
 
 add_executable(gps_publisher_node src/gps_publisher_node.cpp src/gps/AbstractGps.h src/gps/Gps.cpp src/gps/Gps.h)
@@ -154,7 +153,6 @@ add_executable(gps_subscriber_node src/gps_subscriber_node.cpp)
 target_link_libraries(sbot_publisher_node ${catkin_LIBRARIES})
 target_link_libraries(hokuyo_publisher_node ${catkin_LIBRARIES})
 target_link_libraries(hokuyo_subscriber_node ${catkin_LIBRARIES})
-target_link_libraries(camera_subscriber_node ${catkin_LIBRARIES})
 target_link_libraries(camera_publisher_node ${catkin_LIBRARIES})
 target_link_libraries(gps_publisher_node ${catkin_LIBRARIES})
 target_link_libraries(gps_subscriber_node ${catkin_LIBRARIES})

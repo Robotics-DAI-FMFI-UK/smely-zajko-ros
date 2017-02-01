@@ -9,7 +9,8 @@ find_package(catkin REQUIRED
         roscpp
         cv_bridge
         message_types
-        std_msgs)
+        std_msgs
+        image_transport)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -129,6 +130,7 @@ include_directories(
 # add_dependencies(sensors_gui ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
+add_executable(camera_gui src/camera_gui.cpp)
 add_executable(hokuyo_gui src/hokuyo_gui.cpp)
 
 
@@ -138,6 +140,7 @@ add_executable(hokuyo_gui src/hokuyo_gui.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(hokuyo_gui ${catkin_LIBRARIES})
+target_link_libraries(camera_gui ${catkin_LIBRARIES})
 
 #############
 ## Install ##
