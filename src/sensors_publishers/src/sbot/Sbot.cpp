@@ -5,11 +5,11 @@ void Sbot::init() {
 
     if (pipe(fdR) < 0) {
         ROS_ERROR("pipe2()");
-        exit(-1);
+        return;
     }
     if (!pipe(fdW) < 0) {
         ROS_ERROR("pipe2()");
-        exit(-1);
+        return;
     }
 
     if ((child = fork()) == 0) {
@@ -28,14 +28,14 @@ void Sbot::init() {
         // "-serial", "-sercfg", "115200,N,n,8,1", NULL) < 0) {
         if (execl("/usr/bin/plink", "/usr/bin/plink", "/dev/sbot", "-serial",
                   "-sercfg", "115200,N,n,8,1", NULL) < 0) {
-            perror("child execl()");
-            exit(-1);
+            ROS_ERROR("child execl()");
+            return;
         }
     }
 
     if (child < 0) {
-        perror("fork()");
-        exit(-1);
+        ROS_ERROR("fork()");
+        return;
     }
 
     /* parent */

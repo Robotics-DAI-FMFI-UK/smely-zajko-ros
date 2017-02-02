@@ -12,6 +12,8 @@
 
     <node pkg="sensors_publishers" name="imu_publisher_node" type="imu_publisher_node"/>
     <node pkg="sensors_publishers" name="imu_subscriber_node" type="imu_subscriber_node"/>
+
+    <node pkg="sensors_publishers" name="sbot_publisher_node" type="sbot_publisher_node"/>
   </group>
 
 </launch>

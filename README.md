@@ -34,3 +34,16 @@ From root folder run `$ catkin_make`. Make sure you run `source devel/setup.bash
 
 ## Running
 From root folder run `$ roslaunch camera smely_zajko.launch`.
+
+
+## Record run via rosbag
+We can record whole run and play it again (with correct timing, data, etc.) via `rosbag`. To record run use
+```{r, engine='bash', count_lines}
+$ rosbag record -a
+```
+and for play 
+```{r, engine='bash', count_lines}
+$ rosbag play filename.bag
+```
+
+For more information check [documentation](http://wiki.ros.org/rosbag/Commandline).
