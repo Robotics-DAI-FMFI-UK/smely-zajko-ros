@@ -14,13 +14,14 @@ int main(int argc, char **argv) {
 
     gps->init();
     while (ros::ok()) {
+        if (gps_publisher.getNumSubscribers() > 0) {
+            gps->readData();
 
-        gps->readData();
+            gps_publisher.publish(gps->getData());
 
-        gps_publisher.publish(gps->getData());
-
-        ros::spinOnce();
-        loop_rate.sleep();
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
     }
 
     return 0;

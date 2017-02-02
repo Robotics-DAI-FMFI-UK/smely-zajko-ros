@@ -17,12 +17,14 @@ int main(int argc, char **argv) {
     ros::Duration(0.5).sleep();
 
     while (ros::ok()) {
-        imu->readData();
+        if (imu_publisher.getNumSubscribers() > 0) {
+            imu->readData();
 
-        imu_publisher.publish(imu->getData());
+            imu_publisher.publish(imu->getData());
 
-        ros::spinOnce();
-        loop_rate.sleep();
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
     }
 
     return 0;

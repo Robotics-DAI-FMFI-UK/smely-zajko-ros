@@ -11,19 +11,21 @@ int main(int argc, char **argv) {
 
     ros::Rate loop_rate(10);
 
-    AbstractSbot *sbot= new Sbot();
+    AbstractSbot *sbot = new Sbot();
     sbot->init();
 
     ros::Duration(0.5).sleep();
 
     while (ros::ok()) {
-        sbot->readData();
+        if (sbot_publisher.getNumSubscribers() > 0) {
+            sbot->readData();
 
-        sbot_publisher.publish(sbot->getData());
+            sbot_publisher.publish(sbot->getData());
 
-        ros::spinOnce();
+            ros::spinOnce();
 
-        loop_rate.sleep();
+            loop_rate.sleep();
+        }
     }
 
     return 0;

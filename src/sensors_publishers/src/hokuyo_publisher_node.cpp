@@ -20,13 +20,15 @@ int main(int argc, char **argv) {
     ros::Duration(0.5).sleep();
 
     while (ros::ok()) {
-        hokuyo->readData();
+        if (hokuyo_publisher.getNumSubscribers() > 0) {
+            hokuyo->readData();
 
-        hokuyo_publisher.publish(hokuyo->getData());
+            hokuyo_publisher.publish(hokuyo->getData());
 
-        ros::spinOnce();
+            ros::spinOnce();
 
-        loop_rate.sleep();
+            loop_rate.sleep();
+        }
     }
 
     return 0;
