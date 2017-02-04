@@ -4,7 +4,7 @@ void Imu::init() {
     imu = open(dev_name, O_RDWR | O_NOCTTY | O_NONBLOCK);
 
     if (imu < 0) {
-        ROS_ERROR("imu not found");
+        ROS_ERROR("imu not found at %s", dev_name);
         return;
     }
 

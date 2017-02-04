@@ -1,18 +1,12 @@
 #include "Gps.h"
 
-#include <fcntl.h>
-#include <string.h>
-#include <termios.h>
-#include <unistd.h>
-
-// TODO: add code from validate
 void Gps::init() {
 
     struct termios oldtio, newtio;
 
-    gps = open("/dev/galileo", O_RDONLY | O_NOCTTY | O_NONBLOCK);
+    gps = open(dev_name, O_RDONLY | O_NOCTTY | O_NONBLOCK);
     if (gps < 0) {
-        // printf("imu not found at %s\n", devName);
+        ROS_ERROR("GPS not found at %s", dev_name);
         return;
     }
 

@@ -3,6 +3,12 @@
 
 #include "AbstractGps.h"
 
+#include "ros/ros.h"
+#include <fcntl.h>
+#include <termios.h>
+
+#define dev_name "/dev/galileo"
+
 class Gps : public AbstractGps {
     int gps;
     int bufp;
