@@ -6,13 +6,15 @@
 int main(int argc, char **argv) {
     ros::init(argc, argv, "gps_publisher");
     ros::NodeHandle n;
-    ros::Publisher gps_publisher = n.advertise<sensor_msgs::NavSatFix>("gps_publisher", 1000);
-
-    ros::Rate loop_rate(10);
+    ros::Publisher gps_publisher = n.advertise<sensor_msgs::NavSatFix>("gps_publisher", 10);
 
     AbstractGps *gps = new Gps();
-
     gps->init();
+
+    ros::Rate loop_rate(100);
+
+    ros::Duration(0.5).sleep();
+
     while (ros::ok()) {
         if (gps_publisher.getNumSubscribers() > 0) {
             gps->readData();
@@ -20,6 +22,7 @@ int main(int argc, char **argv) {
             gps_publisher.publish(gps->getData());
 
             ros::spinOnce();
+
             loop_rate.sleep();
         }
     }

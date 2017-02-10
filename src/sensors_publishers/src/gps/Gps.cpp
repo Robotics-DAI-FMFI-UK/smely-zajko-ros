@@ -1,5 +1,55 @@
 #include "Gps.h"
 
+double stringToDouble(string s) {
+    double returnValue = 0;
+    std::istringstream istr(s);
+
+    istr >> returnValue;
+
+    return (returnValue);
+}
+
+double nmeaToDecimal(string position) {
+    double pos = stringToDouble(position);
+    double deg = floor(pos / 100);
+    double dec_pos = deg + ((pos - (deg * 100)) / 60);
+
+    return dec_pos;
+}
+
+vector<string> splitStringByComma(string input) {
+
+    vector<string> returnVector;
+    stringstream ss(input);
+    string element;
+
+    while (getline(ss, element, ',')) {
+        returnVector.push_back(element);
+    }
+
+    return returnVector;
+}
+
+bool isValidGPGGA(const vector<string> elementVector) {
+    if (elementVector[0] != "$GPGGA") {
+        return false;
+    }
+    if (elementVector.size() != 15) {
+        return false;
+    }
+    if (atoi(elementVector[6].c_str()) == 0) {
+        return false;
+    }
+    if (elementVector[4].length() < 9) {
+        return false;
+    }
+    if (elementVector[2].length() < 9) {
+        return false;
+    }
+
+    return atoi(elementVector[7].c_str()) != 0;
+}
+
 void Gps::init() {
 
     struct termios oldtio, newtio;
@@ -61,5 +111,34 @@ void Gps::readData() {
 
 sensor_msgs::NavSatFix Gps::getData() {
 
-    return sensor_msgs::NavSatFix();
+    return parseLine(b);
+}
+
+sensor_msgs::NavSatFix Gps::parseLine(const char *s) {
+
+    sensor_msgs::NavSatFix fix;
+
+    vector<string> splittedLine = splitStringByComma(s);
+
+    if (isValidGPGGA(splittedLine)) {
+        for (int i = 0; i < splittedLine.size(); i++) {
+            cout << splittedLine[i] << " ";
+        }
+
+        cout << '\n';
+
+        fix.latitude = nmeaToDecimal(splittedLine[2]);
+        fix.longitude = nmeaToDecimal(splittedLine[4]);
+        if (splittedLine[3] == "S") {
+            fix.latitude = -fix.latitude;
+        }
+        if (splittedLine[5] == "W") {
+            fix.longitude = -fix.longitude;
+        }
+        fix.altitude = stringToDouble(splittedLine[9]);
+        //numberSatellites = atoi(elementVector[7].c_str());
+    }
+
+
+    return fix;
 }
