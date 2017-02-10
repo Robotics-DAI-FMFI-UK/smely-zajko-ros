@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
     ros::Duration(0.5).sleep();
 
     while (ros::ok()) {
-        if (sbot_publisher.getNumSubscribers() > 0) {
+        //if (sbot_publisher.getNumSubscribers() > 0) {
             sbot->readData();
 
             sbot_publisher.publish(sbot->getData());
@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
             ros::spinOnce();
 
             loop_rate.sleep();
-        }
+        //}
     }
 
     return 0;

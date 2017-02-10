@@ -39,9 +39,5 @@ void Robot::unblock() {
 }
 
 void Robot::ignore_obstacle(bool val) {
-    if (val) {
-        send_command("i;");
-    } else {
-        send_command("o;");
-    }
+    send_command(val ? "i;" : "o;");
 }

@@ -1,6 +1,86 @@
 #include "Sbot.h"
 
+int validate(const char *devName) {
+    // char *command="plink /dev/ttyUSB0 -serial -sercfg 115200,N,n,8,1";
+    char command[128];
+
+
+    sprintf(command, "plink %s -serial -sercfg 115200,N,n,8,1", devName);
+
+    FILE *f;
+
+    if (!(f = (FILE *) popen(command, "r"))) {
+        // If fpipe is NULL
+        return 0;
+    }
+    if (f < 0)
+        return 0;
+
+    char b[128];
+
+    for (int i = 0; i < 10; i++) {
+
+        fgets(b, sizeof b, f);
+
+        //@0 -6 0 0 0 0 200 108 200
+        std::istringstream is(b);
+        if (!is.eof()) {
+            char c;
+            int n;
+
+            is >> c;
+            if (is.fail() || c != '@') {
+                continue;
+            }
+
+            is >> n;
+            if (is.fail()) {
+                continue;
+            }
+            is >> n;
+            if (is.fail()) {
+                continue;
+            }
+            is >> n;
+            if (is.fail()) {
+                continue;
+            }
+            is >> n;
+            if (is.fail()) {
+                continue;
+            }
+            is >> n;
+            if (is.fail()) {
+                continue;
+            }
+            is >> n;
+            if (is.fail()) {
+                continue;
+            }
+            is >> n;
+            if (is.fail()) {
+                continue;
+            }
+            is >> n;
+            if (is.fail()) {
+                continue;
+            }
+
+            // printf("%s", b );
+            pclose(f);
+            return 1;
+        }
+    }
+
+    pclose(f);
+
+    return 0;
+}
+
 void Sbot::init() {
+    ROS_ERROR("test");
+
+    validate("/dev/sbot");
 // char *command="plink /dev/ttyUSB0 -serial -sercfg 115200,N,n,8,1";
 
     if (pipe(fdR) < 0) {
@@ -55,9 +135,9 @@ void Sbot::readData() {
     int lineIndex = 1;
 
     do {
-        if ((numRead = read(fdW[0], &ch, 1)) < 0) {
-            perror("read()");
-            exit(-1);
+        if (read(fdW[0], &ch, 1) < 0) {
+            ROS_ERROR("read()");
+            return;
         }
         if (ch == '!')
             printing = printingDebugging;
@@ -70,8 +150,8 @@ void Sbot::readData() {
 
     do {
         if ((numRead = read(fdW[0], line + lineIndex, 1)) < 0) {
-            perror("read()");
-            exit(-1);
+            ROS_ERROR("read()");
+            return;
         }
         lineIndex += numRead;
         if (lineIndex > 1023) {
@@ -83,8 +163,7 @@ void Sbot::readData() {
         return;
     }
     line[lineIndex] = '\0';
-
-    sscanf(line, "@ %d %d %d %d %d %d %d %d %d %d %d", &result.lstep,
+    sscanf(line, "@ %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf", &result.lstep,
            &result.rstep, &result.lspeed, &result.rspeed, &result.blocked,
            &result.obstacle, &result.distRR, &result.distFR, &result.distM,
            &result.distFL, &result.distRL);
