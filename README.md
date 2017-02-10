@@ -11,6 +11,19 @@ $ git clone https://github.com/Robotics-DAI-FMFI-UK/smely-zajko-ros
 $ sudo apt-get install libopencv-dev
 ```
 
+### gpsctl
+```{r, engine='bash', count_lines}
+$ sudo apt-get install gpsd-clients
+```
+
+### putty-tools (plink)
+```{r, engine='bash', count_lines}
+$ sudo apt-get install putty-tools
+```
+Do not forget to add user to group `dialout`.
+```{r, engine='bash', count_lines}
+$ sudo usermod -a -G dialout <userName>
+```
 ### ROS Kinetic
 ```{r, engine='bash', count_lines}
 $ sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'

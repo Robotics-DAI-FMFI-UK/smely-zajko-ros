@@ -23,6 +23,7 @@ int main(int argc, char **argv) {
             imu_publisher.publish(imu->getData());
 
             ros::spinOnce();
+
             loop_rate.sleep();
         }
     }
