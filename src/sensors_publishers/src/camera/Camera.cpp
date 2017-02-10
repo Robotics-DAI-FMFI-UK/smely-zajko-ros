@@ -1,7 +1,7 @@
 #include "Camera.h"
 
 void Camera::init() {
-    cap = cv::VideoCapture(0);
+    cap = cv::VideoCapture(1);
     if (!cap.isOpened()) {
         ROS_ERROR("Camera is not initialized");
     }
@@ -15,6 +15,7 @@ void Camera::readData() {
     /*cv::GaussianBlur(image, image, cv::Size(7, 7), 1.5, 1.5);
     cv::Canny(image, image, 0, 30, 3);*/
     if (!frame.empty()) {
+        cv::flip(image, image, 0);
         cv::flip(image, image, 1);
     }
 }

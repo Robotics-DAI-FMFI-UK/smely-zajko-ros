@@ -132,22 +132,22 @@ add_executable(sbot_publisher_node src/sbot_publisher_node.cpp src/sbot/Abstract
 add_dependencies(sbot_publisher_node message_types_gencpp)
 
 add_executable(hokuyo_publisher_node
-        src/hokuyo_publisher_node.cpp
-        src/hokuyo/AbstractHokuyo.h
-        src/hokuyo/Hokuyo.cpp
-        src/hokuyo/Hokuyo.h
-        src/hokuyo/HokuyoSynthetic.cpp
-        src/hokuyo/HokuyoSynthetic.h)
+        src/hokuyo_publisher_node.cpp src/hokuyo/AbstractHokuyo.h
+        src/hokuyo/Hokuyo.cpp src/hokuyo/Hokuyo.h
+        src/hokuyo/HokuyoSynthetic.cpp src/hokuyo/HokuyoSynthetic.h)
 
 add_executable(hokuyo_subscriber_node src/hokuyo_subscriber_node.cpp)
 
-add_executable(camera_publisher_node src/camera_publisher_node.cpp src/camera/AbstractCamera.h src/camera/Camera.cpp src/camera/Camera.h)
+add_executable(camera_publisher_node
+        src/camera_publisher_node.cpp src/camera/AbstractCamera.h
+        src/camera/CameraAvi.cpp src/camera/CameraAvi.h
+        src/camera/Camera.cpp src/camera/Camera.h)
 
 add_executable(gps_publisher_node src/gps_publisher_node.cpp src/gps/AbstractGps.h src/gps/Gps.cpp src/gps/Gps.h)
 add_executable(gps_subscriber_node src/gps_subscriber_node.cpp)
 
 add_executable(imu_publisher_node src/imu_publisher_node.cpp src/imu/AbstractImu.h src/imu/Imu.cpp src/imu/Imu.h)
-add_executable(imu_subscriber_node src/imu_subscriber_node.cpp )
+add_executable(imu_subscriber_node src/imu_subscriber_node.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above

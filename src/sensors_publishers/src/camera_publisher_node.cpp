@@ -22,6 +22,10 @@ int main(int argc, char **argv) {
     camera->init();
 
     sensor_msgs::ImagePtr msg;
+
+    ros::Rate loop_rate(30);
+
+    ros::Duration(0.5).sleep();
     while (nh.ok()) {
         if (camera_publisher.getNumSubscribers() > 0) {
             camera->readData();
@@ -30,10 +34,11 @@ int main(int argc, char **argv) {
             if (!image.empty()) {
                 msg = cv_bridge::CvImage(std_msgs::Header(), sensor_msgs::image_encodings::BGRA8, image).toImageMsg();
                 camera_publisher.publish(msg);
-                cv::waitKey(30);
             }
 
             ros::spinOnce();
+
+            loop_rate.sleep();
         }
     }
 
