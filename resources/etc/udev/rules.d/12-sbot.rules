@@ -1,0 +1,2 @@
+# recognize Sbot and put it at /dev/sbot
+ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{serial}=="FTE36FY9", SYMLINK="sbot"

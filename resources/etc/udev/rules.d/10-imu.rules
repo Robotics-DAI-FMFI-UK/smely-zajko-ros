@@ -1,0 +1,2 @@
+# recognize compass and put it at /dev/imu
+ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{serial}=="FTF3GX6O", SYMLINK="imu"
