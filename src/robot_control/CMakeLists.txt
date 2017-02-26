@@ -132,7 +132,11 @@ include_directories(
 add_executable(robot_control
         src/robot_control.cpp src/robot/AbstractRobot.h
         src/robot/Robot.cpp src/robot/Robot.h
-        src/LocalizationAndPlanning.cpp src/LocalizationAndPlanning.h
+        )
+
+add_executable(localization_and_planning
+        src/localization_and_planning.cpp
+        src/localizationAndPlanning/LocalizationAndPlanning.cpp src/localizationAndPlanning/LocalizationAndPlanning.h
         )
 
 ## Add cmake target dependencies of the executable
@@ -141,6 +145,7 @@ add_executable(robot_control
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(robot_control ${catkin_LIBRARIES})
+target_link_libraries(localization_and_planning ${catkin_LIBRARIES})
 
 #############
 ## Install ##

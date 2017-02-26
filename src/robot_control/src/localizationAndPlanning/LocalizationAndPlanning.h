@@ -9,8 +9,8 @@
 #include <sensor_msgs/NavSatFix.h>
 #include <geometry_msgs/Point.h>
 #include "message_types/GpsAngles.h"
-#include "rapidxml/rapidxml.hpp"
-#include "rapidxml/rapidxml_utils.hpp"
+#include "../rapidxml/rapidxml.hpp"
+#include "../rapidxml/rapidxml_utils.hpp"
 
 using namespace std;
 using namespace rapidxml;

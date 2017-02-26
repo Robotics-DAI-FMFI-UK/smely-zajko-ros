@@ -846,8 +846,9 @@ message_types::GpsAngles LocalizationAndPlanning::update(sensor_msgs::NavSatFix 
     result.map = calc_bearing(curPoint, headingPoint);
 
     if (result.dstToFin < 0.002) { // dst v km
-        printf("SME V CIELI ( %f m ) \n", result.dstToFin * 1000);
+        ROS_INFO("SME V CIELI ( %f m ) \n", result.dstToFin * 1000);
         result.map = DBL_MAX;
     }
+
     return result;
 };
