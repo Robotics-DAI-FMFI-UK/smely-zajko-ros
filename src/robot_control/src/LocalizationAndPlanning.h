@@ -8,6 +8,7 @@
 #include <opencv2/core/types_c.h>
 #include <sensor_msgs/NavSatFix.h>
 #include <geometry_msgs/Point.h>
+#include "message_types/GpsAngles.h"
 #include "rapidxml/rapidxml.hpp"
 #include "rapidxml/rapidxml_utils.hpp"
 
@@ -18,15 +19,6 @@ class IdDist {
 public:
     double id;
     double dist;
-};
-
-// TODO: get rid of this
-class GpsAngles {
-public:
-    double map;
-    double dstToFin;
-    double dstToHeadingPoint;
-    // double gps;
 };
 
 class FindOnWay {
@@ -107,7 +99,7 @@ public:
     void readDestination(char *filename);
 
     // update state with new gps data
-    GpsAngles update(sensor_msgs::NavSatFix gps);
+    message_types::GpsAngles update(sensor_msgs::NavSatFix gps);
 
     // calculate shortest path between two paths
     void calcPath(double strtPoint, double strtPointB, double destPoint,

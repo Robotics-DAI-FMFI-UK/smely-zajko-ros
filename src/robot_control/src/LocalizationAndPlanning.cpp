@@ -798,9 +798,9 @@ void LocalizationAndPlanning::calcPath(
     }
 }
 
-GpsAngles LocalizationAndPlanning::update(sensor_msgs::NavSatFix gps) {
+message_types::GpsAngles LocalizationAndPlanning::update(sensor_msgs::NavSatFix gps) {
 
-    GpsAngles result;
+    message_types::GpsAngles result;
 
     lastPosition = gps;
 
