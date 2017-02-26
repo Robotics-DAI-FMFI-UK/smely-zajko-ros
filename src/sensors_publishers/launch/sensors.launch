@@ -1,19 +1,21 @@
 <launch>
-
+  <arg name="camera_index" default="0" />
   <group ns="sensors">
-    <node pkg="sensors_publishers" name="hokuyo_publisher_node" type="hokuyo_publisher_node"/>
-    <node pkg="sensors_gui" name="hokuyo_gui" type="hokuyo_gui"/>
 
-    <node pkg="sensors_publishers" name="camera_publisher_node" type="camera_publisher_node"/>
-    <node pkg="sensors_gui" name="camera_gui" type="camera_gui"/>
+    <node pkg="sensors_publishers" name="hokuyo_publisher_node" type="hokuyo_publisher_node" />
+    <node pkg="sensors_gui" name="hokuyo_gui" type="hokuyo_gui" />
 
-    <node pkg="sensors_publishers" name="gps_publisher_node" type="gps_publisher_node"/>
-    <node pkg="sensors_publishers" name="gps_subscriber_node" type="gps_subscriber_node"/>
+    <node pkg="sensors_publishers" name="camera_publisher_node" type="camera_publisher_node">
+        <param name="camera_index" value="$(arg camera_index)" />
+    </node>
+    <node pkg="sensors_gui" name="camera_gui" type="camera_gui" />
 
-    <node pkg="sensors_publishers" name="imu_publisher_node" type="imu_publisher_node"/>
-    <node pkg="sensors_publishers" name="imu_subscriber_node" type="imu_subscriber_node"/>
+    <node pkg="sensors_publishers" name="gps_publisher_node" type="gps_publisher_node" />
+    <node pkg="sensors_publishers" name="gps_subscriber_node" type="gps_subscriber_node" />
 
-    <node pkg="sensors_publishers" name="sbot_publisher_node" type="sbot_publisher_node"/>
+    <node pkg="sensors_publishers" name="imu_publisher_node" type="imu_publisher_node" />
+
+    <node pkg="sensors_publishers" name="sbot_publisher_node" type="sbot_publisher_node" />
   </group>
 
 </launch>
