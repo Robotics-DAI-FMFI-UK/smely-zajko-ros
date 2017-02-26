@@ -147,7 +147,6 @@ add_executable(gps_publisher_node src/gps_publisher_node.cpp src/gps/AbstractGps
 add_executable(gps_subscriber_node src/gps_subscriber_node.cpp)
 
 add_executable(imu_publisher_node src/imu_publisher_node.cpp src/imu/AbstractImu.h src/imu/Imu.cpp src/imu/Imu.h)
-add_executable(imu_subscriber_node src/imu_subscriber_node.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -161,7 +160,6 @@ target_link_libraries(camera_publisher_node ${catkin_LIBRARIES})
 target_link_libraries(gps_publisher_node ${catkin_LIBRARIES})
 target_link_libraries(gps_subscriber_node ${catkin_LIBRARIES})
 target_link_libraries(imu_publisher_node ${catkin_LIBRARIES})
-target_link_libraries(imu_subscriber_node ${catkin_LIBRARIES})
 
 #############
 ## Install ##
