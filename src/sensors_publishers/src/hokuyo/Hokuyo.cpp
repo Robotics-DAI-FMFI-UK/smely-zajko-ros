@@ -6,8 +6,8 @@ void Hokuyo::init() {
     struct sockaddr_in remoteaddr;
 
     remoteaddr.sin_family = AF_INET;
-    remoteaddr.sin_addr.s_addr = inet_addr("192.168.0.1");
-    remoteaddr.sin_port = htons(10940);
+    remoteaddr.sin_addr.s_addr = inet_addr(address);
+    remoteaddr.sin_port = htons(port);
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
 
@@ -30,7 +30,7 @@ void Hokuyo::init() {
     char *start_measurement = (char *) "BM\n";
 
     if (write(sockfd, start_measurement, strlen(start_measurement)) < 0) {
-        ROS_ERROR("ERROR writing to Hokuyo\n");
+        ROS_ERROR("ERROR writing to Hokuyo");
 
         return;
     }
@@ -121,7 +121,9 @@ Int32MultiArray Hokuyo::getData() {
     pthread_mutex_lock(&m_read);
     for (int i = 0; i < RANGE_DATA_COUNT; i++) {
         result.data.push_back(data[i]);
+        std::cout << data[i] << " ";
     }
+    std::cout << '\n';
     pthread_mutex_unlock(&m_read);
 
     return result;
