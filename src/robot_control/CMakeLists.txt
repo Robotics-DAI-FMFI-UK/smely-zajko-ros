@@ -8,6 +8,7 @@ find_package(catkin REQUIRED
         COMPONENTS
         roscpp
         message_types
+        cv_bridge
         std_msgs)
 
 ## System dependencies are found with CMake's conventions
@@ -128,7 +129,11 @@ include_directories(
 # add_dependencies(robot_control ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(robot_control src/robot_control.cpp src/robot/AbstractRobot.h src/robot/Robot.cpp src/robot/Robot.h)
+add_executable(robot_control
+        src/robot_control.cpp src/robot/AbstractRobot.h
+        src/robot/Robot.cpp src/robot/Robot.h
+        src/LocalizationAndPlanning.cpp src/LocalizationAndPlanning.h
+        )
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
