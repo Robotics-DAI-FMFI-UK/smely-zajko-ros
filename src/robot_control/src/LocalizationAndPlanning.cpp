@@ -36,11 +36,11 @@ geometry_msgs::Point LocalizationAndPlanning::convert(sensor_msgs::NavSatFix poi
 sensor_msgs::NavSatFix LocalizationAndPlanning::reverse(geometry_msgs::Point location) {
 
     sensor_msgs::NavSatFix result;
-    result.longitude = (double) location.x / (double) guiMapWidth *
-                       (double) (bounds.maxlon - bounds.minlon) +
+    result.longitude = location.x / (double) guiMapWidth *
+                       (bounds.maxlon - bounds.minlon) +
                        bounds.minlon;
-    result.latitude = (double) location.y / (double) guiMapHeight *
-                      (double) (bounds.maxlat - bounds.minlat) +
+    result.latitude = location.y / (double) guiMapHeight *
+                      (bounds.maxlat - bounds.minlat) +
                       bounds.minlat;
     return result;
 }
@@ -53,8 +53,9 @@ void LocalizationAndPlanning::readMap(char *filename) {
     char *str;
 
     if (!is.good()) {
-        printf("cannot read map file \n");
-        exit(-1);
+        ROS_ERROR("cannot read map file \n");
+
+        return;
     }
 
     // get length of file:
@@ -573,7 +574,7 @@ double LocalizationAndPlanning::calc_bearing(sensor_msgs::NavSatFix a, sensor_ms
 // ak su rovnake vrati bod p1 ak je nejasne vrati p2
 sensor_msgs::NavSatFix
 LocalizationAndPlanning::intersection_of_bearings(sensor_msgs::NavSatFix p1, double b1, sensor_msgs::NavSatFix p2,
-                                                 double b2) {
+                                                  double b2) {
 
     double lat1 = p1.latitude * (M_PI / 180);
     double lon1 = p1.longitude * (M_PI / 180);
@@ -650,7 +651,7 @@ LocalizationAndPlanning::intersection_of_bearings(sensor_msgs::NavSatFix p1, dou
 // "point"
 pair<double, sensor_msgs::NavSatFix>
 LocalizationAndPlanning::dist_point_linesegment(sensor_msgs::NavSatFix point, sensor_msgs::NavSatFix start,
-                                               sensor_msgs::NavSatFix end) {
+                                                sensor_msgs::NavSatFix end) {
 
     sensor_msgs::NavSatFix closest;
     double b_se = calc_bearing(start, end);
@@ -683,8 +684,7 @@ LocalizationAndPlanning::dist_point_linesegment(sensor_msgs::NavSatFix point, se
 }
 
 FindOnWay LocalizationAndPlanning::find_on_way(sensor_msgs::NavSatFix point) {
-
-    FindOnWay result;
+    FindOnWay result = FindOnWay();
     long double dist = DBL_MAX;
     pair<double, sensor_msgs::NavSatFix> p;
     for (unsigned long i = 0; i < paths.size(); i++) {

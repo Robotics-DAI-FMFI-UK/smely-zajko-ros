@@ -2,6 +2,7 @@
 #define PROJECT_LOCALIZATIONANDPLANNING_H
 
 #include <opencv2/opencv.hpp>
+#include <ros/ros.h>
 #include <cfloat>
 #include <map>
 #include <opencv2/core/types_c.h>
