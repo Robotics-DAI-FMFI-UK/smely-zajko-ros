@@ -9,7 +9,8 @@ find_package(catkin REQUIRED
         roscpp
         message_types
         cv_bridge
-        std_msgs)
+        std_msgs
+        image_transport)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)

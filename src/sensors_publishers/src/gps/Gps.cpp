@@ -57,6 +57,7 @@ void Gps::init() {
     gps = open(dev_name, O_RDONLY | O_NOCTTY | O_NONBLOCK);
     if (gps < 0) {
         ROS_ERROR("GPS not found at %s", dev_name);
+        
         return;
     }
 

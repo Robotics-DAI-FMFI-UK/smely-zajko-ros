@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
     cv::imshow("laser", empty_frame);
     cv::waitKey(30);
 
-    ros::Subscriber subscriber = n.subscribe("hokuyo_publisher", 100, arrayCallback);
+    ros::Subscriber subscriber = n.subscribe("/sensors/hokuyo_publisher", 100, arrayCallback);
 
     ros::spin();
 
