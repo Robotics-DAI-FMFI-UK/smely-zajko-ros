@@ -1,0 +1,5 @@
+<launch>
+    <include file="$(find sensors_publishers)/launch/sensors.launch" />
+    <include file="$(find robot_control)/launch/control.launch" />
+    <include file="$(find sensors_gui)/launch/gui.launch" />
+</launch>
