@@ -134,7 +134,7 @@ add_dependencies(sbot_publisher_node message_types_gencpp)
 add_executable(hokuyo_publisher_node
         src/hokuyo_publisher_node.cpp src/hokuyo/AbstractHokuyo.h
         src/hokuyo/Hokuyo.cpp src/hokuyo/Hokuyo.h
-        src/hokuyo/HokuyoSynthetic.cpp src/hokuyo/HokuyoSynthetic.h)
+        src/hokuyo/HokuyoSynthetic.cpp src/hokuyo/HokuyoSynthetic.h src/hokuyo/HokuyoFiles.cpp src/hokuyo/HokuyoFiles.h)
 
 add_executable(hokuyo_subscriber_node src/hokuyo_subscriber_node.cpp)
 

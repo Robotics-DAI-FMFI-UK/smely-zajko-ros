@@ -3,6 +3,7 @@
 
 #include "hokuyo/Hokuyo.h"
 #include "hokuyo/HokuyoSynthetic.h"
+#include "hokuyo/HokuyoFiles.h"
 
 using namespace std;
 
@@ -14,7 +15,7 @@ int main(int argc, char **argv) {
 
     ros::Rate loop_rate(10);
 
-    AbstractHokuyo *hokuyo = new HokuyoSynthetic();
+    AbstractHokuyo *hokuyo = new Hokuyo();
     hokuyo->init();
 
     ros::Duration(0.5).sleep();
