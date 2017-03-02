@@ -8,7 +8,7 @@ LocalizationAndPlanning *localizationAndPlanning = new LocalizationAndPlanning(5
 void gpsCallback(const sensor_msgs::NavSatFix &gps) {
     pubPtr.publish(localizationAndPlanning->update(gps));
 
-    cvShowImage("laser", localizationAndPlanning->getGui());
+    cvShowImage("loc and planning", localizationAndPlanning->getGui());
     cv::waitKey(30);
 }
 

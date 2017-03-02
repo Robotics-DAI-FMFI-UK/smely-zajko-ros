@@ -1,17 +1,12 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(sensors_publishers)
+project(robot_shared_libs)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED
-        COMPONENTS
-        roscpp
-        cv_bridge
-        message_types
-        std_msgs
-        sensor_msgs
-        image_transport)
+find_package(catkin REQUIRED COMPONENTS
+  roscpp
+)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -103,10 +98,10 @@ find_package(catkin REQUIRED
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-        #  INCLUDE_DIRS include
-        #  LIBRARIES message_types
-        #  CATKIN_DEPENDS other_catkin_pkg
-        #  DEPENDS system_lib
+#  INCLUDE_DIRS include
+#  LIBRARIES robot_shared_libs
+#  CATKIN_DEPENDS roscpp
+#  DEPENDS system_lib
 )
 
 ###########
@@ -115,51 +110,32 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(include ${catkin_INCLUDE_DIRS})
+# include_directories(include)
+include_directories(
+  ${catkin_INCLUDE_DIRS}
+)
 
 ## Declare a C++ library
-# add_library(sensors_publishers
-#   src/${PROJECT_NAME}/sensors_publishers.cpp
+# add_library(robot_shared_libs
+#   src/${PROJECT_NAME}/robot_shared_libs.cpp
 # )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(sensors_publishers ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(robot_shared_libs ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(sbot_publisher_node src/sbot_publisher_node.cpp ../robot_shared_libs/src/sbot/AbstractSbot.h ../robot_shared_libs/src/sbot/Sbot.cpp ../robot_shared_libs/src/sbot/Sbot.h)
-add_dependencies(sbot_publisher_node message_types_gencpp)
-
-add_executable(hokuyo_publisher_node
-        src/hokuyo_publisher_node.cpp src/hokuyo/AbstractHokuyo.h
-        src/hokuyo/Hokuyo.cpp src/hokuyo/Hokuyo.h
-        src/hokuyo/HokuyoSynthetic.cpp src/hokuyo/HokuyoSynthetic.h src/hokuyo/HokuyoFiles.cpp src/hokuyo/HokuyoFiles.h)
-
-add_executable(hokuyo_subscriber_node src/hokuyo_subscriber_node.cpp)
-
-add_executable(camera_publisher_node
-        src/camera_publisher_node.cpp src/camera/AbstractCamera.h
-        src/camera/CameraAvi.cpp src/camera/CameraAvi.h
-        src/camera/Camera.cpp src/camera/Camera.h)
-
-add_executable(gps_publisher_node src/gps_publisher_node.cpp src/gps/AbstractGps.h src/gps/Gps.cpp src/gps/Gps.h)
-add_executable(gps_subscriber_node src/gps_subscriber_node.cpp)
-
-add_executable(imu_publisher_node src/imu_publisher_node.cpp src/imu/AbstractImu.h src/imu/Imu.cpp src/imu/Imu.h)
+# add_executable(robot_shared_libs_node src/robot_shared_libs_node.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(sbot_publisher_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(robot_shared_libs_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(sbot_publisher_node ${catkin_LIBRARIES})
-target_link_libraries(hokuyo_publisher_node ${catkin_LIBRARIES})
-target_link_libraries(hokuyo_subscriber_node ${catkin_LIBRARIES})
-target_link_libraries(camera_publisher_node ${catkin_LIBRARIES})
-target_link_libraries(gps_publisher_node ${catkin_LIBRARIES})
-target_link_libraries(gps_subscriber_node ${catkin_LIBRARIES})
-target_link_libraries(imu_publisher_node ${catkin_LIBRARIES})
+# target_link_libraries(robot_shared_libs_node
+#   ${catkin_LIBRARIES}
+# )
 
 #############
 ## Install ##
@@ -176,7 +152,7 @@ target_link_libraries(imu_publisher_node ${catkin_LIBRARIES})
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS sensors_publishers sbot_publisher_node
+# install(TARGETS robot_shared_libs robot_shared_libs_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -201,7 +177,7 @@ target_link_libraries(imu_publisher_node ${catkin_LIBRARIES})
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_sbot_publisher.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_robot_shared_libs.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

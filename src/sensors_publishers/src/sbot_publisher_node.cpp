@@ -1,5 +1,5 @@
 #include "ros/ros.h"
-#include "sbot/Sbot.h"
+#include "../../robot_shared_libs/src/sbot/Sbot.h"
 #include "message_types/SbotMsg.h"
 
 using namespace std;

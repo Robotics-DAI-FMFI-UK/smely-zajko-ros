@@ -1,4 +1,4 @@
-#include"ros/ros.h"
+#include "ros/ros.h"
 #include "std_msgs/Int32MultiArray.h"
 
 #include "hokuyo/Hokuyo.h"

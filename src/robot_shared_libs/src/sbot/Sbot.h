@@ -6,12 +6,12 @@
 #include"ros/ros.h"
 
 class Sbot : public AbstractSbot {
-    int fdR[2];
     int fdW[2];
     int child;
     pthread_mutex_t m_read;
     message_types::SbotMsg result;
 public:
+    int fdR[2];
 
     void init();
 

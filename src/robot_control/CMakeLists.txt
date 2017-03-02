@@ -133,6 +133,8 @@ include_directories(
 add_executable(robot_control
         src/robot_control.cpp src/robot/AbstractRobot.h
         src/robot/Robot.cpp src/robot/Robot.h
+        ../robot_shared_libs/src/sbot/AbstractSbot.h
+        ../robot_shared_libs/src/sbot/Sbot.cpp ../robot_shared_libs/src/sbot/Sbot.h
         )
 
 add_executable(localization_and_planning

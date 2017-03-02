@@ -3,14 +3,18 @@
 
 
 #include "AbstractRobot.h"
-
+#include "ros/ros.h"
+#include "../../../robot_shared_libs/src/sbot/Sbot.h"
 #include <stdio.h>
 #include <string.h>
 #include <string>
 #include <unistd.h>
 
 class Robot : public AbstractRobot {
+    Sbot *sbot;
 public:
+    Robot();
+
     void send_command(const char *command);
 
     void set_direction(int d);

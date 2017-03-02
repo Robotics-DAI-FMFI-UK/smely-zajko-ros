@@ -9,7 +9,7 @@ int validate(const char *devName) {
 
     FILE *f;
 
-    if (!(f = (FILE *) popen(command, "r"))) {
+    if (!(f = popen(command, "r"))) {
         // If fpipe is NULL
         return 0;
     }
@@ -78,8 +78,6 @@ int validate(const char *devName) {
 }
 
 void Sbot::init() {
-    ROS_ERROR("test");
-
     validate("/dev/sbot");
 // char *command="plink /dev/ttyUSB0 -serial -sercfg 115200,N,n,8,1";
 

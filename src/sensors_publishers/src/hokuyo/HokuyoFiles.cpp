@@ -11,7 +11,6 @@ void HokuyoFiles::readData() {
                 char path[200];
                 sprintf(path, "/home/jozef/Desktop/smely-zajko/runHokuyo/%s", ent->d_name);
                 std::fstream file(path, std::ios_base::in);
-                std::cout << file;
                 int a;
                 data.data.clear();
                 while (file >> a) {

@@ -1,5 +1,4 @@
 #include "ros/ros.h"
-#include <std_msgs/String.h>
 #include "gps/AbstractGps.h"
 #include "gps/Gps.h"
 

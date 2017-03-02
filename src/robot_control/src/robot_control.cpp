@@ -4,6 +4,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/Int32MultiArray.h>
+#include <std_msgs/Int8.h>
 #include "robot/AbstractRobot.h"
 #include "robot/Robot.h"
 #include "message_types/SbotMsg.h"
@@ -11,30 +12,37 @@
 
 AbstractRobot *robot;
 
-void sbotCallback(const message_types::SbotMsg &sbot) {
-    ROS_ERROR("%f", sbot.lstep);
+message_types::SbotMsg sbot_msg;
+message_types::GpsAngles gps_msg;
+sensor_msgs::Imu imu_msg;
+cv::Mat image;
+std_msgs::Int32MultiArray hokuyo_msg;
+
+void sbotCallback(const message_types::SbotMsg &msg) {
+    ROS_ERROR("%f", msg.lstep);
 }
 
 void localizationAndPlanningCallback(const message_types::GpsAngles &msg) {
-
+    gps_msg = msg;
 }
 
-void imuCallback(const sensor_msgs::Imu::ConstPtr &imu) {
-    ROS_INFO("x: [%f]", imu->orientation.x);
+void imuCallback(const sensor_msgs::Imu &msg) {
+    ROS_INFO("x: [%f]", msg.orientation.x);
+    imu_msg = msg;
 }
 
 
 void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
     try {
-        cv::Mat image = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image;
+        image = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image;
     }
     catch (cv_bridge::Exception &e) {
         ROS_ERROR("Could not convert from '%s' to 'bgra8'.", msg->encoding.c_str());
     }
 }
 
-void arrayCallback(const std_msgs::Int32MultiArray::ConstPtr &array) {
-
+void arrayCallback(const std_msgs::Int32MultiArray &msg) {
+    hokuyo_msg = msg;
 }
 
 
@@ -53,7 +61,20 @@ int main(int argc, char **argv) {
 
     robot = new Robot();
 
-    ros::spin();
+    ros::Rate loop_rate(20);
+
+    int direction = 10;
+    while (ros::ok()) {
+        std_msgs::Int8 m;
+        m.data = 10;
+        if (robot != NULL) {
+            robot->set_speed(1);
+            robot->set_direction(direction);
+        }
+        ros::spinOnce();
+
+        loop_rate.sleep();
+    }
 
     return 0;
 }

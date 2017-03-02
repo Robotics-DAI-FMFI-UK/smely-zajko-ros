@@ -2,10 +2,14 @@
 
 using namespace std;
 
-void Robot::send_command(const char *command) {
-    write(1, command, strlen(command));
+Robot::Robot() {
+    sbot = new Sbot();
+    sbot->init();
 }
 
+void Robot::send_command(const char *command) {
+    write(sbot->fdR[1], command, strlen(command));
+}
 
 void Robot::set_direction(int d) {
     char buff[32];
