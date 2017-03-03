@@ -52,9 +52,6 @@ void Imu::readData() {
 }
 
 sensor_msgs::Imu Imu::getData() {
-    ROS_INFO("X: %f", result.orientation.x);
-    ROS_INFO("Y: %f", result.orientation.y);
-    ROS_INFO("Z: %f", result.orientation.z);
 
     return result;
 }

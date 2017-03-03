@@ -85,7 +85,7 @@ void Gps::init() {
 
 void Gps::readData() {
 
-    int nread;
+    ssize_t nread;
     if (!(nread = read(gps, b + bufp, 1))) {
 
         return;

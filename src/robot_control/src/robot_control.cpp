@@ -4,7 +4,6 @@
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/Int32MultiArray.h>
-#include <std_msgs/Int8.h>
 #include "robot/AbstractRobot.h"
 #include "robot/Robot.h"
 #include "message_types/SbotMsg.h"
@@ -41,7 +40,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
     }
 }
 
-void arrayCallback(const std_msgs::Int32MultiArray &msg) {
+void hokuyoCallback(const std_msgs::Int32MultiArray &msg) {
     hokuyo_msg = msg;
 }
 
@@ -54,7 +53,7 @@ int main(int argc, char **argv) {
     ros::Subscriber localization_and_planning_subscriber = nh.subscribe("localization_and_planning", 100,
                                                                         localizationAndPlanningCallback);
     ros::Subscriber imu_subscriber = nh.subscribe("/sensors/imu_publisher", 100, imuCallback);
-    ros::Subscriber hokuyo_subscriber = nh.subscribe("/sensors/hokuyo_publisher", 100, arrayCallback);
+    ros::Subscriber hokuyo_subscriber = nh.subscribe("/sensors/hokuyo_publisher", 100, hokuyoCallback);
 
     image_transport::ImageTransport it(nh);
     image_transport::Subscriber sub = it.subscribe("/sensors/camera/image", 1, imageCallback);
@@ -65,8 +64,6 @@ int main(int argc, char **argv) {
 
     int direction = 10;
     while (ros::ok()) {
-        std_msgs::Int8 m;
-        m.data = 10;
         if (robot != NULL) {
             robot->set_speed(1);
             robot->set_direction(direction);

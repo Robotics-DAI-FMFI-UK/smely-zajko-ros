@@ -78,7 +78,10 @@ int validate(const char *devName) {
 }
 
 void Sbot::init() {
-    validate("/dev/sbot");
+    if (!validate("/dev/sbot")) {
+        ROS_ERROR("Sbot is not initialized");
+        return;
+    }
 // char *command="plink /dev/ttyUSB0 -serial -sercfg 115200,N,n,8,1";
 
     if (pipe(fdR) < 0) {
