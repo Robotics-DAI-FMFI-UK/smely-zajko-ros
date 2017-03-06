@@ -7,7 +7,7 @@
 #include <arpa/inet.h>
 
 #define address "169.254.0.10"
-#define port 10490
+#define port 10940
 
 class Hokuyo : public AbstractHokuyo {
     static const int BUFFER_SIZE = 5000;
