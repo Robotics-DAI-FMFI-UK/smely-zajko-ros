@@ -50,13 +50,21 @@ From root folder run `$ roslaunch camera smely_zajko.launch`.
 
 
 ## Record run via rosbag
-We can record whole run and play it again (with correct timing, data, etc.) via `rosbag`. To record run use
+We can record whole run and play it again (with correct timing, data, etc.) via `rosbag`. To record all nodes (not recommended) in run use
 ```{r, engine='bash', count_lines}
 $ rosbag record -a
+```
+but preferable way is to record only sensors with
+```{r, engine='bash', count_lines}
+$ rosbag record /sensors_publishers/camera/image /sensors_publishers/gps_publisher /sensors_publishers/houyo_publisher /sensors_publishers/gps_publisher /sensors_publishers/imu_publisher /sensors_publishers/sbot_publisher
 ```
 and for play 
 ```{r, engine='bash', count_lines}
 $ rosbag play filename.bag
 ```
-
+`*.bag` files can be quite big, so use to compress and decompress files
+```{r, engine='bash', count_lines}
+$ rosbag compress *.bag
+$ rosbag decompress *.bag
+```
 For more information check [documentation](http://wiki.ros.org/rosbag/Commandline).
