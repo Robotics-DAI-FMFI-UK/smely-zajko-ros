@@ -19,7 +19,13 @@ int main(int argc, char **argv) {
     ros::Subscriber gps_subscriber = nh.subscribe("/sensors/gps_publisher", 100, gpsCallback);
     pubPtr = nh.advertise<message_types::GpsAngles>("localization_and_planning", 100);
 
-    localizationAndPlanning->readMap((char *) "/home/jozef/Desktop/smely-zajko/maps/wien.osm");
+    localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/wien.osm");
+
+    sensor_msgs::NavSatFix destinationPoint = sensor_msgs::NavSatFix();
+    destinationPoint.latitude = 0;
+    destinationPoint.longitude = 0;
+
+    localizationAndPlanning->setDestination(destinationPoint);
 
     ros::spin();
 

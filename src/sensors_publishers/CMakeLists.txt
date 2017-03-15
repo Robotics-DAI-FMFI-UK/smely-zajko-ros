@@ -143,7 +143,7 @@ add_executable(camera_publisher_node
         src/camera/CameraAvi.cpp src/camera/CameraAvi.h
         src/camera/Camera.cpp src/camera/Camera.h)
 
-add_executable(gps_publisher_node src/gps_publisher_node.cpp src/gps/AbstractGps.h src/gps/Gps.cpp src/gps/Gps.h)
+add_executable(gps_publisher_node src/gps_publisher_node.cpp src/gps/AbstractGps.h src/gps/Gps.cpp src/gps/Gps.h src/gps/GpsFiles.cpp src/gps/GpsFiles.h)
 add_executable(gps_subscriber_node src/gps_subscriber_node.cpp)
 
 add_executable(imu_publisher_node src/imu_publisher_node.cpp src/imu/AbstractImu.h src/imu/Imu.cpp src/imu/Imu.h)
