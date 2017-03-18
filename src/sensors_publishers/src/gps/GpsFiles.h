@@ -9,8 +9,7 @@
 
 class GpsFiles : public AbstractGps {
     sensor_msgs::NavSatFix data;
-    DIR *dir;
-    struct dirent *ent;
+    std::fstream file;
 public:
 
     void init();

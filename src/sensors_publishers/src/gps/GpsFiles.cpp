@@ -1,26 +1,26 @@
 #include "GpsFiles.h"
 
 void GpsFiles::init() {
-    dir = opendir("/home/jozef/Desktop/smely-zajko/logs");
+    file.open("/home/jozef/Desktop/smely-zajko/logs/1473959209.log", std::ios_base::in);
 }
 
 void GpsFiles::readData() {
-    if (dir != NULL) {
-        if ((ent = readdir(dir)) != NULL) {
-            if (strcmp(ent->d_name, ".") != 0 && strcmp(ent->d_name, "..") != 0) {
-                char path[200];
-                sprintf(path, "/home/jozef/Desktop/smely-zajko/logs/%s", ent->d_name);
-                std::fstream file(path, std::ios_base::in);
-                long _;
-                for(int i = 0; i < 14; i++, file >> _);
-                file >> data.longitude;
-                file >> data.latitude;
-                file.close();
-            }
+    if (file.is_open()) {
+        std::string line;
+        if (getline(file, line)) {
+            std::stringstream iss(line);
+            float _;
+            for (int i = 0; i < 15; iss >> _, i++);
+            iss >> data.longitude;
+            iss >> data.latitude;
         } else {
-            data = sensor_msgs::NavSatFix();
-            closedir(dir);
+            data.longitude = 0;
+            data.latitude = 0;
+            file.close();
         }
+    } else {
+        data.longitude = 0;
+        data.latitude = 0;
     }
 }
 
