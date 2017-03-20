@@ -43,7 +43,8 @@ void render_window() {
         cvCircle(result, cvPoint(x, guiHeight - y), 2, cvScalar(0.6, 0.8, 0), -1);
     }
 
-    double max = -INFINITY, max_index = 0;
+    double max = -INFINITY;
+    int max_index = 0;
 
     for (int i = 0; i < 11; i++) {
         cvCircle(result, cvPoint(guiWidth / 11 * (i + 0.5), guiHeight - guiHeight * hokuyo_weights[i]), 2,

@@ -4,6 +4,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/Int32MultiArray.h>
+#include <std_msgs/Float64MultiArray.h>
 #include "robot/AbstractRobot.h"
 #include "robot/Robot.h"
 #include "message_types/SbotMsg.h"
@@ -16,6 +17,8 @@ message_types::GpsAngles gps_msg;
 sensor_msgs::Imu imu_msg;
 cv::Mat image;
 std_msgs::Int32MultiArray hokuyo_msg;
+
+int direction = 0;
 
 void sbotCallback(const message_types::SbotMsg &msg) {
     ROS_ERROR("%f", msg.lstep);
@@ -40,10 +43,19 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
     }
 }
 
-void hokuyoCallback(const std_msgs::Int32MultiArray &msg) {
-    hokuyo_msg = msg;
+void hokuyoAlgoCallback(const std_msgs::Float64MultiArray::ConstPtr &msg) {
+    double max = -INFINITY;
+    int max_index = 0;
+    int i = 0;
+    for (std::vector<double>::const_iterator it = msg->data.begin(); it != msg->data.end(); ++it) {
+        if (*it > max) {
+            max = *it;
+            max_index = i;
+        }
+        i++;
+    }
+    direction = max_index;
 }
-
 
 int main(int argc, char **argv) {
 
@@ -52,8 +64,8 @@ int main(int argc, char **argv) {
     ros::Subscriber sbot_subscriber = nh.subscribe("/sensors/sbot_publisher", 100, sbotCallback);
     ros::Subscriber localization_and_planning_subscriber = nh.subscribe("localization_and_planning", 100,
                                                                         localizationAndPlanningCallback);
+    ros::Subscriber hokuyo_algo_subscriber = nh.subscribe("houyo_algo", 100, hokuyoAlgoCallback);
     ros::Subscriber imu_subscriber = nh.subscribe("/sensors/imu_publisher", 100, imuCallback);
-    ros::Subscriber hokuyo_subscriber = nh.subscribe("/sensors/hokuyo_publisher", 100, hokuyoCallback);
 
     image_transport::ImageTransport it(nh);
     image_transport::Subscriber sub = it.subscribe("/sensors/camera/image", 1, imageCallback);
@@ -62,7 +74,6 @@ int main(int argc, char **argv) {
 
     ros::Rate loop_rate(20);
 
-    int direction = 10;
     while (ros::ok()) {
         if (robot != NULL) {
             robot->set_speed(1);
