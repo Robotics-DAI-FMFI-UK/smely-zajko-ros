@@ -1,11 +1,11 @@
 #include <ros/ros.h>
+#include <opencv2/opencv.hpp>
 #include <image_transport/image_transport.h>
-#include <opencv2/highgui/highgui.hpp>
 #include <cv_bridge/cv_bridge.h>
 
 void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
     try {
-        cv::imshow("view", cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGRA8)->image);
+        cv::imshow("camera_gui", cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGRA8)->image);
         cv::waitKey(30);
     }
     catch (cv_bridge::Exception &e) {
@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "camera_gui");
     ros::NodeHandle nh;
 
-    cv::namedWindow("view");
+   cv::namedWindow("camera_gui");
     cv::startWindowThread();
 
     image_transport::ImageTransport it(nh);

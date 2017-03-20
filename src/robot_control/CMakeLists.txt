@@ -102,10 +102,10 @@ find_package(catkin REQUIRED
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES robot_control
-#  CATKIN_DEPENDS other_catkin_pkg
-#  DEPENDS system_lib
+        #  INCLUDE_DIRS include
+        #  LIBRARIES robot_control
+        #  CATKIN_DEPENDS other_catkin_pkg
+        #  DEPENDS system_lib
 )
 
 ###########
@@ -130,17 +130,19 @@ include_directories(
 # add_dependencies(robot_control ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(robot_control
-        src/robot_control.cpp src/robot/AbstractRobot.h
+add_executable(robot_control src/robot_control.cpp
+        src/robot/AbstractRobot.h
         src/robot/Robot.cpp src/robot/Robot.h
         ../robot_shared_libs/src/sbot/AbstractSbot.h
         ../robot_shared_libs/src/sbot/Sbot.cpp ../robot_shared_libs/src/sbot/Sbot.h
         )
 
-add_executable(localization_and_planning
-        src/localization_and_planning.cpp
+add_executable(localization_and_planning src/localization_and_planning.cpp
         src/localizationAndPlanning/LocalizationAndPlanning.cpp src/localizationAndPlanning/LocalizationAndPlanning.h
         )
+
+add_executable(hokuyo_algo src/hokuyo_algo.cpp
+        src/hokuyo_algos/openPath/OpenPath.cpp src/hokuyo_algos/openPath/OpenPath.h src/hokuyo_algos/basicAlgo/BasicAlgo.cpp src/hokuyo_algos/basicAlgo/BasicAlgo.h)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -149,6 +151,7 @@ add_executable(localization_and_planning
 ## Specify libraries to link a library or executable target against
 target_link_libraries(robot_control ${catkin_LIBRARIES})
 target_link_libraries(localization_and_planning ${catkin_LIBRARIES})
+target_link_libraries(hokuyo_algo ${catkin_LIBRARIES})
 
 #############
 ## Install ##
