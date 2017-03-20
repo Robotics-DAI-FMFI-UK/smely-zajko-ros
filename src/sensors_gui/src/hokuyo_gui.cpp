@@ -46,7 +46,7 @@ void render_window() {
     double max = -INFINITY, max_index = 0;
 
     for (int i = 0; i < 11; i++) {
-        cvCircle(result, cvPoint(guiWidth / 11 * (i + 0.5), guiHeight - guiHeight * (hokuyo_weights[i])), 2,
+        cvCircle(result, cvPoint(guiWidth / 11 * (i + 0.5), guiHeight - guiHeight * hokuyo_weights[i]), 2,
                  cvScalar(0.6, 0.8, 0),
                  -1);
         if (hokuyo_weights[i] > max) {
@@ -55,7 +55,7 @@ void render_window() {
         }
     }
 
-    cvCircle(result, cvPoint(guiWidth / 11 * (max_index + 0.5), guiHeight * (1.0 - max)), 3,
+    cvCircle(result, cvPoint(guiWidth / 11 * (max_index + 0.5), guiHeight - guiHeight * max), 3,
              cvScalar(0, 0, 1),
              -1);
 
@@ -76,7 +76,7 @@ int main(int argc, char **argv) {
     cv::waitKey(30);
 
     ros::Subscriber subscriber = n.subscribe("/sensors/hokuyo_publisher", 100, hokuyoCallback);
-    ros::Subscriber hokuyo_subscriber = n.subscribe("/hokuyo_algo", 100, hokuyoAlgoCallback);
+    ros::Subscriber hokuyo_subscriber = n.subscribe("/control/hokuyo_algo", 100, hokuyoAlgoCallback);
 
     ros::Rate loop_rate(30);
 
