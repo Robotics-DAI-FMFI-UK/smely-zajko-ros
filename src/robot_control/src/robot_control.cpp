@@ -76,8 +76,9 @@ int main(int argc, char **argv) {
 
     while (ros::ok()) {
         if (robot != NULL) {
-            robot->set_speed(1);
+            robot->set_speed(5);
             robot->set_direction(direction);
+            ROS_ERROR("my direction is %lf", direction);
         }
         ros::spinOnce();
 
