@@ -44,17 +44,17 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
 }
 
 void hokuyoAlgoCallback(const std_msgs::Float64MultiArray::ConstPtr &msg) {
-    double max = -INFINITY;
+    double max = 0.0;
     int max_index = 0;
-    int i = 0;
+    int j = 0;
     for (std::vector<double>::const_iterator it = msg->data.begin(); it != msg->data.end(); ++it) {
         if (*it > max) {
             max = *it;
-            max_index = i;
+            max_index = j;
         }
-        i++;
+        j++;
     }
-    direction = max_index;
+    direction = 3*(max_index - 5.5);
 }
 
 int main(int argc, char **argv) {
@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
     ros::Subscriber sbot_subscriber = nh.subscribe("/sensors/sbot_publisher", 100, sbotCallback);
     ros::Subscriber localization_and_planning_subscriber = nh.subscribe("localization_and_planning", 100,
                                                                         localizationAndPlanningCallback);
-    ros::Subscriber hokuyo_algo_subscriber = nh.subscribe("houyo_algo", 100, hokuyoAlgoCallback);
+    ros::Subscriber hokuyo_algo_subscriber = nh.subscribe("hokuyo_algo", 100, hokuyoAlgoCallback);
     ros::Subscriber imu_subscriber = nh.subscribe("/sensors/imu_publisher", 100, imuCallback);
 
     image_transport::ImageTransport it(nh);
@@ -74,11 +74,15 @@ int main(int argc, char **argv) {
 
     ros::Rate loop_rate(20);
 
+    int index = 0;
     while (ros::ok()) {
         if (robot != NULL) {
-            robot->set_speed(5);
+            if (!index) {
+                robot->set_speed(5);
+                index = 1;
+            }
             robot->set_direction(direction);
-            ROS_ERROR("my direction is %lf", direction);
+            ROS_ERROR("my direction is %d", direction);
         }
         ros::spinOnce();
 
