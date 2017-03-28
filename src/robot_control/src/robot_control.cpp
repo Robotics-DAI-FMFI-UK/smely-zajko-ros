@@ -58,7 +58,7 @@ void hokuyoAlgoCallback(const std_msgs::Float64MultiArray::ConstPtr &msg) {
         }
         j++;
     }
-    actual_direction = 5 * (actual_direction - 6);
+    actual_direction = 5 * (actual_direction - 5);
 
     predicted_dir = (running_mean * running_mean_weight) + (actual_direction * (1 - running_mean_weight));
     running_mean = (running_mean * 3.0 + predicted_dir) / 4.0;
