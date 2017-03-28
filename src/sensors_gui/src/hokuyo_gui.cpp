@@ -33,6 +33,20 @@ void render_window() {
     int x, y;
     double brkAngle = -135 / 180.0 * M_PI;
     double deltaAngle = 0.25 / 180 * M_PI;
+
+    std::set<int> directions;
+    directions.insert(705);
+    directions.insert(672);
+    directions.insert(639);
+    directions.insert(606);
+    directions.insert(573);
+    directions.insert(540);
+    directions.insert(507);
+    directions.insert(474);
+    directions.insert(441);
+    directions.insert(408);
+    directions.insert(375);
+
     for (int i = 0; i < 1081; i++) {
         x = (int) (-hokuyo_results[i] * sin(brkAngle + i * deltaAngle) / 35 +
                    guiWidth / 2);
@@ -41,6 +55,14 @@ void render_window() {
         cvLine(result, cvPoint(guiWidth / 2, guiHeight / 2),
                cvPoint(x, guiHeight - y), cvScalar(0.4, 0.4, 0.4));
         cvCircle(result, cvPoint(x, guiHeight - y), 2, cvScalar(0.6, 0.8, 0), -1);
+    }
+
+    for (std::set<int>::iterator it = directions.begin(); it != directions.end(); ++it) {
+        x = (int) (-hokuyo_results[*it] * sin(brkAngle + *it * deltaAngle) / 35 +
+                   guiWidth / 2);
+        y = (int) (hokuyo_results[*it] * cos(brkAngle + *it * deltaAngle) / 35 +
+                   guiHeight / 2);
+        cvCircle(result, cvPoint(x, guiHeight - y), 2, cvScalar(0.0, 1, 0.0), -1);
     }
 
     double max = -INFINITY;
@@ -59,6 +81,7 @@ void render_window() {
     cvCircle(result, cvPoint(guiWidth / 11 * (max_index + 0.5), guiHeight - guiHeight * max), 3,
              cvScalar(0, 0, 1),
              -1);
+
 
     cvShowImage("laser", result);
     cv::waitKey(30);
