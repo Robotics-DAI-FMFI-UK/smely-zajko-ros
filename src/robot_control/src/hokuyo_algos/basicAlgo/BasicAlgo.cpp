@@ -5,17 +5,17 @@ double ray_to_alpha(int ray) {
 }
 
 void BasicAlgo::init() {
-    directions.push_back(650);
-    directions.push_back(630);
-    directions.push_back(610);
-    directions.push_back(585);
-    directions.push_back(560);
-    directions.push_back(525);
-    directions.push_back(500);
-    directions.push_back(470);
-    directions.push_back(445);
-    directions.push_back(420);
-    directions.push_back(400);
+    directions.push_back(705);
+    directions.push_back(672);
+    directions.push_back(639);
+    directions.push_back(606);
+    directions.push_back(573);
+    directions.push_back(540);
+    directions.push_back(507);
+    directions.push_back(474);
+    directions.push_back(441);
+    directions.push_back(408);
+    directions.push_back(375);
     double par_c = PARABOLA_RANGE_FORWARD;
     double par_a = -PARABOLA_RANGE_FORWARD / (PARABOLA_RANGE_SIDE * PARABOLA_RANGE_SIDE);
 
@@ -35,10 +35,12 @@ double BasicAlgo::getPath(int arr[1081], int direction) {
 
 //    int direction_index = 540 + abs(6 - direction) * 20 * ((6 - direction < 0) ? 1 : -1);
     int direction_laser_begin = std::max(180, directions[direction] - 360);
+    //direction_laser_begin = std::max(180, 180 + 360/11 * (direction+1) - 180);
 
     //  int direction_laser_begin = direction_index - 360;
 
     int direction_laser_end = std::min(900, directions[direction] + 360);
+    //direction_laser_end = std::min(900, 180 + 360/11 * (direction+1) + 180);
 //    int direction_laser_end = direction_index + 360;
 
     double sum = 0;
