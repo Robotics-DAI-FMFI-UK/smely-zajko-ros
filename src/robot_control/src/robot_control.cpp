@@ -49,19 +49,21 @@ double running_mean_weight = 0.7;
 
 void hokuyoAlgoCallback(const std_msgs::Float64MultiArray::ConstPtr &msg) {
     double max = 0.0;
-    int max_index = 0;
+    int actual_direction = 0;
     int j = 0;
     for (std::vector<double>::const_iterator it = msg->data.begin(); it != msg->data.end(); ++it) {
         if (*it > max) {
             max = *it;
-            max_index = j;
+            actual_direction = j;
         }
         j++;
     }
-    predicted_dir = (running_mean * running_mean_weight) + (max_index * (1 - running_mean_weight));
+    actual_direction = 5 * (actual_direction - 6);
+
+    predicted_dir = (running_mean * running_mean_weight) + (actual_direction * (1 - running_mean_weight));
     running_mean = (running_mean * 3.0 + predicted_dir) / 4.0;
 
-    direction = 5*(running_mean- 6);
+    direction = running_mean;
 }
 
 int main(int argc, char **argv) {
