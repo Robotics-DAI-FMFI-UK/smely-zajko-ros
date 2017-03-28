@@ -43,6 +43,10 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
     }
 }
 
+double predicted_dir = 0.0;
+double running_mean = 0.0;
+double running_mean_weight = 0.7;
+
 void hokuyoAlgoCallback(const std_msgs::Float64MultiArray::ConstPtr &msg) {
     double max = 0.0;
     int max_index = 0;
@@ -54,7 +58,10 @@ void hokuyoAlgoCallback(const std_msgs::Float64MultiArray::ConstPtr &msg) {
         }
         j++;
     }
-    direction = 3*(max_index - 5.5);
+    predicted_dir = (running_mean * running_mean_weight) + (max_index * (1 - running_mean_weight));
+    running_mean = (running_mean * 3.0 + predicted_dir) / 4.0;
+
+    direction = 5*(running_mean- 6);
 }
 
 int main(int argc, char **argv) {
