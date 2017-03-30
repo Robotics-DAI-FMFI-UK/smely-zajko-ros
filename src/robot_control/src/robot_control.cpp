@@ -47,36 +47,41 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
 double predicted_dir = 0.0;
 double running_mean = 0.0;
 double running_mean_weight = 0.7;
+bool back_up = false;
 
 void hokuyoAlgoCallback(const std_msgs::Float64MultiArray::ConstPtr &msg) {
-    double max = 0.0;
-    int actual_direction = 0;
-    int j = 0;
-    for (std::vector<double>::const_iterator it = msg->data.begin(); it != msg->data.end(); ++it) {
-        if (*it > max) {
-            max = *it;
-            actual_direction = j;
+    if (!back_up) {
+        double max = 0.0;
+        int actual_direction = 0;
+        int j = 0;
+        for (std::vector<double>::const_iterator it = msg->data.begin(); it != msg->data.end(); ++it) {
+            if (*it > max) {
+                max = *it;
+                actual_direction = j;
+            }
+            j++;
         }
-        j++;
-    }
-    if (max < 0.3) {
-        ROS_ERROR("treba cuvat");
-        robot->set_speed(-3);
-        robot->set_direction(0);
-        sleep(4);
-        robot->set_direction(-40);
-        robot->set_speed(1);
-        sleep(2);
-        robot->set_direction(0);
-        robot->set_speed(5);
-        ROS_ERROR("docuvane");
-    } else {
-        actual_direction = 5 * (actual_direction - 5);
+        if (max < 0.3) {
+            back_up = true;
+            ROS_ERROR("treba cuvat");
+            robot->set_speed(-3);
+            robot->set_direction(0);
+            sleep(4);
+            robot->set_direction(-40);
+            robot->set_speed(1);
+            sleep(2);
+            robot->set_direction(0);
+            robot->set_speed(5);
+            ROS_ERROR("docuvane");
+            back_up = false;
+        } else {
+            actual_direction = 5 * (actual_direction - 5);
 
-        predicted_dir = (running_mean * running_mean_weight) + (actual_direction * (1 - running_mean_weight));
-        running_mean = (running_mean * 3.0 + predicted_dir) / 4.0;
+            predicted_dir = (running_mean * running_mean_weight) + (actual_direction * (1 - running_mean_weight));
+            running_mean = (running_mean * 3.0 + predicted_dir) / 4.0;
 
-        direction = running_mean;
+            direction = running_mean;
+        }
     }
 }
 
