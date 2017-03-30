@@ -43,6 +43,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
     }
 }
 
+// TODO: refactor this
 double predicted_dir = 0.0;
 double running_mean = 0.0;
 double running_mean_weight = 0.7;
@@ -58,12 +59,25 @@ void hokuyoAlgoCallback(const std_msgs::Float64MultiArray::ConstPtr &msg) {
         }
         j++;
     }
-    actual_direction = 5 * (actual_direction - 5);
+    if (max < 0.3) {
+        ROS_ERROR("treba cuvat");
+        robot->set_speed(-3);
+        robot->set_direction(0);
+        sleep(4);
+        robot->set_direction(-40);
+        robot->set_speed(1);
+        sleep(2);
+        robot->set_direction(0);
+        robot->set_speed(5);
+        ROS_ERROR("docuvane");
+    } else {
+        actual_direction = 5 * (actual_direction - 5);
 
-    predicted_dir = (running_mean * running_mean_weight) + (actual_direction * (1 - running_mean_weight));
-    running_mean = (running_mean * 3.0 + predicted_dir) / 4.0;
+        predicted_dir = (running_mean * running_mean_weight) + (actual_direction * (1 - running_mean_weight));
+        running_mean = (running_mean * 3.0 + predicted_dir) / 4.0;
 
-    direction = running_mean;
+        direction = running_mean;
+    }
 }
 
 int main(int argc, char **argv) {
