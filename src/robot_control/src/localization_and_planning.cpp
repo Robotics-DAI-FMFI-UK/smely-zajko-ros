@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
 
     ros::init(argc, argv, "ros_control");
     ros::NodeHandle nh;
-    ros::Subscriber gps_subscriber = nh.subscribe("/sensors/gps_publisher", 100, gpsCallback);
+    ros::Subscriber gps_subscriber = nh.subscribe("/sensors/gps_publisher", 10, gpsCallback);
     pubPtr = nh.advertise<message_types::GpsAngles>("localization_and_planning", 10);
 
     localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/wien.osm");
