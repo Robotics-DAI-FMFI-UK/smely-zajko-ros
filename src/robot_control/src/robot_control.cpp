@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
     ros::Subscriber sbot_subscriber = nh.subscribe("/sensors/sbot_publisher", 100, sbotCallback);
     ros::Subscriber localization_and_planning_subscriber = nh.subscribe("localization_and_planning", 100,
                                                                         localizationAndPlanningCallback);
-    ros::Subscriber hokuyo_algo_subscriber = nh.subscribe("hokuyo_algo", 100, hokuyoAlgoCallback);
+    ros::Subscriber hokuyo_algo_subscriber = nh.subscribe("basic_algo", 100, hokuyoAlgoCallback);
     ros::Subscriber imu_subscriber = nh.subscribe("/sensors/imu_publisher", 100, imuCallback);
 
     image_transport::ImageTransport it(nh);

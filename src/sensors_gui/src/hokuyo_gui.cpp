@@ -7,7 +7,8 @@
 
 IplImage *result;
 int hokuyo_results[1081];
-double hokuyo_weights[11];
+double hokuyo_prev_weights[11];
+double hokuyo_basic_weights[11];
 
 int guiWidth = 320;
 int guiHeight = 240;
@@ -20,10 +21,19 @@ void hokuyoCallback(const std_msgs::Int32MultiArray::ConstPtr &array) {
     }
 }
 
-void hokuyoAlgoCallback(const std_msgs::Float64MultiArray::ConstPtr &array) {
+void hokuyoPrevAlgoCallback(const std_msgs::Float64MultiArray::ConstPtr &array) {
     int i = 0;
     for (std::vector<double>::const_iterator it = array->data.begin(); it != array->data.end(); ++it) {
-        hokuyo_weights[i] = *it;
+        hokuyo_prev_weights[i] = *it;
+        i++;
+    }
+}
+
+
+void hokuyoBasicAlgoCallback(const std_msgs::Float64MultiArray::ConstPtr &array) {
+    int i = 0;
+    for (std::vector<double>::const_iterator it = array->data.begin(); it != array->data.end(); ++it) {
+        hokuyo_basic_weights[i] = *it;
         i++;
     }
 }
@@ -69,11 +79,20 @@ void render_window() {
     int max_index = 0;
 
     for (int i = 0; i < 11; i++) {
-        cvCircle(result, cvPoint(guiWidth / 11 * (i + 0.5), guiHeight - guiHeight * hokuyo_weights[i]), 2,
+        cvCircle(result, cvPoint(guiWidth / 11 * (i + 0.5), guiHeight - guiHeight * hokuyo_basic_weights[i]), 2,
                  cvScalar(0.6, 0.8, 0),
                  -1);
-        if (hokuyo_weights[i] > max) {
-            max = hokuyo_weights[i];
+        if (hokuyo_prev_weights[i] == 0.9) {
+            cvCircle(result, cvPoint(guiWidth / 11 * (i + 0.5), guiHeight - guiHeight * hokuyo_prev_weights[i]), 2,
+                     cvScalar(0.0, 1.0, 0.0),
+                     -1);
+        } else {
+            cvCircle(result, cvPoint(guiWidth / 11 * (i + 0.5), guiHeight - guiHeight * hokuyo_prev_weights[i]), 2,
+                     cvScalar(0.0, 0.0, 1.0),
+                     -1);
+        }
+        if (hokuyo_basic_weights[i] > max) {
+            max = hokuyo_basic_weights[i];
             max_index = i;
         }
     }
@@ -100,7 +119,8 @@ int main(int argc, char **argv) {
     cv::waitKey(30);
 
     ros::Subscriber subscriber = n.subscribe("/sensors/hokuyo_publisher", 100, hokuyoCallback);
-    ros::Subscriber hokuyo_subscriber = n.subscribe("/control/hokuyo_algo", 100, hokuyoAlgoCallback);
+    ros::Subscriber hokuyo_prev_subscriber = n.subscribe("/control/prev_algo", 100, hokuyoPrevAlgoCallback);
+    ros::Subscriber hokuyo_basic_subscriber = n.subscribe("/control/basic_algo", 100, hokuyoBasicAlgoCallback);
 
     ros::Rate loop_rate(30);
 

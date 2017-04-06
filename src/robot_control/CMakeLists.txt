@@ -142,7 +142,7 @@ add_executable(localization_and_planning src/localization_and_planning.cpp
         )
 
 add_executable(hokuyo_algo src/hokuyo_algo.cpp
-        src/hokuyo_algos/openPath/OpenPath.cpp src/hokuyo_algos/openPath/OpenPath.h src/hokuyo_algos/basicAlgo/BasicAlgo.cpp src/hokuyo_algos/basicAlgo/BasicAlgo.h)
+        src/hokuyo_algos/openPath/OpenPath.cpp src/hokuyo_algos/openPath/OpenPath.h src/hokuyo_algos/basicAlgo/BasicAlgo.cpp src/hokuyo_algos/basicAlgo/BasicAlgo.h src/hokuyo_algos/previousAlgo/PreviousAlgo.cpp src/hokuyo_algos/previousAlgo/PreviousAlgo.h)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
