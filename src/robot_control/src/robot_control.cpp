@@ -16,12 +16,12 @@ message_types::SbotMsg sbot_msg;
 message_types::GpsAngles gps_msg;
 sensor_msgs::Imu imu_msg;
 cv::Mat image;
-std_msgs::Int32MultiArray hokuyo_msg;
+std::vector<double> hokuyo_algo_msg;
 
 int direction = 0;
 
 void sbotCallback(const message_types::SbotMsg &msg) {
-    ROS_ERROR("%f", msg.lstep);
+    sbot_msg = msg;
 }
 
 void localizationAndPlanningCallback(const message_types::GpsAngles &msg) {
@@ -29,7 +29,6 @@ void localizationAndPlanningCallback(const message_types::GpsAngles &msg) {
 }
 
 void imuCallback(const sensor_msgs::Imu &msg) {
-    ROS_INFO("x: [%f]", msg.orientation.x);
     imu_msg = msg;
 }
 
@@ -52,6 +51,8 @@ void hokuyoAlgoCallback(const std_msgs::Float64MultiArray::ConstPtr &msg) {
     double max = 0.0;
     int actual_direction = 0;
     int j = 0;
+
+    hokuyo_algo_msg = msg->data;
     for (std::vector<double>::const_iterator it = msg->data.begin(); it != msg->data.end(); ++it) {
         if (*it > max) {
             max = *it;
@@ -74,15 +75,195 @@ void hokuyoAlgoCallback(const std_msgs::Float64MultiArray::ConstPtr &msg) {
     }
 }
 
+int move() {
+    int display_direction = 0;
+    bool autonomy = true;
+    bool status_from_subroutines;
+
+    std::vector<double> vDist;
+    std::vector<double> lDist;
+    std::vector<double> move_probs;
+    int isChodnik = 0;
+    double delta;
+    double computed_dir;
+    int wrong_dir = 0;
+    double imuAngle = imu_msg.orientation.x;
+    //printf("evalLaser: ");
+    double max_neural_dir = 0;
+    double max_neural_dir_val = 0.0;
+    int neuron_dir = 0;
+    // TODO: z lokalizacie
+    double mapAngle = gps_msg.map;
+    double speed_down_dst = 0.003;
+    std::string move_status;
+
+    printf("HOKUYO WEIGHTS:\n");
+    for (int i = 0; i < 11; i++) {
+        double f = 0; /////////////////ed->eval(predicted_data, i) - 0.4;
+        double g = hokuyo_algo_msg.size() ? hokuyo_algo_msg[i] : 0.0;
+        if (f < 0) {
+            f = 0;
+
+        } else if (f > 0 && g > 0.5) {
+            isChodnik = 1;
+        }
+
+        if (f > max_neural_dir_val) {
+            max_neural_dir_val = f;
+            max_neural_dir = i;
+        }
+
+        vDist.push_back(f);
+        lDist.push_back(g);
+        printf("%.3f ", g);
+    }
+    printf("\n");
+    neuron_dir = max_neural_dir;
+    //printf("\n");
+
+    // in destination vicinity
+    if (mapAngle == DBL_MAX) {
+        robot->set_direction(0);
+        robot->set_speed(0);
+        return 0;
+    }
+
+    // delta
+    if (mapAngle == DBL_MIN) {
+        delta = 0;
+    } else {
+        //   delta = ((int)(mapAngle /* - (imuData.xAngle/10) */ + 360))%360 ;
+        delta = ((int) (mapAngle - imuAngle / 10 + 360)) % 360;
+    }
+    if (delta > 180)
+        delta = delta - 360;
+
+    // heading roughly the right way
+    if (abs(delta) < 40) {
+        wrong_dir = 0;
+    }
+    // significantly off course(> 150deg), turn
+    if (abs(delta) > 150 || wrong_dir) {
+        if (!status_from_subroutines)
+            move_status = "turning";
+        // printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Going in wrong direction,
+        // delta %f turning...\n",delta);
+        wrong_dir = 1;
+        if (delta > 0) {
+            if (autonomy) {
+                robot->set_direction(80);
+                robot->set_speed(1);
+            }
+            display_direction = 5;
+        } else {
+            if (autonomy) {
+                robot->set_direction(-80);
+                robot->set_speed(1);
+            }
+            display_direction = -5;
+        }
+
+    } else if (isChodnik == 0) {
+        // no valid direction from vision
+        // TODO presun do subroutines
+
+        if (!status_from_subroutines)
+            move_status = "searching";
+
+        printf("!!!!!!!!!!!!!!!!!!!!!!! Chodnik missing searching..\n");
+        if (delta > 0) {
+            if (autonomy) {
+                robot->set_direction(40);
+                robot->set_speed(-1);
+            }
+            display_direction = 5;
+        } else {
+            if (autonomy) {
+                robot->set_direction(-40);
+                robot->set_speed(-1);
+            }
+            display_direction = -5;
+        }
+    } else {
+        if (!status_from_subroutines)
+            move_status = "running";
+        if (delta > 90) {
+            delta = 89.3;
+        } else if (delta < -90) {
+            delta = -89.3;
+        }
+        delta /= 18.0;
+
+        double fmax = -1;
+        int maxdir = 5;
+        move_probs.clear();
+        for (int i = 0; i <= 10; i++) {
+            double coeff = 5 - abs(delta - (i - 5));
+            if (coeff < 0.0)
+                coeff = 0.000001; //0.1;
+            coeff /= 25.0; // vyskusat 5, 12 ...
+            coeff += 1.0;
+            // TODO x 1if hoku sez > 1.5m else 0.1
+            // lDist[i] = 1.0;
+            double f = vDist[i] * coeff * lDist[i];
+            move_probs.push_back(f);
+            if (f > fmax) {
+                fmax = f;
+                maxdir = i;
+            }
+        }
+        for (int i = 0; i < move_probs.size(); i++) {
+            move_probs[i] /= fmax;
+            move_probs[i] = 1 - move_probs[i];
+        }
+
+        int sdir = (maxdir - 5) * 8;
+        //      sdir -= 3;
+        if (sbot_msg.away_from_left)
+            sdir += 20;
+        if (sdir > 40)
+            sdir = 40;
+        if (sbot_msg.away_from_right)
+            sdir -= 20;
+        if (sdir < -40)
+            sdir = -40;
+
+        predicted_dir = (running_mean * running_mean_weight) + (sdir * (1 - running_mean_weight));
+        running_mean = (running_mean * 3.0 + predicted_dir) / 4.0;
+
+        //printf("Inferred dir: %d\tProposed dir: %f\n", sdir, predicted_dir);
+
+        computed_dir = sdir;
+
+        if (autonomy) {
+            robot->set_direction(predicted_dir);
+            //printf("%.10f %.10f\n", angles.dstToHeadingPoint, speed_down_dst);
+            if (gps_msg.dstToHeadingPoint <= speed_down_dst) {
+                robot->set_speed(7);
+                printf("setSpeed: 7\n");
+            } else {
+                robot->set_speed(10);
+                printf("setSpeed: 10\n");
+            }
+        }
+        display_direction = maxdir;
+    }
+
+    // printf("delta= %f\n", delta);
+
+    return display_direction;
+}
+
+
 int main(int argc, char **argv) {
 
     ros::init(argc, argv, "ros_control");
     ros::NodeHandle nh;
-    ros::Subscriber sbot_subscriber = nh.subscribe("/sensors/sbot_publisher", 100, sbotCallback);
-    ros::Subscriber localization_and_planning_subscriber = nh.subscribe("localization_and_planning", 100,
+    ros::Subscriber sbot_subscriber = nh.subscribe("/sensors/sbot_publisher", 10, sbotCallback);
+    ros::Subscriber localization_and_planning_subscriber = nh.subscribe("localization_and_planning", 10,
                                                                         localizationAndPlanningCallback);
-    ros::Subscriber hokuyo_algo_subscriber = nh.subscribe("basic_algo", 100, hokuyoAlgoCallback);
-    ros::Subscriber imu_subscriber = nh.subscribe("/sensors/imu_publisher", 100, imuCallback);
+    ros::Subscriber hokuyo_algo_subscriber = nh.subscribe("basic_algo", 10, hokuyoAlgoCallback);
+    ros::Subscriber imu_subscriber = nh.subscribe("/sensors/imu_publisher", 10, imuCallback);
 
     image_transport::ImageTransport it(nh);
     image_transport::Subscriber sub = it.subscribe("/sensors/camera/image", 1, imageCallback);
