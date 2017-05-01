@@ -118,9 +118,9 @@ int main(int argc, char **argv) {
     cv::imshow("laser", empty_frame);
     cv::waitKey(30);
 
-    ros::Subscriber subscriber = n.subscribe("/sensors/hokuyo_publisher", 100, hokuyoCallback);
-    ros::Subscriber hokuyo_prev_subscriber = n.subscribe("/control/prev_algo", 100, hokuyoPrevAlgoCallback);
-    ros::Subscriber hokuyo_basic_subscriber = n.subscribe("/control/basic_algo", 100, hokuyoBasicAlgoCallback);
+    ros::Subscriber subscriber = n.subscribe("/sensors/hokuyo_publisher", 10, hokuyoCallback);
+    ros::Subscriber hokuyo_prev_subscriber = n.subscribe("/control/prev_algo", 10, hokuyoPrevAlgoCallback);
+    ros::Subscriber hokuyo_basic_subscriber = n.subscribe("/control/basic_algo", 10, hokuyoBasicAlgoCallback);
 
     ros::Rate loop_rate(30);
 

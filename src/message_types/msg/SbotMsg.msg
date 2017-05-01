@@ -10,3 +10,6 @@ float64 distFR
 float64 distM
 float64 distFL
 float64 distRL
+float64 time
+int32 away_from_left
+int32 away_from_right
