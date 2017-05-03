@@ -11,11 +11,6 @@ $ git clone https://github.com/Robotics-DAI-FMFI-UK/smely-zajko-ros
 $ sudo apt-get install libopencv-dev
 ```
 
-### gpsctl
-```{r, engine='bash', count_lines}
-$ sudo apt-get install gpsd-clients
-```
-
 ### putty-tools (plink)
 ```{r, engine='bash', count_lines}
 $ sudo apt-get install putty-tools

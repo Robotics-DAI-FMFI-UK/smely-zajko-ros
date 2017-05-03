@@ -1,6 +1,7 @@
 <launch>
   <group ns="control">
 
+    <node pkg="robot_control" name="localization_and_planning" type="localization_and_planning" />
     <node pkg="robot_control" name="hokuyo_algo" type="hokuyo_algo" />
     <node pkg="robot_control" name="robot_control" type="robot_control" />
   </group>

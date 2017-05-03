@@ -11,16 +11,18 @@ int main(int argc, char **argv) {
     AbstractGps *gps = new Gps();
     gps->init();
 
-    ros::Rate loop_rate(30);
+    ros::Rate loop_rate(3);
 
-    ros::Duration(0.5).sleep();
+    ros::Duration(2).sleep();
 
     while (ros::ok()) {
         if (gps_publisher.getNumSubscribers() > 0) {
             gps->readData();
 
-            gps_publisher.publish(gps->getData());
-
+            sensor_msgs::NavSatFix g = gps->getData();
+            if (g.latitude) {
+                gps_publisher.publish(g);
+            }
             ros::spinOnce();
 
             loop_rate.sleep();

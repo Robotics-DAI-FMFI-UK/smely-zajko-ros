@@ -99,7 +99,7 @@ int move() {
 
     printf("HOKUYO WEIGHTS:\n");
     for (int i = 0; i < 11; i++) {
-        double f = 0; /////////////////ed->eval(predicted_data, i) - 0.4;
+        double f = 1; /////////////////ed->eval(predicted_data, i) - 0.4;
         double g = hokuyo_algo_msg.size() ? hokuyo_algo_msg[i] : 0.0;
         if (f < 0) {
             f = 0;
@@ -142,6 +142,7 @@ int move() {
     if (abs(delta) < 40) {
         wrong_dir = 0;
     }
+    ROS_ERROR("%d", abs(delta) > 150 || wrong_dir);
     // significantly off course(> 150deg), turn
     if (abs(delta) > 150 || wrong_dir) {
         if (!status_from_subroutines)
@@ -275,12 +276,14 @@ int main(int argc, char **argv) {
     int index = 0;
     while (ros::ok()) {
         if (robot != NULL) {
+            move();
+            /*
             if (!index) {
                 robot->set_speed(5);
                 index = 1;
             }
             robot->set_direction(direction);
-            ROS_ERROR("my direction is %d", direction);
+            ROS_ERROR("my direction is %d", direction);*/
         }
         ros::spinOnce();
 

@@ -57,7 +57,7 @@ void Gps::init() {
     gps = open(dev_name, O_RDONLY | O_NOCTTY | O_NONBLOCK);
     if (gps < 0) {
         ROS_ERROR("GPS not found at %s", dev_name);
-        
+
         return;
     }
 
@@ -85,32 +85,35 @@ void Gps::init() {
 
 void Gps::readData() {
 
-    ssize_t nread;
-    if (!(nread = read(gps, b + bufp, 1))) {
+    while (true) {
+        ssize_t nread;
+        if (!(nread = read(gps, b + bufp, 1))) {
 
-        return;
-    }
-    if (nread < 0) {
-        usleep(3000);
+            return;
+        }
+        if (nread < 0) {
+            usleep(3000);
 
-        return;
-    }
-    if (b[bufp] == '\n') {
-        b[bufp] = '\0';
-        bufp = 0;
-        strncpy(b2, b, 1023);
-        b2[1023] = '\0';
+            return;
+        }
+        if (b[bufp] == '\n') {
+            b[bufp] = '\0';
+            bufp = 0;
+            strncpy(b2, b, 1023);
+            b2[1023] = '\0';
 
-        //parseGpsLine(b);
-
-    } else if (bufp < 1023) {
-        bufp++;
-    } else {
-        bufp = 0;
+            //parseGpsLine(b);
+            break;
+        } else if (bufp < 1023) {
+            bufp++;
+        } else {
+            bufp = 0;
+        }
     }
 }
 
 sensor_msgs::NavSatFix Gps::getData() {
+    ROS_ERROR(b);
 
     return parseLine(b);
 }
