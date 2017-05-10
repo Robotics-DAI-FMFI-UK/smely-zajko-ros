@@ -1,6 +1,3 @@
-[submodule "src/sensors_gui/src/imgui"]
-	path = src/sensors_gui/src/imgui
-	url = https://github.com/ocornut/imgui
 [submodule "src/robot_control/src/rapidxml"]
 	path = src/robot_control/src/rapidxml
 	url = https://github.com/d0d0/rapidxml
