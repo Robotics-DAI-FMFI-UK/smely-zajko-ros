@@ -4,3 +4,6 @@
 [submodule "src/robot_control/src/rapidxml"]
 	path = src/robot_control/src/rapidxml
 	url = https://github.com/d0d0/rapidxml
+[submodule "src/robot_control/src/scripts/smely-zajko-dataset"]
+	path = src/robot_control/src/scripts/smely_zajko_dataset
+	url = https://github.com/NaiveNeuron/smely-zajko-dataset.git
