@@ -57,7 +57,7 @@ and for play
 ```{r, engine='bash', count_lines}
 $ rosbag play filename.bag
 ```
-`*.bag` files can be quite big, so use to compress and decompress files
+`*.bag` files can be quite big, so use `rosbag` to compress and decompress files
 ```{r, engine='bash', count_lines}
 $ rosbag compress *.bag
 $ rosbag decompress *.bag
