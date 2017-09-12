@@ -129,6 +129,8 @@ include_directories(
 ## either from message generation or dynamic reconfigure
 # add_dependencies(robot_control ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+add_dependencies(robot_control message_types_generate_messages_cpp)
+
 ## Declare a C++ executable
 add_executable(robot_control src/robot_control.cpp
         src/robot/AbstractRobot.h
