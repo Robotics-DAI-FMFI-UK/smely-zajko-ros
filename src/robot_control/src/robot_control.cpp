@@ -9,14 +9,48 @@
 #include "robot/Robot.h"
 #include "message_types/SbotMsg.h"
 #include "message_types/GpsAngles.h"
+#include "message_types/HeadingState.h"
 
 AbstractRobot *robot;
 
 message_types::SbotMsg sbot_msg;
 message_types::GpsAngles gps_msg;
+message_types::HeadingState state_msg;
 sensor_msgs::Imu imu_msg;
 cv::Mat image;
 std::vector<double> hokuyo_algo_msg;
+
+
+ros::Publisher statePublisher;
+
+int handleArrival() {
+    switch (state_msg) {
+        case message_types::HeadingState::HEADING_LOADING:
+            state_msg = message_types::HeadingState::LOADING
+            robot->set_direction(0);
+            robot->set_speed(0);
+            // TODO: wait for loading
+            // sleep(5000)
+            // state_msg = message_types::HeadingState::HEADING_UNLOADING
+            return 1
+        case message_types::HeadingState::HEADING_UNLOADING:
+            state_msg = message_types::HeadingState::UNLOADING
+            robot->set_direction(0);
+            robot->set_speed(0);
+            // TODO: wait for unloading
+            // sleep(5000)
+            // state_msg = message_types::HeadingState::HEADING_DEST
+            return 1
+        case message_types::HeadingState::HEADING_DEST:
+            robot->set_direction(0);
+            robot->set_speed(0);
+            return 0
+    };
+}
+
+void stateCallback(const message_types::HeadingState &state) {
+    statePublisher.publish(state);
+}
 
 int direction = 0;
 
@@ -123,9 +157,9 @@ int move() {
 
     // in destination vicinity
     if (mapAngle == DBL_MAX) {
-        robot->set_direction(0);
-        robot->set_speed(0);
-        return 0;
+        if(handleArrival() == 0) {
+            return 0;
+        }
     }
 
     // delta
@@ -270,6 +304,7 @@ int main(int argc, char **argv) {
     image_transport::Subscriber sub = it.subscribe("/sensors/camera/image", 1, imageCallback);
 
     robot = new Robot();
+    state = headingLoading;
 
     ros::Rate loop_rate(20);
 
