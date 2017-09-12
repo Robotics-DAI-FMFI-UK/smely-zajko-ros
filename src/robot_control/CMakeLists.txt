@@ -8,7 +8,7 @@ find_package(catkin REQUIRED
         COMPONENTS
         roscpp
         message_types
-        cv_bridge
+        OpenCV
         std_msgs
         image_transport)
 
