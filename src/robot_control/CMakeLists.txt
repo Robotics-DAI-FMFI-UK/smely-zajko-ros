@@ -147,6 +147,8 @@ add_executable(hokuyo_algo src/hokuyo_algo.cpp
 
 
 add_dependencies(robot_control message_types_generate_messages_cpp)
+add_dependencies(localization_and_planning message_types_generate_messages_cpp)
+add_dependencies(hokuyo_algo message_types_generate_messages_cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
