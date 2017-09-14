@@ -8,15 +8,56 @@
 #include "robot/Robot.h"
 #include "message_types/SbotMsg.h"
 #include "message_types/GpsAngles.h"
+#include "message_types/HeadingState.h"
 
 AbstractRobot *robot;
 
 message_types::SbotMsg sbot_msg;
 message_types::GpsAngles gps_msg;
+message_types::HeadingState state_msg;
 sensor_msgs::Imu imu_msg;
 cv::Mat image;
 std::vector<double> hokuyo_algo_msg;
 std::vector<double> camera_prediction_msg;
+
+ros::Publisher statePublisher;
+
+void waitForOperator(int loading) {
+    ros::Rate loop_rate(20);
+    while (sbot_msg.payload != loading) {
+        loop_rate.sleep();
+    }
+}
+
+int handleArrival() {
+    switch (state_msg) {
+        case message_types::HeadingState::HEADING_LOADING:
+            state_msg = message_types::HeadingState::LOADING
+            robot->set_direction(0);
+            robot->set_speed(0);
+            // wait for loading
+            waitForOperator(1);
+            state_msg = message_types::HeadingState::HEADING_UNLOADING
+            return 1
+        case message_types::HeadingState::HEADING_UNLOADING:
+            state_msg = message_types::HeadingState::UNLOADING
+            robot->set_direction(0);
+            robot->set_speed(0);
+            // wait for unloading
+            waitForOperator(0);
+            state_msg = message_types::HeadingState::HEADING_DEST
+            return 1
+        case message_types::HeadingState::HEADING_DEST:
+            // we are close to finish. Stop and finish.
+            robot->set_direction(0);
+            robot->set_speed(0);
+            return 0
+    };
+}
+
+void stateCallback(const message_types::HeadingState &state) {
+    statePublisher.publish(state);
+}
 
 int direction = 0;
 
@@ -92,7 +133,7 @@ int move() {
     double computed_dir;
     int wrong_dir = 0;
     double imuAngle = imu_msg.orientation.x;
-    //printf("evalLaser: ");
+    // printf("evalLaser: ");
     double max_neural_dir = 0;
     double max_neural_dir_val = 0.0;
     int neuron_dir = 0;
@@ -128,9 +169,9 @@ int move() {
 
     // in destination vicinity
     if (mapAngle == DBL_MAX) {
-        robot->set_direction(0);
-        robot->set_speed(0);
-        return 0;
+        if(handleArrival() == 0) {
+            return 0;
+        }
     }
 
     // delta
@@ -277,6 +318,7 @@ int main(int argc, char **argv) {
     image_transport::Subscriber sub = it.subscribe("/sensors/camera/image", 1, imageCallback);
 
     robot = new Robot();
+    state = headingLoading;
 
     ros::Rate loop_rate(20);
 

@@ -7,7 +7,7 @@ from std_msgs.msg import Float64MultiArray
 from skimage.util.shape import view_as_windows
 from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
-from smely_zajko_dataset import models
+from keras.models import load_model
 
 bridge = CvBridge()
 
@@ -17,19 +17,20 @@ stride = 5
 TRIANGLE_HEIGHT = 34
 TRIANGLE_WIDTH = 6
 
-model = models.mlp(n_input=75, architecture=[(20, 'sigmoid'), (2, 'softmax')],
-                   metrics=['accuracy'])
-model.load_weights(
-    '/home/zajko/Projects/smely-zajko-ros/src/robot_control/src/scripts/smely_zajko_dataset/mlp_20_sigmoid_2_softmax.hdf5')
+model = load_model('/home/zajko/Projects/smely-zajko-ros/src/robot_control/src/scripts/smely_zajko_dataset/small_middle_cnn.hdf5')
 
 
 def prepare_image(image, window, stride):
     window_x, window_y = window
-    Y = np.asarray(np.squeeze(view_as_windows(image,
+    padd = map(int, np.ceil((window_x / 2.0, window_y / 2.0)))
+    img = np.pad(image, (padd, padd, (0, 0)), 'constant',
+                 constant_values=(0, 0))
+    X = np.asarray(np.squeeze(view_as_windows(img,
                                               (window_x, window_y, 3),
                                               step=stride)))
-    nx, ny, w, h, d = Y.shape
-    return Y.reshape((nx * ny, w * h * d))
+    X = X[1:, 1:, :, :, :]
+    nx, ny, w, h, d = X.shape
+    return np.rollaxis(X.reshape((nx * ny, w, h, d)), 3, start=1)
 
 
 def callback(data):
@@ -43,10 +44,9 @@ def callback(data):
         X = (X - 87.062)
         X = (X / 255.0)
         y_pred = model.predict(X)
-        prediction_mask = (y_pred[:, 1].reshape(48, 64) * 255).astype('uint8')
+        prediction_mask = (np.reshape(y_pred, (48, 64)) * 255).astype('uint8')
 
         # print(prediction_mask.max(), prediction_mask.min(), prediction_mask.mean())
-    
 	
 	out = []
 	for i in range(2, 64, TRIANGLE_WIDTH):
