@@ -113,7 +113,7 @@ void Gps::readData() {
 }
 
 sensor_msgs::NavSatFix Gps::getData() {
-    ROS_ERROR(b);
+    // ROS_ERROR(b);
 
     return parseLine(b);
 }

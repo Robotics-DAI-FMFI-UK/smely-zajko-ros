@@ -3,7 +3,6 @@
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/Imu.h>
-#include <std_msgs/Int32MultiArray.h>
 #include <std_msgs/Float64MultiArray.h>
 #include "robot/AbstractRobot.h"
 #include "robot/Robot.h"
@@ -17,6 +16,7 @@ message_types::GpsAngles gps_msg;
 sensor_msgs::Imu imu_msg;
 cv::Mat image;
 std::vector<double> hokuyo_algo_msg;
+std::vector<double> camera_prediction_msg;
 
 int direction = 0;
 
@@ -71,8 +71,12 @@ void hokuyoAlgoCallback(const std_msgs::Float64MultiArray::ConstPtr &msg) {
         predicted_dir = (running_mean * running_mean_weight) + (actual_direction * (1 - running_mean_weight));
         running_mean = (running_mean * 3.0 + predicted_dir) / 4.0;
 
-        direction = running_mean;
+        direction = (int)(running_mean + 0.5);
     }
+}
+
+void cameraPredictionCallback(const std_msgs::Float64MultiArray::ConstPtr &msg) {
+    camera_prediction_msg = msg->data;
 }
 
 int move() {
@@ -99,7 +103,8 @@ int move() {
 
     printf("HOKUYO WEIGHTS:\n");
     for (int i = 0; i < 11; i++) {
-        double f = 1; /////////////////ed->eval(predicted_data, i) - 0.4;
+        // double f = camera_prediction_msg.size() ? camera_prediction_msg[i] : 1.0; /////////////////ed->eval(predicted_data, i) - 0.4;
+        double f = 1.0;
         double g = hokuyo_algo_msg.size() ? hokuyo_algo_msg[i] : 0.0;
         if (f < 0) {
             f = 0;
@@ -142,7 +147,8 @@ int move() {
     if (abs(delta) < 40) {
         wrong_dir = 0;
     }
-    ROS_ERROR("%d", abs(delta) > 150 || wrong_dir);
+
+    // ROS_ERROR("%d", abs(delta) > 150 || wrong_dir);
     // significantly off course(> 150deg), turn
     if (abs(delta) > 150 || wrong_dir) {
         if (!status_from_subroutines)
@@ -265,6 +271,7 @@ int main(int argc, char **argv) {
                                                                         localizationAndPlanningCallback);
     ros::Subscriber hokuyo_algo_subscriber = nh.subscribe("basic_algo", 10, hokuyoAlgoCallback);
     ros::Subscriber imu_subscriber = nh.subscribe("/sensors/imu_publisher", 10, imuCallback);
+    ros::Subscriber camera_prediction_traingle_subscriber = nh.subscribe("/control/camera_triangles_prediction", 10, cameraPredictionCallback);
 
     image_transport::ImageTransport it(nh);
     image_transport::Subscriber sub = it.subscribe("/sensors/camera/image", 1, imageCallback);

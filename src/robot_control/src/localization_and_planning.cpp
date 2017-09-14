@@ -20,11 +20,16 @@ int main(int argc, char **argv) {
     ros::Subscriber gps_subscriber = nh.subscribe("/sensors/gps_publisher", 10, gpsCallback);
     pubPtr = nh.advertise<message_types::GpsAngles>("localization_and_planning", 10);
 
-    localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/botanicka.osm");
+    localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/matfyz.osm");
 
     sensor_msgs::NavSatFix destinationPoint = sensor_msgs::NavSatFix();
-    destinationPoint.latitude = 48.1451892;
-    destinationPoint.longitude = 17.0737996;
+    // 48.15188
+    // 17.07166
+  //destinationPoint.latitude = 48.15061;
+  //destinationPoint.longitude = 17.07165;
+
+    destinationPoint.latitude = 48.15188;
+    destinationPoint.longitude = 17.07166;
 
     localizationAndPlanning->setDestination(destinationPoint);
 

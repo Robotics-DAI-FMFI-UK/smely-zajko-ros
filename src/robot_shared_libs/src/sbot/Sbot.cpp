@@ -124,7 +124,7 @@ void Sbot::init() {
     close(fdW[1]);
 
     pthread_mutex_init(&m_read, NULL);
-};
+}
 
 void Sbot::readData() {
     char line[1024];
@@ -164,10 +164,11 @@ void Sbot::readData() {
         return;
     }
     line[lineIndex] = '\0';
-    sscanf(line, "@ %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf", &result.lstep,
+    sscanf(line, "@ %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf", &result.lstep,
            &result.rstep, &result.lspeed, &result.rspeed, &result.blocked,
            &result.obstacle, &result.distRR, &result.distFR, &result.distM,
-           &result.distFL, &result.distRL, &result.time);
+           &result.distFL, &result.distRL, &result.payload, 
+           &result.rear_obstacle,&result.time);
     if ((result.distRL < 35) && (result.distRL > 14))
         result.away_from_left = 1;
     else
@@ -176,9 +177,9 @@ void Sbot::readData() {
         result.away_from_right = 1;
     else
         result.away_from_right = 0;
-};
+}
 
 message_types::SbotMsg Sbot::getData() {
 
     return result;
-};
+}
