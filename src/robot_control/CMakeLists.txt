@@ -129,6 +129,7 @@ include_directories(
 ## either from message generation or dynamic reconfigure
 # add_dependencies(robot_control ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+
 ## Declare a C++ executable
 add_executable(robot_control src/robot_control.cpp
         src/robot/AbstractRobot.h
@@ -144,9 +145,15 @@ add_executable(localization_and_planning src/localization_and_planning.cpp
 add_executable(hokuyo_algo src/hokuyo_algo.cpp
         src/hokuyo_algos/openPath/OpenPath.cpp src/hokuyo_algos/openPath/OpenPath.h src/hokuyo_algos/basicAlgo/BasicAlgo.cpp src/hokuyo_algos/basicAlgo/BasicAlgo.h src/hokuyo_algos/previousAlgo/PreviousAlgo.cpp src/hokuyo_algos/previousAlgo/PreviousAlgo.h)
 
+
+add_dependencies(robot_control message_types_generate_messages_cpp)
+add_dependencies(localization_and_planning message_types_generate_messages_cpp)
+add_dependencies(hokuyo_algo message_types_generate_messages_cpp)
+
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(robot_control_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(robot_control ${catkin_LIBRARIES})
