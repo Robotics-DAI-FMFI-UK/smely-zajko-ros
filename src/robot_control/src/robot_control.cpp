@@ -20,8 +20,14 @@ sensor_msgs::Imu imu_msg;
 cv::Mat image;
 std::vector<double> hokuyo_algo_msg;
 
-
 ros::Publisher statePublisher;
+
+void waitForOperator(int loading) {
+    ros::Rate loop_rate(20);
+    while (sbot_msg.payload != loading) {
+        loop_rate.sleep();
+    }
+}
 
 int handleArrival() {
     switch (state_msg) {
@@ -29,19 +35,20 @@ int handleArrival() {
             state_msg = message_types::HeadingState::LOADING
             robot->set_direction(0);
             robot->set_speed(0);
-            // TODO: wait for loading
-            // sleep(5000)
-            // state_msg = message_types::HeadingState::HEADING_UNLOADING
+            // wait for loading
+            waitForOperator(1);
+            state_msg = message_types::HeadingState::HEADING_UNLOADING
             return 1
         case message_types::HeadingState::HEADING_UNLOADING:
             state_msg = message_types::HeadingState::UNLOADING
             robot->set_direction(0);
             robot->set_speed(0);
-            // TODO: wait for unloading
-            // sleep(5000)
-            // state_msg = message_types::HeadingState::HEADING_DEST
+            // wait for unloading
+            waitForOperator(0);
+            state_msg = message_types::HeadingState::HEADING_DEST
             return 1
         case message_types::HeadingState::HEADING_DEST:
+            // we are close to finish. Stop and finish.
             robot->set_direction(0);
             robot->set_speed(0);
             return 0
@@ -122,7 +129,7 @@ int move() {
     double computed_dir;
     int wrong_dir = 0;
     double imuAngle = imu_msg.orientation.x;
-    //printf("evalLaser: ");
+    // printf("evalLaser: ");
     double max_neural_dir = 0;
     double max_neural_dir_val = 0.0;
     int neuron_dir = 0;
