@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
 
     pubPtr = nh.advertise<message_types::GpsAngles>("localization_and_planning", 10);
 
-    localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/matfyz.osm");
+    localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/zilina.osm");
 
     loadingPoint.latitude = 48.1527956;
     loadingPoint.longitude = 17.0711376;

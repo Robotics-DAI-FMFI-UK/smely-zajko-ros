@@ -108,7 +108,6 @@ void LocalizationAndPlanning::readMap(char *filename) {
             }
 
             if ((strcmp(attr_v->value(), "footway") == 0) ||
-                (strcmp(attr_v->value(), "residential") == 0) ||
                 (strcmp(attr_v->value(), "path") == 0) ||
                 (strcmp(attr_v->value(), "unclassified") == 0) ||
                 (strcmp(attr_v->value(), "pedestrian") == 0) ||
@@ -116,10 +115,12 @@ void LocalizationAndPlanning::readMap(char *filename) {
                 candidate++;
             }
 
-            if (strcmp(attr_v->value(), "sand") == 0)
+            if ((strcmp(attr_v->value(), "sand") == 0) ||
+                (strcmp(attr_v->value(), "residential") == 0) ||
+                (strcmp(attr_v->value(), "grass") == 0)
+               ){
                 candidate--;
-            if (strcmp(attr_v->value(), "grass") == 0)
-                candidate--;
+            }
         }
         if (candidate > 0) {
             Path path;
