@@ -144,8 +144,8 @@ void Sbot::readData() {
             printing = printingDebugging;
         if ((printing) && (ch == 13))
             printing = 0;
-        if (printing)
-            printf("%c", ch);
+        // if (printing)
+            // printf("%c", ch);
     } while (ch != '@');
     line[0] = '@';
 

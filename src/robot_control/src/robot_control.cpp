@@ -15,12 +15,19 @@ AbstractRobot *robot;
 message_types::SbotMsg sbot_msg;
 message_types::GpsAngles gps_msg;
 message_types::HeadingState state_msg;
+
 sensor_msgs::Imu imu_msg;
 cv::Mat image;
 std::vector<double> hokuyo_algo_msg;
 std::vector<double> camera_prediction_msg;
 
 ros::Publisher statePublisher;
+
+const int HEADING_LOADING = 0;
+const int LOADING = 1;
+const int HEADING_UNLOADING = 2;
+const int UNLOADING = 3;
+const int HEADING_DEST = 4;
 
 void waitForOperator(int loading) {
     ros::Rate loop_rate(20);
@@ -29,34 +36,45 @@ void waitForOperator(int loading) {
     }
 }
 
-int handleArrival() {
-    switch (state_msg) {
-        case message_types::HeadingState::HEADING_LOADING:
-            state_msg = message_types::HeadingState::LOADING
-            robot->set_direction(0);
-            robot->set_speed(0);
-            // wait for loading
-            waitForOperator(1);
-            state_msg = message_types::HeadingState::HEADING_UNLOADING
-            return 1
-        case message_types::HeadingState::HEADING_UNLOADING:
-            state_msg = message_types::HeadingState::UNLOADING
-            robot->set_direction(0);
-            robot->set_speed(0);
-            // wait for unloading
-            waitForOperator(0);
-            state_msg = message_types::HeadingState::HEADING_DEST
-            return 1
-        case message_types::HeadingState::HEADING_DEST:
-            // we are close to finish. Stop and finish.
-            robot->set_direction(0);
-            robot->set_speed(0);
-            return 0
-    };
+void setState(const int state) {
+    ros::Rate loop_rate(10);
+	state_msg.headingState = state;
+	statePublisher.publish(state_msg);
+	ros::spinOnce();
+    loop_rate.sleep();
 }
 
-void stateCallback(const message_types::HeadingState &state) {
-    statePublisher.publish(state);
+int handleArrival() {
+    printf("state_msg.headingState: %d\n", state_msg.headingState);
+    if (state_msg.headingState == HEADING_LOADING) {
+        printf("HEADING LOADING\n");
+        robot->set_direction(0);
+        robot->set_speed(0);
+        setState(LOADING);
+    }
+
+    if (state_msg.headingState == HEADING_UNLOADING) {
+        printf("HEADING UNLOADING\n");
+        robot->set_direction(0);
+        robot->set_speed(0);
+        setState(UNLOADING);
+
+        // wait for unloading
+        // waitForOperator(0);
+
+		setState(HEADING_DEST);
+        // system("echo bbbbbbbbbbbbbbbbbbbbbbb | espeak");
+    }
+
+    if (state_msg.headingState == HEADING_DEST) {
+        printf("HEADING DEST\n");
+        // we are close to finish. Stop and finish.
+        robot->set_direction(0);
+        robot->set_speed(0);
+
+        system("echo END | espeak");
+    }
+    return 1;
 }
 
 int direction = 0;
@@ -120,7 +138,25 @@ void cameraPredictionCallback(const std_msgs::Float64MultiArray::ConstPtr &msg) 
     camera_prediction_msg = msg->data;
 }
 
+int checkPayload() {
+    if (state_msg.headingState == LOADING && sbot_msg.payload == 0) {
+        return 1;
+    } else if (state_msg.headingState == LOADING && sbot_msg.payload == 1) {
+        setState(HEADING_UNLOADING);
+    }
+
+    if (state_msg.headingState == UNLOADING && sbot_msg.payload == 1) {
+        return 1;
+    } else if (state_msg.headingState == UNLOADING && sbot_msg.payload == 0){
+        setState(HEADING_DEST);
+    }
+    return 0;
+}
+
 int move() {
+    if (checkPayload()) {
+        return 0;
+    }
     int display_direction = 0;
     bool autonomy = true;
     bool status_from_subroutines;
@@ -142,7 +178,7 @@ int move() {
     double speed_down_dst = 0.003;
     std::string move_status;
 
-    printf("HOKUYO WEIGHTS:\n");
+    // printf("HOKUYO WEIGHTS:\n");
     for (int i = 0; i < 11; i++) {
         // double f = camera_prediction_msg.size() ? camera_prediction_msg[i] : 1.0; /////////////////ed->eval(predicted_data, i) - 0.4;
         double f = 1.0;
@@ -161,9 +197,9 @@ int move() {
 
         vDist.push_back(f);
         lDist.push_back(g);
-        printf("%.3f ", g);
+        // printf("%.3f ", g);
     }
-    printf("\n");
+    // printf("\n");
     neuron_dir = max_neural_dir;
     //printf("\n");
 
@@ -218,7 +254,7 @@ int move() {
         if (!status_from_subroutines)
             move_status = "searching";
 
-        printf("!!!!!!!!!!!!!!!!!!!!!!! Chodnik missing searching..\n");
+        // printf("!!!!!!!!!!!!!!!!!!!!!!! Chodnik missing searching..\n");
         if (delta > 0) {
             if (autonomy) {
                 robot->set_direction(40);
@@ -279,19 +315,19 @@ int move() {
         predicted_dir = (running_mean * running_mean_weight) + (sdir * (1 - running_mean_weight));
         running_mean = (running_mean * 3.0 + predicted_dir) / 4.0;
 
-        //printf("Inferred dir: %d\tProposed dir: %f\n", sdir, predicted_dir);
+        // printf("Inferred dir: %d\tProposed dir: %f\n", sdir, predicted_dir);
 
         computed_dir = sdir;
 
         if (autonomy) {
             robot->set_direction(predicted_dir);
-            //printf("%.10f %.10f\n", angles.dstToHeadingPoint, speed_down_dst);
+            // printf("%.10f %.10f\n", angles.dstToHeadingPoint, speed_down_dst);
             if (gps_msg.dstToHeadingPoint <= speed_down_dst) {
                 robot->set_speed(7);
-                printf("setSpeed: 7\n");
+                // printf("setSpeed: 7\n");
             } else {
                 robot->set_speed(10);
-                printf("setSpeed: 10\n");
+                // printf("setSpeed: 10\n");
             }
         }
         display_direction = maxdir;
@@ -317,8 +353,10 @@ int main(int argc, char **argv) {
     image_transport::ImageTransport it(nh);
     image_transport::Subscriber sub = it.subscribe("/sensors/camera/image", 1, imageCallback);
 
+    statePublisher = nh.advertise<message_types::HeadingState>("statePublisher", 10);
+
     robot = new Robot();
-    state = headingLoading;
+    setState(HEADING_LOADING);
 
     ros::Rate loop_rate(20);
 

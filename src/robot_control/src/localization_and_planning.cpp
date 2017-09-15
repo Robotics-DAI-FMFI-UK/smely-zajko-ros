@@ -1,7 +1,7 @@
 #include "ros/ros.h"
 #include "localizationAndPlanning/LocalizationAndPlanning.h"
 #include "message_types/GpsAngles.h"
-#include "yaml-cpp"
+#include "message_types/HeadingState.h"
 
 ros::Publisher pubPtr;
 LocalizationAndPlanning *localizationAndPlanning = new LocalizationAndPlanning(500, 500);
@@ -12,33 +12,29 @@ sensor_msgs::NavSatFix destinationPoint = sensor_msgs::NavSatFix();
 
 message_types::HeadingState state_msg;
 
-void handleArrival() {
-    switch(state_msg) {
-        case message_types::HeadingState::LOADING:
-            localizationAndPlanning->setDestination(unloadingPoint);
-            break;
-        case message_types::HeadingState::UNLOADING:
-            localizationAndPlanning->setDestination(destinationPoint);
-            break;
-    }
-}
+const int HEADING_LOADING = 0;
+const int LOADING = 1;
+const int HEADING_UNLOADING = 2;
+const int UNLOADING = 3;
+const int HEADING_DEST = 4;
 
 void gpsCallback(const sensor_msgs::NavSatFix &gps) {
-    if (state_msg == message_types::HeadingState::LOADING) {
-        localizationAndPlanning->setDestination(unloadingPoint);
-    } else if (state_msg == message_types::HeadingState::UNLOADING) {
-        localizationAndPlanning->setDestination(destinationPoint);
-    }
-
-    dst = localizationAndPlanning->update(gps)
-    pubPtr.publish(localizationAndPlanning->update(dst));
+    pubPtr.publish(localizationAndPlanning->update(gps));
 
     cvShowImage("loc and planning", localizationAndPlanning->getGui());
     cv::waitKey(30);
 }
 
 void headingStateCallback(const message_types::HeadingState &state){
-    state_msg = msg;
+    state_msg = state;
+    ROS_INFO("---------------------------- HEADING STATE %d ------------------------------------------", state_msg.headingState);
+    if (state_msg.headingState == LOADING) {
+        localizationAndPlanning->setDestination(unloadingPoint);
+        system("echo heading unloading | espeak");
+    } else if (state_msg.headingState == UNLOADING) {
+        localizationAndPlanning->setDestination(destinationPoint);
+        system("echo heading destination | espeak");
+    }
 }
 
 int main(int argc, char **argv) {
@@ -46,25 +42,36 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "ros_control");
     ros::NodeHandle nh;
     ros::Subscriber gps_subscriber = nh.subscribe("/sensors/gps_publisher", 10, gpsCallback);
-    ros::Subscriber heading_state_subscriber = nh.subscribe("robot_control", 10, headingStateCallback);
+
+    ros::Subscriber heading_state_subscriber = nh.subscribe("statePublisher", 10, headingStateCallback);
+
     pubPtr = nh.advertise<message_types::GpsAngles>("localization_and_planning", 10);
 
     localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/matfyz.osm");
 
-    YAML::Node config = YAML::LoadFile("config.yaml");
+    loadingPoint.latitude = 48.1527956;
+    loadingPoint.longitude = 17.0711376;
 
-    loadingPoint.latitude = config["loading_lat"].as<double>();
-    loadingPoint.longitude = config["loading_lon"].as<double>();
+    unloadingPoint.latitude = 49.1527956;
+    unloadingPoint.longitude = 17.0711376;
 
-    unloadingPoint.latitude = config["unloading_lat"].as<double>();
-    unloadingPoint.longitude = config["unloading_lon"].as<double>();
-
-    destinationPoint.latitude = config["destination_lat"].as<double>();
-    destinationPoint.longitude = config["destination_lon"].as<double>();
+    destinationPoint.latitude = 47.1527956;
+    destinationPoint.longitude = 17.0711376;
 
     localizationAndPlanning->setDestination(loadingPoint);
 
     ros::spin();
 
+    /*ros::Rate r(1.0 / 10.0);
+
+	gpsCallback(loadingPoint);
+	ros::spinOnce();
+	r.sleep();
+	gpsCallback(unloadingPoint);
+	ros::spinOnce();
+	r.sleep();
+	gpsCallback(destinationPoint);
+	ros::spinOnce();
+	r.sleep();*/
     return 0;
 }

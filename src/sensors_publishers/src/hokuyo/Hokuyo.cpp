@@ -121,9 +121,7 @@ Int32MultiArray Hokuyo::getData() {
     pthread_mutex_lock(&m_read);
     for (int i = 0; i < RANGE_DATA_COUNT; i++) {
         result.data.push_back(data[i]);
-        std::cout << data[i] << " ";
     }
-    std::cout << '\n';
     pthread_mutex_unlock(&m_read);
 
     return result;
