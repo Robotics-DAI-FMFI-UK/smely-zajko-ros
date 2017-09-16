@@ -2,13 +2,14 @@
 #include "gps/AbstractGps.h"
 #include "gps/Gps.h"
 #include "gps/GpsFiles.h"
+#include "gps/GpsPoints.h"
 
 int main(int argc, char **argv) {
     ros::init(argc, argv, "gps_publisher");
     ros::NodeHandle n;
     ros::Publisher gps_publisher = n.advertise<sensor_msgs::NavSatFix>("gps_publisher", 10);
 
-    AbstractGps *gps = new Gps();
+    AbstractGps *gps = new GpsFiles();
     gps->init();
 
     ros::Rate loop_rate(3);

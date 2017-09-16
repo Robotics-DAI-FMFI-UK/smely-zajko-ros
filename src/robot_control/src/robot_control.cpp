@@ -4,6 +4,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/Float64MultiArray.h>
+#include <std_msgs/Float64.h>
 #include "robot/AbstractRobot.h"
 #include "robot/Robot.h"
 #include "message_types/SbotMsg.h"
@@ -21,61 +22,16 @@ cv::Mat image;
 std::vector<double> hokuyo_algo_msg;
 std::vector<double> camera_prediction_msg;
 
-ros::Publisher statePublisher;
+ros::Publisher directionPublisher;
 
 const int HEADING_LOADING = 0;
 const int LOADING = 1;
 const int HEADING_UNLOADING = 2;
 const int UNLOADING = 3;
 const int HEADING_DEST = 4;
+const int END = 5;
 
-void waitForOperator(int loading) {
-    ros::Rate loop_rate(20);
-    while (sbot_msg.payload != loading) {
-        loop_rate.sleep();
-    }
-}
-
-void setState(const int state) {
-    ros::Rate loop_rate(10);
-	state_msg.headingState = state;
-	statePublisher.publish(state_msg);
-	ros::spinOnce();
-    loop_rate.sleep();
-}
-
-int handleArrival() {
-    printf("state_msg.headingState: %d\n", state_msg.headingState);
-    if (state_msg.headingState == HEADING_LOADING) {
-        printf("HEADING LOADING\n");
-        robot->set_direction(0);
-        robot->set_speed(0);
-        setState(LOADING);
-    }
-
-    if (state_msg.headingState == HEADING_UNLOADING) {
-        printf("HEADING UNLOADING\n");
-        robot->set_direction(0);
-        robot->set_speed(0);
-        setState(UNLOADING);
-
-        // wait for unloading
-        // waitForOperator(0);
-
-		setState(HEADING_DEST);
-        // system("echo bbbbbbbbbbbbbbbbbbbbbbb | espeak");
-    }
-
-    if (state_msg.headingState == HEADING_DEST) {
-        printf("HEADING DEST\n");
-        // we are close to finish. Stop and finish.
-        robot->set_direction(0);
-        robot->set_speed(0);
-
-        system("echo END | espeak");
-    }
-    return 1;
-}
+int previousState = -1;
 
 int direction = 0;
 
@@ -101,7 +57,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
     }
 }
 
-// TODO: refactor this
+//TODO: refactor this
 double predicted_dir = 0.0;
 double running_mean = 0.0;
 double running_mean_weight = 0.7;
@@ -119,44 +75,26 @@ void hokuyoAlgoCallback(const std_msgs::Float64MultiArray::ConstPtr &msg) {
         }
         j++;
     }
-    if (max < 0.3) {
-        ROS_ERROR("treba cuvat");
-        robot->set_speed(-3);
-        robot->set_direction(0);
-        ROS_ERROR("docuvane");
+
+    // FIXME: Naco dva krat?
+    /*if (max < 0.3) {
+        //TODO: Dozadu backing dorobit
+        printf("Tu by sa niekedy v buducnosti mohlo aj cuvat\n");
     } else {
         actual_direction = 5 * (actual_direction - 5);
 
         predicted_dir = (running_mean * running_mean_weight) + (actual_direction * (1 - running_mean_weight));
         running_mean = (running_mean * 3.0 + predicted_dir) / 4.0;
 
-        direction = (int)(running_mean + 0.5);
-    }
+        direction = (int) (running_mean + 0.5);
+    }*/
 }
 
 void cameraPredictionCallback(const std_msgs::Float64MultiArray::ConstPtr &msg) {
     camera_prediction_msg = msg->data;
 }
 
-int checkPayload() {
-    if (state_msg.headingState == LOADING && sbot_msg.payload == 0) {
-        return 1;
-    } else if (state_msg.headingState == LOADING && sbot_msg.payload == 1) {
-        setState(HEADING_UNLOADING);
-    }
-
-    if (state_msg.headingState == UNLOADING && sbot_msg.payload == 1) {
-        return 1;
-    } else if (state_msg.headingState == UNLOADING && sbot_msg.payload == 0){
-        setState(HEADING_DEST);
-    }
-    return 0;
-}
-
 int move() {
-    if (checkPayload()) {
-        return 0;
-    }
     int display_direction = 0;
     bool autonomy = true;
     bool status_from_subroutines;
@@ -169,7 +107,7 @@ int move() {
     double computed_dir;
     int wrong_dir = 0;
     double imuAngle = imu_msg.orientation.x;
-    // printf("evalLaser: ");
+
     double max_neural_dir = 0;
     double max_neural_dir_val = 0.0;
     int neuron_dir = 0;
@@ -178,9 +116,7 @@ int move() {
     double speed_down_dst = 0.003;
     std::string move_status;
 
-    // printf("HOKUYO WEIGHTS:\n");
     for (int i = 0; i < 11; i++) {
-        // double f = camera_prediction_msg.size() ? camera_prediction_msg[i] : 1.0; /////////////////ed->eval(predicted_data, i) - 0.4;
         double f = 1.0;
         double g = hokuyo_algo_msg.size() ? hokuyo_algo_msg[i] : 0.0;
         if (f < 0) {
@@ -197,24 +133,14 @@ int move() {
 
         vDist.push_back(f);
         lDist.push_back(g);
-        // printf("%.3f ", g);
     }
-    // printf("\n");
     neuron_dir = max_neural_dir;
-    //printf("\n");
-
-    // in destination vicinity
-    if (mapAngle == DBL_MAX) {
-        if(handleArrival() == 0) {
-            return 0;
-        }
-    }
 
     // delta
     if (mapAngle == DBL_MIN) {
         delta = 0;
     } else {
-        //   delta = ((int)(mapAngle /* - (imuData.xAngle/10) */ + 360))%360 ;
+        // delta = ((int)(mapAngle /* - (imuData.xAngle / 10) */ + 360))%360 ;
         delta = ((int) (mapAngle - imuAngle / 10 + 360)) % 360;
     }
     if (delta > 180)
@@ -225,7 +151,6 @@ int move() {
         wrong_dir = 0;
     }
 
-    // ROS_ERROR("%d", abs(delta) > 150 || wrong_dir);
     // significantly off course(> 150deg), turn
     if (abs(delta) > 150 || wrong_dir) {
         if (!status_from_subroutines)
@@ -269,8 +194,9 @@ int move() {
             display_direction = -5;
         }
     } else {
-        if (!status_from_subroutines)
+        if (!status_from_subroutines) {
             move_status = "running";
+        }
         if (delta > 90) {
             delta = 89.3;
         } else if (delta < -90) {
@@ -302,7 +228,7 @@ int move() {
         }
 
         int sdir = (maxdir - 5) * 8;
-        //      sdir -= 3;
+        // sdir -= 3;
         if (sbot_msg.away_from_left)
             sdir += 20;
         if (sdir > 40)
@@ -330,6 +256,9 @@ int move() {
                 // printf("setSpeed: 10\n");
             }
         }
+        std_msgs::Float64 directionMsg;
+        directionMsg.data = predicted_dir;
+        directionPublisher.publish(directionMsg);
         display_direction = maxdir;
     }
 
@@ -338,9 +267,7 @@ int move() {
     return display_direction;
 }
 
-
 int main(int argc, char **argv) {
-
     ros::init(argc, argv, "ros_control");
     ros::NodeHandle nh;
     ros::Subscriber sbot_subscriber = nh.subscribe("/sensors/sbot_publisher", 10, sbotCallback);
@@ -348,29 +275,39 @@ int main(int argc, char **argv) {
                                                                         localizationAndPlanningCallback);
     ros::Subscriber hokuyo_algo_subscriber = nh.subscribe("basic_algo", 10, hokuyoAlgoCallback);
     ros::Subscriber imu_subscriber = nh.subscribe("/sensors/imu_publisher", 10, imuCallback);
-    ros::Subscriber camera_prediction_traingle_subscriber = nh.subscribe("/control/camera_triangles_prediction", 10, cameraPredictionCallback);
+    ros::Subscriber camera_prediction_traingle_subscriber = nh.subscribe("/control/camera_triangles_prediction", 10,
+                                                                         cameraPredictionCallback);
 
     image_transport::ImageTransport it(nh);
     image_transport::Subscriber sub = it.subscribe("/sensors/camera/image", 1, imageCallback);
 
-    statePublisher = nh.advertise<message_types::HeadingState>("statePublisher", 10);
+    directionPublisher = nh.advertise<std_msgs::Float64>("directionPublisher", 10);
 
     robot = new Robot();
-    setState(HEADING_LOADING);
 
     ros::Rate loop_rate(20);
 
     int index = 0;
     while (ros::ok()) {
         if (robot != NULL) {
-            move();
-            /*
-            if (!index) {
-                robot->set_speed(5);
-                index = 1;
+
+            printf("CURRENT STATE: %d PAYLOAD: %f\n", gps_msg.headingState, sbot_msg.payload);
+
+            if (previousState == LOADING && gps_msg.headingState == HEADING_UNLOADING ||
+                previousState == UNLOADING && gps_msg.headingState == HEADING_DEST) {
+                ros::Duration(3).sleep();
             }
-            robot->set_direction(direction);
-            ROS_ERROR("my direction is %d", direction);*/
+
+            if (gps_msg.headingState == LOADING ||
+                gps_msg.headingState == UNLOADING ||
+                gps_msg.headingState == END) {
+                robot->set_direction(0);
+                robot->set_speed(0);
+            } else {
+                move();
+            }
+
+            previousState = gps_msg.headingState;
         }
         ros::spinOnce();
 
