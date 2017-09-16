@@ -7,12 +7,12 @@
 int main(int argc, char **argv) {
     ros::init(argc, argv, "gps_publisher");
     ros::NodeHandle n;
-    ros::Publisher gps_publisher = n.advertise<sensor_msgs::NavSatFix>("gps_publisher", 10);
+    ros::Publisher gps_publisher = n.advertise<sensor_msgs::NavSatFix>("gps_publisher", 1);
 
     AbstractGps *gps = new Gps();
     gps->init();
 
-    ros::Rate loop_rate(3);
+    ros::Rate loop_rate(100);
 
     ros::Duration(2).sleep();
 

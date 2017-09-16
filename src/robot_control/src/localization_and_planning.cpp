@@ -36,9 +36,9 @@ void setState(int state) {
     headingState = state;
 }
 
-void say(const char * msg) {
+void say(const char *msg) {
     char out[256];
-      snprintf(out, 255, "echo \"%s\" | espeak -a 200 -p 20 -s 80", msg);
+    snprintf(out, 255, "echo \"%s\" | espeak -a 200 -p 20 -s 80", msg);
     system(out);
 }
 
@@ -77,17 +77,19 @@ void gpsCallback(const sensor_msgs::NavSatFix &gps) {
 
     actualHeading.headingState = headingState;
 
+    printf("Distance: %f\n", localizationAndPlanning->distance(localizationAndPlanning->destinationPoint,
+                                                             localizationAndPlanning->curPoint) * 1000);
     pubPtr.publish(actualHeading);
 
     cvShowImage("loc and planning", localizationAndPlanning->getGui());
-    cv::waitKey(30);
+    cv::waitKey(1);
 }
 
 int main(int argc, char **argv) {
 
     ros::init(argc, argv, "ros_control");
     ros::NodeHandle nh;
-    ros::Subscriber gps_subscriber = nh.subscribe("/sensors/gps_publisher", 10, gpsCallback);
+    ros::Subscriber gps_subscriber = nh.subscribe("/sensors/gps_publisher", 1, gpsCallback);
 
     ros::Subscriber sbot_subscriber = nh.subscribe("/sensors/sbot_publisher", 10, sbotCallback);
 
@@ -95,14 +97,14 @@ int main(int argc, char **argv) {
 
     localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/zilina.osm");
 
-    loadingPoint.latitude = 49.2116839;
-    loadingPoint.longitude = 18.7451427;
+    loadingPoint.latitude = 49.2129610;
+    loadingPoint.longitude = 18.7447602;
 
-    unloadingPoint.latitude = 49.2118122;
-    unloadingPoint.longitude = 18.7452533;
+    unloadingPoint.latitude = 49.2126778;
+    unloadingPoint.longitude = 18.7439919;
 
-    destinationPoint.latitude = 49.2121765;
-    destinationPoint.longitude = 18.7453255;
+    destinationPoint.latitude = 49.2128361;
+    destinationPoint.longitude = 18.7446799;
 
     localizationAndPlanning->setDestination(loadingPoint);
 

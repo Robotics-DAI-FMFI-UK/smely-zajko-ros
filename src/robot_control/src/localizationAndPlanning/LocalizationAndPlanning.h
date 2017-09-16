@@ -90,6 +90,9 @@ public:
     // read osm map from xml
     void readMap(char *filename);
 
+    // distance between 2 points on a sphere
+    double distance(sensor_msgs::NavSatFix p1, sensor_msgs::NavSatFix p2);
+
     // gets image of map and main points
     IplImage *getGui();
 
@@ -140,9 +143,6 @@ private:
 
     // lon,lat to map x,y
     geometry_msgs::Point convert(sensor_msgs::NavSatFix point);
-
-    // distance between 2 points on a sphere
-    double distance(sensor_msgs::NavSatFix p1, sensor_msgs::NavSatFix p2);
 
     // calculates bearing (initial)
     double calc_bearing(sensor_msgs::NavSatFix a, sensor_msgs::NavSatFix b);

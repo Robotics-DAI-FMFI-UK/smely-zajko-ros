@@ -25,7 +25,8 @@ void predictionCallback(const sensor_msgs::ImageConstPtr &msg) {
     try {
         cv::Mat image;
         cv::resize(cv_bridge::toCvShare(msg)->image, image, cv::Size(640, 480));
-        cvLine(direction_image, cvPoint(80, 30), cvPoint(direction * 2, 15),
+        cvSet(direction_image, CV_RGB(255, 255, 255));
+        cvLine(direction_image, cvPoint(80, 30), cvPoint((direction + 40) * 2 , 15),
                cvScalar(0, 0, 1), 2);
         cv::imshow("prediction_gui", image);
         cvShowImage("direction", direction_image);

@@ -342,7 +342,7 @@ int main(int argc, char **argv) {
     while (ros::ok()) {
         if (robot != NULL) {
 
-            printf("CURRENT STATE: %d PAYLOAD: %f\n", gps_msg.headingState, sbot_msg.payload);
+            // printf("CURRENT STATE: %d PAYLOAD: %f\n", gps_msg.headingState, sbot_msg.payload);
 
             if (previousState == LOADING && gps_msg.headingState == HEADING_UNLOADING ||
                 previousState == UNLOADING && gps_msg.headingState == HEADING_DEST) {
