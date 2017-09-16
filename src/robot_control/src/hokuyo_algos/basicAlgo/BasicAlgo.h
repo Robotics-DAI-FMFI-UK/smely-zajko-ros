@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <vector>
 #include "std_msgs/Float64MultiArray.h"
+#include "message_types/HokuyoObstacle.h"
 
 class BasicAlgo {
     const int DIR_COUNT = 10;
@@ -18,7 +19,7 @@ public:
 
     double getPath(int arr[1081], int direction);
 
-    std_msgs::Float64MultiArray getPaths(int arr[1081]);
+    message_types::HokuyoObstacle getPaths(int arr[1081]);
 };
 
 

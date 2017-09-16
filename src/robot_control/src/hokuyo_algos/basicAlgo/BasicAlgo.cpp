@@ -57,8 +57,10 @@ double BasicAlgo::getPath(int arr[1081], int direction) {
         ray_weight *= ray_weight;
         ray_weight *= ray_weight;
         sum += ray_weight;
-        double laser_limited = (arr[i] > max_range[relative_ray]) ? (PARABOLA_RANGE_FORWARD) : (arr[i]);
-        sum1 += ray_weight * laser_limited / PARABOLA_RANGE_FORWARD; // max_range[i];
+        //double laser_limited = (arr[i] > max_range[relative_ray]) ? (PARABOLA_RANGE_FORWARD) : (arr[i]);
+        //sum1 += ray_weight * laser_limited / PARABOLA_RANGE_FORWARD; // max_range[i];
+        double laser_limited = (arr[i] > max_range[relative_ray]) ? (max_range[relative_ray]) : (arr[i]);
+        sum1 += ray_weight * laser_limited / max_range[relative_ray]; // max_range[i];
 
         //printf("%d: %lf  %lf\n", i, (1 - fabs(normalized_alpha)), (1 - fabs(normalized_alpha)) * laser_limited / PARABOLA_RANGE_FORWARD);
     }
@@ -69,11 +71,25 @@ double BasicAlgo::getPath(int arr[1081], int direction) {
     return result;
 }
 
-std_msgs::Float64MultiArray BasicAlgo::getPaths(int arr[1081]) {
-    std_msgs::Float64MultiArray result;
-    for (int i = 0; i <= DIR_COUNT; i++) {
-        result.data.push_back(this->getPath(arr, i));
+uint8_t detect_obstacle(int arr[1081])
+{
+    uint8_t obs = 0;
+
+    for (int i = 180; i <= 900; i++)
+    {
+      if (arr[i] <= 330) obs++;
+      else if (obs) obs--;
+      if (obs > 3) return 1;
     }
+    return 0;
+}
+
+message_types::HokuyoObstacle BasicAlgo::getPaths(int arr[1081]) {
+    message_types::HokuyoObstacle result;
+    for (int i = 0; i <= DIR_COUNT; i++) {
+        result.distances.data.push_back(this->getPath(arr, i));
+    }
+    result.obstacle = detect_obstacle(arr);
 
     return result;
 }

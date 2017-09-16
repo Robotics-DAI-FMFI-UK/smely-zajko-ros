@@ -1,7 +1,9 @@
+#include <stdlib.h>
 #include "ros/ros.h"
 #include "localizationAndPlanning/LocalizationAndPlanning.h"
 #include "message_types/GpsAngles.h"
 #include "message_types/SbotMsg.h"
+#include "string.h"
 
 ros::Publisher pubPtr;
 LocalizationAndPlanning *localizationAndPlanning = new LocalizationAndPlanning(500, 500);
@@ -34,32 +36,42 @@ void setState(int state) {
     headingState = state;
 }
 
+void say(const char * msg) {
+    char out[256];
+      snprintf(out, 255, "echo \"%s\" | espeak -a 200 -p 20 -s 80", msg);
+    system(out);
+}
+
 void gpsCallback(const sensor_msgs::NavSatFix &gps) {
     message_types::GpsAngles actualHeading = localizationAndPlanning->update(gps);
 
     if (actualHeading.map == DBL_MAX) {
         if (headingState == HEADING_LOADING) {
             printf("LOADING\n");
-            system("echo LOADING | espeak");
+            say("LOADING");
+
             setState(LOADING);
         } else if (headingState == LOADING && sbot_msg.payload == FULL) {
             printf("HEADING_UNLOADING\n");
-            system("echo 'HEADING UNLOADING' | espeak");
+            say("HEADING UNLOADING");
+
             localizationAndPlanning->setDestination(unloadingPoint);
             setState(HEADING_UNLOADING);
         } else if (headingState == HEADING_UNLOADING) {
             printf("UNLOADING\n");
-            system("echo 'UNLOADING' | espeak");
+            say("UNLOADING");
+
             setState(UNLOADING);
         } else if (headingState == UNLOADING && sbot_msg.payload == EMPTY) {
             printf("HEADING_DEST\n");
-            system("echo 'HEADING DESTINATION' | espeak");
+            say("HEADING DESTINATION");
+
             localizationAndPlanning->setDestination(destinationPoint);
             setState(HEADING_DEST);
         } else if (headingState == HEADING_DEST) {
             printf("FINISH\n");
             setState(END);
-            system("echo 'FINISH' | espeak");
+            say("FINISH");
         }
     }
 

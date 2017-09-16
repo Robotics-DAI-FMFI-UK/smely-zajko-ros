@@ -1,6 +1,7 @@
 #include "ros/ros.h"
 
 #include "std_msgs/Int32MultiArray.h"
+#include "message_types/HokuyoObstacle.h"
 #include "hokuyo_algos/openPath/OpenPath.h"
 #include "hokuyo_algos/basicAlgo/BasicAlgo.h"
 #include "hokuyo_algos/previousAlgo/PreviousAlgo.h"
@@ -18,10 +19,8 @@ void arrayCallback(const std_msgs::Int32MultiArray::ConstPtr &array) {
         arr[i] = *it;
         i++;
     }
-    std_msgs::Float64MultiArray a = pa->getPaths(arr);
-    prevPtr.publish(a);
+    message_types::HokuyoObstacle a = ba->getPaths(arr);
 
-    a = ba->getPaths(arr);
     basicPtr.publish(a);
 }
 
@@ -34,8 +33,7 @@ int main(int argc, char **argv) {
     ba->init();
     pa->init();
     ros::Subscriber subscriber = n.subscribe("/sensors/hokuyo_publisher", 100, arrayCallback);
-    prevPtr = n.advertise<std_msgs::Float64MultiArray>("prev_algo", 10);
-    basicPtr = n.advertise<std_msgs::Float64MultiArray>("basic_algo", 10);
+    basicPtr = n.advertise<message_types::HokuyoObstacle>("basic_algo", 10);
 
     ros::spin();
 

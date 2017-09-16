@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "ros/ros.h"
 #include <opencv2/opencv.hpp>
 #include <image_transport/image_transport.h>
@@ -10,6 +11,7 @@
 #include "message_types/SbotMsg.h"
 #include "message_types/GpsAngles.h"
 #include "message_types/HeadingState.h"
+#include "message_types/HokuyoObstacle.h"
 
 AbstractRobot *robot;
 
@@ -35,6 +37,8 @@ int previousState = -1;
 
 int direction = 0;
 
+static volatile int8_t hokuyo_sees_obstacle;
+
 void sbotCallback(const message_types::SbotMsg &msg) {
     sbot_msg = msg;
 }
@@ -57,17 +61,27 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
     }
 }
 
+void say(const char * msg) 
+{
+    char out[256];
+      snprintf(out, 255, "echo \"%s\" | espeak -a 200 -p 20 -s 80", msg);
+    system(out);
+}
+
 //TODO: refactor this
 double predicted_dir = 0.0;
 double running_mean = 0.0;
 double running_mean_weight = 0.7;
 
-void hokuyoAlgoCallback(const std_msgs::Float64MultiArray::ConstPtr &msg) {
-    double max = 0.0;
-    int actual_direction = 0;
-    int j = 0;
+void hokuyoAlgoCallback(const message_types::HokuyoObstacle::ConstPtr &msg) {
+//    double max = 0.0;
+//    int actual_direction = 0;
+//    int j = 0;
 
-    hokuyo_algo_msg = msg->data;
+    hokuyo_algo_msg = msg->distances.data;
+    hokuyo_sees_obstacle = msg->obstacle;
+
+/*
     for (std::vector<double>::const_iterator it = msg->data.begin(); it != msg->data.end(); ++it) {
         if (*it > max) {
             max = *it;
@@ -75,6 +89,7 @@ void hokuyoAlgoCallback(const std_msgs::Float64MultiArray::ConstPtr &msg) {
         }
         j++;
     }
+*/
 
     // FIXME: Naco dva krat?
     /*if (max < 0.3) {
@@ -267,6 +282,42 @@ int move() {
     return display_direction;
 }
 
+void avoid_obstacle(ros::Rate *loop_rate)
+{
+    robot->set_direction(0);
+    robot->set_speed(0);
+    
+    say("step away, please");
+    // wait for the obstacle to go away
+    int waiting = 0;
+    while (waiting < 600)
+    {
+      if (ros::ok())
+      {
+        ros::spinOnce();
+        loop_rate->sleep();
+      } 
+      waiting++;
+      if (!hokuyo_sees_obstacle) return;
+    } 
+
+    say("beep peep deep");
+    // obstacle is still in front of us after 30 seconds, try backing up a little bit
+    robot->set_speed(-4);
+    
+    // just a couple of seconds of backing up
+    while (waiting < 80)
+    {
+      if (ros::ok())
+      {
+        ros::spinOnce();
+        loop_rate->sleep();
+      } 
+      waiting++;
+    } 
+    // now try to resume... or end up in this function again if obstacle still seen (todo: try to turn)
+}
+
 int main(int argc, char **argv) {
     ros::init(argc, argv, "ros_control");
     ros::NodeHandle nh;
@@ -304,7 +355,10 @@ int main(int argc, char **argv) {
                 robot->set_direction(0);
                 robot->set_speed(0);
             } else {
-                move();
+                if (hokuyo_sees_obstacle)
+                   avoid_obstacle(&loop_rate);
+                else     
+                   move();
             }
 
             previousState = gps_msg.headingState;
