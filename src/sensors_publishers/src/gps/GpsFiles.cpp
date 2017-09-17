@@ -1,7 +1,7 @@
 #include "GpsFiles.h"
 
 void GpsFiles::init() {
-    file.open("/home/jozef/Desktop/smely-zajko/logs/1473959209.log", std::ios_base::in);
+    file.open("/home/zajko/Desktop/gps.txt", std::ios_base::in);
 }
 
 void GpsFiles::readData() {
@@ -10,7 +10,7 @@ void GpsFiles::readData() {
         if (getline(file, line)) {
             std::stringstream iss(line);
             float _;
-            for (int i = 0; i < 15; iss >> _, i++);
+            // for (int i = 0; i < 15; iss >> _, i++);
             iss >> data.longitude;
             iss >> data.latitude;
         } else {

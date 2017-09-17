@@ -4,11 +4,13 @@
 
 #include "ros/ros.h"
 #include "std_msgs/Int32MultiArray.h"
+#include "message_types/HokuyoObstacle.h"
 
 IplImage *result;
 int hokuyo_results[1081];
 double hokuyo_prev_weights[11];
 double hokuyo_basic_weights[11];
+int8_t hokuyo_obstacle;
 
 int guiWidth = 320;
 int guiHeight = 240;
@@ -30,16 +32,18 @@ void hokuyoPrevAlgoCallback(const std_msgs::Float64MultiArray::ConstPtr &array) 
 }
 
 
-void hokuyoBasicAlgoCallback(const std_msgs::Float64MultiArray::ConstPtr &array) {
+void hokuyoBasicAlgoCallback(const message_types::HokuyoObstacle::ConstPtr &array) {
     int i = 0;
-    for (std::vector<double>::const_iterator it = array->data.begin(); it != array->data.end(); ++it) {
+    for (std::vector<double>::const_iterator it = array->distances.data.begin(); it != array->distances.data.end(); ++it) {
         hokuyo_basic_weights[i] = *it;
         i++;
     }
+    hokuyo_obstacle = array->obstacle;
 }
 
 void render_window() {
-    cvSet(result, CV_RGB(255, 255, 255));
+    if (hokuyo_obstacle) cvSet(result, CV_RGB(255, 200, 200));
+    else cvSet(result, CV_RGB(255, 255, 255));
     int x, y;
     double brkAngle = -135 / 180.0 * M_PI;
     double deltaAngle = 0.25 / 180 * M_PI;

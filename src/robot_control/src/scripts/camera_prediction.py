@@ -40,7 +40,7 @@ def callback(data):
         cv_image = cv.resize(cv_image, (320, 240))
 
         X = prepare_image(cv_image, window=window, stride=stride)
-        X = (X - 87.062)
+        # X = (X - 87.062)
         X = (X / 255.0)
         y_pred = model.predict(X)
         prediction_mask = (y_pred[:, 1].reshape(48, 64) * 255).astype('uint8')
@@ -79,3 +79,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

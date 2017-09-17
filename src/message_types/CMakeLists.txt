@@ -48,6 +48,8 @@ add_message_files(
   FILES
   SbotMsg.msg
   GpsAngles.msg
+  HeadingState.msg
+  HokuyoObstacle.msg
 )
 
 ## Generate services in the 'srv' folder
