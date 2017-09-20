@@ -134,10 +134,10 @@ add_executable(camera_gui src/camera_gui.cpp)
 add_executable(hokuyo_gui src/hokuyo_gui.cpp)
 add_executable(localization_and_planning_gui src/localization_and_planning_gui.cpp)
 
-
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(gui_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(hokuyo_gui message_types_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(hokuyo_gui ${catkin_LIBRARIES})
