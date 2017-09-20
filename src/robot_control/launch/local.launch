@@ -1,0 +1,6 @@
+<launch>
+  <group ns="control">
+
+    <node pkg="robot_control" name="localization_and_planning" type="localization_and_planning" />
+  </group>
+</launch>
