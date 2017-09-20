@@ -1,0 +1,10 @@
+<launch>
+  <arg name="camera_index" default="0" />
+  <group ns="sensors">
+    <node pkg="robot_control" name="camera_prediction" type="camera_prediction.py" />
+    <node pkg="sensors_publishers" name="camera_publisher_node" type="camera_publisher_node">
+        <param name="camera_index" value="$(arg camera_index)" />
+    </node>
+  </group>
+
+</launch>
