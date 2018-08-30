@@ -1,0 +1,4 @@
+#!/bin/bash
+
+source devel/setup.bash
+roslaunch --screen src/robot_control/launch/robot_mock.launch

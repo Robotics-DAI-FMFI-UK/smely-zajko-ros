@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(find sensors_publishers)/launch/sensors_mock.launch" />
+    <include file="$(find robot_control)/launch/control.launch" />
+</launch>

@@ -1,0 +1,8 @@
+<launch>
+  <arg name="camera_index" default="0" />
+  <group ns="sensors">
+
+    <node pkg="sensors_publishers" name="gps_mock_publisher_node" type="gps_mock_publisher_node" />
+  </group>
+
+</launch>
