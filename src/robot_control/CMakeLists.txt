@@ -12,6 +12,15 @@ find_package(catkin REQUIRED
         std_msgs
         image_transport)
 
+find_package(OpenCV REQUIRED
+        COMPONENTS
+        core 
+        highgui 
+        imgproc 
+        imgcodecs)
+
+set(CMAKE_CXX_STANDARD 11)
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -116,7 +125,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
-        ${catkin_INCLUDE_DIRS}
+        ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -156,9 +165,9 @@ add_dependencies(hokuyo_algo message_types_generate_messages_cpp)
 
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(robot_control ${catkin_LIBRARIES})
-target_link_libraries(localization_and_planning ${catkin_LIBRARIES})
-target_link_libraries(hokuyo_algo ${catkin_LIBRARIES})
+target_link_libraries(robot_control ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+target_link_libraries(localization_and_planning ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+target_link_libraries(hokuyo_algo ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
 #############
 ## Install ##

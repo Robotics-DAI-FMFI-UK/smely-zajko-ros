@@ -13,6 +13,8 @@ find_package(catkin REQUIRED
         sensor_msgs
         image_transport)
 
+find_package(OpenCV)
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -115,7 +117,7 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(include ${catkin_INCLUDE_DIRS})
+include_directories(include ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 
 ## Declare a C++ library
 # add_library(sensors_publishers
@@ -144,6 +146,7 @@ add_executable(camera_publisher_node
         src/camera/Camera.cpp src/camera/Camera.h)
 
 add_executable(gps_publisher_node src/gps_publisher_node.cpp src/gps/AbstractGps.h src/gps/Gps.cpp src/gps/Gps.h src/gps/GpsFiles.cpp src/gps/GpsFiles.h src/gps/GpsPoints.cpp src/gps/GpsPoints.h)
+add_executable(gps_mock_publisher_node src/gps_mock_publisher_node.cpp src/gps/AbstractGps.h src/gps/Gps.cpp src/gps/Gps.h src/gps/GpsFiles.cpp src/gps/GpsFiles.h src/gps/GpsPoints.cpp src/gps/GpsPoints.h)
 add_executable(gps_subscriber_node src/gps_subscriber_node.cpp)
 
 add_executable(imu_publisher_node src/imu_publisher_node.cpp src/imu/AbstractImu.h src/imu/Imu.cpp src/imu/Imu.h)
@@ -156,8 +159,9 @@ add_executable(imu_publisher_node src/imu_publisher_node.cpp src/imu/AbstractImu
 target_link_libraries(sbot_publisher_node ${catkin_LIBRARIES})
 target_link_libraries(hokuyo_publisher_node ${catkin_LIBRARIES})
 target_link_libraries(hokuyo_subscriber_node ${catkin_LIBRARIES})
-target_link_libraries(camera_publisher_node ${catkin_LIBRARIES})
+target_link_libraries(camera_publisher_node ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 target_link_libraries(gps_publisher_node ${catkin_LIBRARIES})
+target_link_libraries(gps_mock_publisher_node ${catkin_LIBRARIES})
 target_link_libraries(gps_subscriber_node ${catkin_LIBRARIES})
 target_link_libraries(imu_publisher_node ${catkin_LIBRARIES})
 

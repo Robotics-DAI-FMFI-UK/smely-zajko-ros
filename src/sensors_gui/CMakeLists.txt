@@ -12,6 +12,10 @@ find_package(catkin REQUIRED
         std_msgs
         image_transport)
 
+find_package(OpenCV REQUIRED
+        COMPONENTS
+        core highgui imgproc imgcodecs)
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -116,7 +120,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
-        ${catkin_INCLUDE_DIRS}
+        ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -140,9 +144,9 @@ add_executable(localization_and_planning_gui src/localization_and_planning_gui.c
 # add_dependencies(gui_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(hokuyo_gui ${catkin_LIBRARIES})
-target_link_libraries(camera_gui ${catkin_LIBRARIES})
-target_link_libraries(localization_and_planning_gui ${catkin_LIBRARIES})
+target_link_libraries(hokuyo_gui ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+target_link_libraries(camera_gui ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+target_link_libraries(localization_and_planning_gui ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
 #############
 ## Install ##
