@@ -95,9 +95,11 @@ int main(int argc, char **argv) {
 
     pubPtr = nh.advertise<message_types::GpsAngles>("localization_and_planning", 10);
 
-    localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/zilina.osm");
+    //localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/zilina.osm");
+    //localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/botanicka.osm");
+    localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/homologacie_fei.osm");
 
-    loadingPoint.latitude = 49.2129610;
+/*    loadingPoint.latitude = 49.2129610;
     loadingPoint.longitude = 18.7447602;
 
     unloadingPoint.latitude = 49.2126778;
@@ -105,7 +107,31 @@ int main(int argc, char **argv) {
 
     destinationPoint.latitude = 49.2128361;
     destinationPoint.longitude = 18.7446799;
+*/
 
+/* homologacia fei: */
+ 
+    loadingPoint.latitude = 48.15143;
+    loadingPoint.longitude = 17.0729;
+
+    unloadingPoint.latitude = 48.15159;
+    unloadingPoint.longitude = 17.07298;
+
+    destinationPoint.latitude = 48.1517;
+    destinationPoint.longitude = 17.07329;
+
+    /*
+    loadingPoint.latitude = 48.1457841;
+    loadingPoint.longitude = 17.0740046;
+
+
+    unloadingPoint.latitude = 48.1458947;
+    unloadingPoint.longitude = 17.0722153;
+
+
+    destinationPoint.latitude = 48.1473408;
+    destinationPoint.longitude = 17.0725359;
+    */
     localizationAndPlanning->setDestination(loadingPoint);
 
     headingState = HEADING_LOADING;

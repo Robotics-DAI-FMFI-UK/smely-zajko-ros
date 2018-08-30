@@ -239,6 +239,7 @@ void LocalizationAndPlanning::setDestination(sensor_msgs::NavSatFix point) {
     FindOnWay fw;
     fw = find_on_way(point);
     destinationPoint = fw.pointFound;
+    forceRecalc = true;
 
     // vypocitaj elipsu okolia pre danu geopoziciu
     calcEllipse(point, heading_search_radius);
@@ -824,16 +825,17 @@ message_types::GpsAngles LocalizationAndPlanning::update(sensor_msgs::NavSatFix 
     // priesecnik alebo destpoint tj ten druhy bod  prveho segmentu
     // ak nemame trasu alebo sme na ceste ktora sa nespaja s bestway na jej
     // zaciatku -> vypocitame trasu
-    if (bestWay.size() == 0 ||
-        (bestWay.size() == 1 && fw.pointId1 != bestWay[bestWay.size() - 1] &&
-         fw.pointId2 != bestWay[bestWay.size() - 1]) ||
-        (bestWay.size() > 1 && fw.pointId1 != bestWay[bestWay.size() - 1] &&
-         fw.pointId2 != bestWay[bestWay.size() - 1] &&
-         fw.pointId1 != bestWay[bestWay.size() - 2] &&
-         fw.pointId2 != bestWay[bestWay.size() - 2])) {
+    if (forceRecalc || bestWay.size() == 0 ||
+            (bestWay.size() == 1 && fw.pointId1 != bestWay[bestWay.size() - 1] &&
+                    fw.pointId2 != bestWay[bestWay.size() - 1]) ||
+            (bestWay.size() > 1 && fw.pointId1 != bestWay[bestWay.size() - 1] &&
+                    fw.pointId2 != bestWay[bestWay.size() - 1] &&
+                    fw.pointId1 != bestWay[bestWay.size() - 2] &&
+                    fw.pointId2 != bestWay[bestWay.size() - 2])) {
         FindOnWay fwDest = find_on_way(destinationPoint);
         calcPath(fw.pointId1, fw.pointId2, fwDest.pointId1, fwDest.pointId2);
-        // printf("new bestWay calculated\n");
+        forceRecalc = false;
+        printf("new bestWay calculated\n");
     }
 
     // najdeme headingpoint

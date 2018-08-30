@@ -129,6 +129,9 @@ private:
     CvFont font;
     CvFont fontBig;
 
+    // force bestway recalculation when setting new destination
+    bool forceRecalc;
+
     // calc point to linesegment distance and closest point on segment to target
     // point
     pair<double, sensor_msgs::NavSatFix>
