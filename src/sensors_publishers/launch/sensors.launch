@@ -4,9 +4,11 @@
 
     <node pkg="sensors_publishers" name="hokuyo_publisher_node" type="hokuyo_publisher_node" />
 
+    <!-- disable camera publisher (images are directly retrieved by camera_prediction node)
     <node pkg="sensors_publishers" name="camera_publisher_node" type="camera_publisher_node">
         <param name="camera_index" value="$(arg camera_index)" />
     </node>
+    -->
 
     <node pkg="sensors_publishers" name="gps_publisher_node" type="gps_publisher_node" />
     <node pkg="sensors_publishers" name="imu_publisher_node" type="imu_publisher_node" />

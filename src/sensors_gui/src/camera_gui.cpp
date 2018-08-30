@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
     cv::startWindowThread();
 
     image_transport::ImageTransport it(nh);
-    image_transport::Subscriber sub = it.subscribe("/sensors/camera/image", 1, imageCallback);
+//    image_transport::Subscriber sub = it.subscribe("/sensors/camera/image", 1, imageCallback);
     image_transport::Subscriber sub1 = it.subscribe("/control/camera_prediction", 1, predictionCallback);
 
     ros::Subscriber directionSubscriber = nh.subscribe("/control/directionPublisher", 1, directionCallback);

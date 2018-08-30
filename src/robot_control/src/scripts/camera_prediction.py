@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import rospy
+import rospy, socket, struct
 import cv2 as cv
 from sensor_msgs.msg import Image
 from std_msgs.msg import Float64MultiArray
@@ -8,6 +8,9 @@ from skimage.util.shape import view_as_windows
 from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
 from smely_zajko_dataset import models
+
+HOST = "localhost"
+PORT = 8111
 
 bridge = CvBridge()
 
@@ -32,11 +35,10 @@ def prepare_image(image, window, stride):
     return Y.reshape((nx * ny, w * h * d))
 
 
-def callback(data):
+def callback(cv_image):
     pub = rospy.Publisher('camera_prediction', Image, queue_size=10)
     pub_triangle = rospy.Publisher('camera_triangles_prediction', Float64MultiArray, queue_size=10)
     try:
-        cv_image = bridge.imgmsg_to_cv2(data, "bgr8")
         cv_image = cv.resize(cv_image, (320, 240))
 
         X = prepare_image(cv_image, window=window, stride=stride)
@@ -69,14 +71,38 @@ def callback(data):
         print(e)
 
 
+def recv_msg(sock):
+    raw_len = sock.recv(4)
+    if not raw_len:
+        return None, None
+    msg_len = struct.unpack('>I', raw_len)[0]
+    return msg_len, recv_n(sock, msg_len)
+
+def recv_n(sock, n):
+    data = b''
+    while len(data) < n:
+        packet = sock.recv(n - len(data))
+        if not packet:
+            return None
+        data += packet
+    return data
+
 def main():
     rospy.init_node('camera_predictor', anonymous=True)
 
-    rospy.Subscriber('/sensors/camera/image', Image, callback)
+#    rospy.Subscriber('/sensors/camera/image', Image, callback)
 
-    rospy.spin()
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect((HOST, PORT))
 
+    while not rospy.is_shutdown():
+        l, m = recv_msg(sock)
+        img = cv.imdecode(np.fromstring(m, np.uint8), cv.IMREAD_COLOR)
+        callback(img)
+        cv.imshow('camera', img)
+        cv.waitKey(1)
 
 if __name__ == '__main__':
     main()
+
 

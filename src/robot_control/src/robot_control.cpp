@@ -304,6 +304,7 @@ void avoid_obstacle(ros::Rate *loop_rate)
     say("beep peep deep");
     // obstacle is still in front of us after 30 seconds, try backing up a little bit
     robot->set_speed(-4);
+    waiting = 0;
     
     // just a couple of seconds of backing up
     while (waiting < 80)
@@ -329,8 +330,8 @@ int main(int argc, char **argv) {
     ros::Subscriber camera_prediction_traingle_subscriber = nh.subscribe("/control/camera_triangles_prediction", 10,
                                                                          cameraPredictionCallback);
 
-    image_transport::ImageTransport it(nh);
-    image_transport::Subscriber sub = it.subscribe("/sensors/camera/image", 1, imageCallback);
+//    image_transport::ImageTransport it(nh);
+//    image_transport::Subscriber sub = it.subscribe("/sensors/camera/image", 1, imageCallback);
 
     directionPublisher = nh.advertise<std_msgs::Float64>("directionPublisher", 10);
 
