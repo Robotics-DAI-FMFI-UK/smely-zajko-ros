@@ -41,7 +41,8 @@ Make sure your `PROJECT_DIR` is in `src` folder (without it, you will not be abl
 From root folder run `$ catkin_make`. Make sure you run `source devel/setup.bash` before.
 
 ## Running
-From root folder run `$ roslaunch camera smely_zajko.launch`.
+From root folder on PC run `$ ./startme`. This launches the ros master
+From root folder on Jetson run `$ ./jetson_camera_start`. Camera node will start and connect to the master
 
 
 ## Record run via rosbag
