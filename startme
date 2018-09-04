@@ -1,4 +1,5 @@
 #!/bin/bash
 
 source devel/setup.bash
+export ROS_MASTER_URI=http://smelyzajko:11311
 roslaunch --screen src/robot_control/launch/robot.launch
