@@ -42,6 +42,7 @@ From root folder run `$ catkin_make`. Make sure you run `source devel/setup.bash
 
 ## Running
 From root folder on PC run `$ ./startme`. This launches the ros master
+
 From root folder on Jetson run `$ ./jetson_camera_start`. Camera node will start and connect to the master
 
 
