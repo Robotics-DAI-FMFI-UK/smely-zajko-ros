@@ -9,8 +9,8 @@ from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
 from smely_zajko_dataset import models
 
-HOST = "localhost"
-PORT = 8111
+HOST = "192.168.42.129"
+PORT = 8000
 
 bridge = CvBridge()
 
@@ -23,7 +23,7 @@ TRIANGLE_WIDTH = 6
 model = models.mlp(n_input=75, architecture=[(20, 'sigmoid'), (2, 'softmax')],
                    metrics=['accuracy'])
 model.load_weights(
-    '/home/zajko/Projects/smely-zajko-ros/src/robot_control/src/scripts/smely_zajko_dataset/mlp_20_sigmoid_2_softmax.hdf5')
+    '/home/nvidia/Projects/smely-zajko-ros/src/robot_control/src/scripts/smely_zajko_dataset/mlp_20_sigmoid_2_softmax.hdf5')
 
 
 def prepare_image(image, window, stride):
@@ -94,13 +94,15 @@ def main():
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((HOST, PORT))
-
+    print "Connected to camera"
+    
     while not rospy.is_shutdown():
         l, m = recv_msg(sock)
+        print l
         img = cv.imdecode(np.fromstring(m, np.uint8), cv.IMREAD_COLOR)
         callback(img)
-        cv.imshow('camera', img)
-        cv.waitKey(1)
+        #cv.imshow('camera', img)
+        #cv.waitKey(1)
 
 if __name__ == '__main__':
     main()
