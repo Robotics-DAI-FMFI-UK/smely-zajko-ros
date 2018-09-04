@@ -4,7 +4,6 @@
 #include "timers.h"
 #include "remote_control.h"
 #include "ultrasonic.h"
-#include "payload.h"
 
 static char prnbuf[125];
 static uint8_t data[16];
@@ -12,6 +11,7 @@ static uint8_t data_index;
 
 uint8_t reset_steps;
 uint8_t backing_up;
+uint8_t payload_detected;
 
 void init_communication()
 {
@@ -39,7 +39,7 @@ void status_reporting()
 
   sprintf(prnbuf, "@%ld %ld %d %d %d %d %u %u %u %u %u %u %u %lu", 
           sumL, sumR, current_speedL, current_speedR, blocked,
-          obstacle, dist[0], dist[1], dist[2], dist[3], dist[4], has_payload(), blocked_behind, tm);
+          obstacle, dist[0], dist[1], dist[2], dist[3], dist[4], payload_detected, blocked_behind, tm);
 
   Serial.println(prnbuf);
 }
@@ -179,12 +179,13 @@ ISR(PCINT1_vect)  //data ready
     if (tm - last_tm > 3) data_index = 0;  // first in a bunch? reset index
     last_tm = tm;
     data[data_index++] = PIND >> 4;       // store this chunk
-    if (data_index == 16)                   // data complete, load them
+    if (data_index == 17)                   // data complete, load them
     {
       current_speedL = -(int16_t)((data[3] << 12) | (data[2] << 8) | (data[1] << 4) | data[0]);
       current_speedR = -(int16_t)((data[7] << 12) | (data[6] << 8) | (data[5] << 4) | data[4]);
-      stepL = -(int16_t)(int16_t)((data[11] << 12) | (data[10] << 8) | (data[9] << 4) | data[8]);
-      stepR = -(int16_t)(int16_t)((data[15] << 12) | (data[14] << 8) | (data[13] << 4) | data[12]);
+      stepL = -(int16_t)((data[11] << 12) | (data[10] << 8) | (data[9] << 4) | data[8]);
+      stepR = -(int16_t)((data[15] << 12) | (data[14] << 8) | (data[13] << 4) | data[12]);
+      payload_detected = data[16];
       data_index = 0;
     }
     digitalWrite(13, LOW);                 // ACK that the chunk was read

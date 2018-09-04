@@ -6,8 +6,15 @@
 //DDRB &= 0b11111011 
 #define enable_tx() delayMicroseconds(5); DDRB |= 4; PORTB |= 4 
 
+#define ECHO 15
+#define TRIG 16
+
 int16_t current_speedL, current_speedR;
 int16_t stepL, stepR;
+
+volatile uint32_t pulse_start;
+volatile int16_t distance;
+volatile uint8_t new_distance;
 
 SoftwareSerial modem(9, 10);
 
@@ -15,6 +22,7 @@ void setup()
 {
   pinMode(9, INPUT);
   pinMode(10, OUTPUT);
+  init_ultrasonic();
   digitalWrite(10, HIGH);
   modem.begin(19200);
   modem.listen();
@@ -33,6 +41,35 @@ void setup()
   delay(300);
   encoders_reverse_motor1();
   delay(30);
+}
+
+void init_ultrasonic()
+{
+  pinMode(ECHO, INPUT);
+  pinMode(TRIG, OUTPUT);
+  
+  PCMSK1 |= 2; //PCINT1;
+  PCIFR &= ~2; //PCIF1;
+  PCICR |= 2; // PCIE1;  
+}
+
+ISR(PCINT1_vect)
+{
+  if (PINC & 2) pulse_start = micros();
+  else 
+  {
+    distance = (int16_t)((micros() - pulse_start) / 58);
+    new_distance = 1;
+  }
+}
+
+void start_distance_measurement()
+{
+  distance = -1;
+  new_distance = 0;
+  digitalWrite(TRIG, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG, LOW);
 }
 
 uint8_t send_4bit(uint8_t b)
@@ -72,6 +109,7 @@ uint8_t send_data()
   ok |= send_16bit(current_speedR);
   ok |= send_16bit(stepL);
   ok |= send_16bit(stepR);
+  ok |= send_4bit(distance < 12);
   return ok;
 }
 
@@ -217,12 +255,13 @@ void check_position_reset()
 
 void loop() 
 {
+  start_distance_measurement();
   read_encoders();
   if (send_data())
   {
     digitalWrite(13, HIGH);
     delay(500);
-    digitalWrite(13, LOW);    
+    digitalWrite(13, LOW);
   }
   check_position_reset();
 }
