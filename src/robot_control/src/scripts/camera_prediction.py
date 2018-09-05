@@ -1,15 +1,17 @@
 #!/usr/bin/env python
 
-import rospy, socket, struct
+import rospy, socket, struct, re
 import cv2 as cv
-from sensor_msgs.msg import Image
-from std_msgs.msg import Float64MultiArray
+from sensor_msgs.msg import Image, NavSatFix
+from std_msgs.msg import Float64MultiArray, UInt8
 from skimage.util.shape import view_as_windows
 from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
 from smely_zajko_dataset import models
+import pyzbar.pyzbar as zbar
 
 HOST = "192.168.42.129"
+HOST = "localhost"
 PORT = 8000
 
 bridge = CvBridge()
@@ -50,26 +52,47 @@ def callback(cv_image):
         # print(prediction_mask.max(), prediction_mask.min(), prediction_mask.mean())
     
 	
-	out = []
-	for i in range(2, 64, TRIANGLE_WIDTH):
-	    out.append(0)
-	    s = 0
-	    for j in range(47, TRIANGLE_HEIGHT, -1):
-		b = int(j * TRIANGLE_WIDTH/TRIANGLE_HEIGHT)
-		for k in range(i-b/2, i+b/2):
-		    if k < 0 or k > 63:
-			continue
-		    out[-1] += prediction_mask[j][k]
-		    s += 1
-	    out[-1] /= s
+        out = []
+        for i in range(2, 64, TRIANGLE_WIDTH):
+            out.append(0)
+            s = 0
+            for j in range(47, TRIANGLE_HEIGHT, -1):
+                b = int(j * TRIANGLE_WIDTH/TRIANGLE_HEIGHT)
+                for k in range(i-b/2, i+b/2):
+                    if k < 0 or k > 63:
+                        continue
+                    out[-1] += prediction_mask[j][k]
+                    s += 1
+            out[-1] /= s
 
-	int_list = Float64MultiArray()
-	int_list.data = out
-	pub_triangle.publish(int_list)
+        int_list = Float64MultiArray()
+        int_list.data = out
+        pub_triangle.publish(int_list)
         pub.publish(bridge.cv2_to_imgmsg(prediction_mask))
     except CvBridgeError as e:
         print(e)
 
+QR_pattern = re.compile('geo:([-+]?\d*\.\d+|[-+]?\d+),([-+]?\d*\.\d+|[-+]?\d+)')
+
+def detectQR(img):
+    pub = rospy.Publisher('/control/camera_qr_target', NavSatFix, queue_size=10)
+
+    decoded = zbar.decode(img)
+    for obj in decoded:
+        if obj.type == 'QRCODE':
+            match = QR_pattern.match(obj.data)
+            if match:
+                target = NavSatFix()
+                target.latitude = float(match.group(1))
+                target.longitude = float(match.group(2))
+                pub.publish(target)
+                return # stop evaluating other qr codes when correct one was found
+
+action = 0
+
+def setAction(act):
+    global action
+    action = act.data
 
 def recv_msg(sock):
     raw_len = sock.recv(4)
@@ -91,6 +114,7 @@ def main():
     rospy.init_node('camera_predictor', anonymous=True)
 
 #    rospy.Subscriber('/sensors/camera/image', Image, callback)
+    rospy.Subscriber('/control/camera_action', UInt8, setAction)
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((HOST, PORT))
@@ -98,9 +122,12 @@ def main():
     
     while not rospy.is_shutdown():
         l, m = recv_msg(sock)
-        print l
+#        print l
         img = cv.imdecode(np.fromstring(m, np.uint8), cv.IMREAD_COLOR)
         callback(img)
+        if action == 1:
+            detectQR(img)
+
         #cv.imshow('camera', img)
         #cv.waitKey(1)
 

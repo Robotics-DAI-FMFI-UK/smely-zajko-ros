@@ -26,12 +26,13 @@ std::vector<double> camera_prediction_msg;
 
 ros::Publisher directionPublisher;
 
-const int HEADING_LOADING = 0;
-const int LOADING = 1;
-const int HEADING_UNLOADING = 2;
-const int UNLOADING = 3;
-const int HEADING_DEST = 4;
-const int END = 5;
+const int START = 0;
+const int HEADING_LOADING = 1;
+const int LOADING = 2;
+const int HEADING_UNLOADING = 3;
+const int UNLOADING = 4;
+const int HEADING_DEST = 5;
+const int END = 6;
 
 int previousState = -1;
 
@@ -350,7 +351,8 @@ int main(int argc, char **argv) {
                 ros::Duration(3).sleep();
             }
 
-            if (gps_msg.headingState == LOADING ||
+            if (gps_msg.headingState == START ||
+                gps_msg.headingState == LOADING ||
                 gps_msg.headingState == UNLOADING ||
                 gps_msg.headingState == END) {
                 robot->set_direction(0);
