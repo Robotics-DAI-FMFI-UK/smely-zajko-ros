@@ -127,11 +127,11 @@ sensor_msgs::NavSatFix Gps::parseLine(const char *s) {
     vector<string> splittedLine = splitStringByComma(s);
 
     if (isValidGPGGA(splittedLine)) {
-        for (int i = 0; i < splittedLine.size(); i++) {
-            cout << splittedLine[i] << " ";
-        }
-
-        cout << '\n';
+//        for (int i = 0; i < splittedLine.size(); i++) {
+//            cout << splittedLine[i] << " ";
+//        }
+//
+//        cout << '\n';
 
         fix.latitude = nmeaToDecimal(splittedLine[2]);
         fix.longitude = nmeaToDecimal(splittedLine[4]);
