@@ -31,9 +31,11 @@ vector<string> splitStringByComma(string input) {
 }
 
 bool isValidGPGGA(const vector<string> elementVector) {
-    if (elementVector[0] != "$GPGGA") {
+    if ((elementVector[0] != "$GPGGA")
+       && (elementVector[0] != "$GNGGA")) {
         return false;
     }
+
     if (elementVector.size() != 15) {
         return false;
     }

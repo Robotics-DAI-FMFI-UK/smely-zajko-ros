@@ -17,6 +17,7 @@ int main(int argc, char **argv) {
     ros::Duration(2).sleep();
 
     while (ros::ok()) {
+
         if (gps_publisher.getNumSubscribers() > 0) {
             gps->readData();
 
