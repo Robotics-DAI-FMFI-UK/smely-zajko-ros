@@ -68,6 +68,8 @@ void say(const char *msg) {
     system(out);
 }
 
+int spamCounter = 0;
+
 void gpsCallback(const sensor_msgs::NavSatFix &gps) {
     message_types::GpsAngles actualHeading = localizationAndPlanning->update(gps);
     std_msgs::UInt8 actionMsg;
@@ -75,7 +77,11 @@ void gpsCallback(const sensor_msgs::NavSatFix &gps) {
     if (headingState == START) {
         if (!targetValid) {
             setCameraAction(DETECT_QR);
+            if (spamCounter == 0) say("WAITING FOR QR CODE");
+            spamCounter++;
+            if (spamCounter > 10) spamCounter = 0;
         } else {
+            say("HEADING LOADING");
             localizationAndPlanning->setDestination(newTarget);
             setState(HEADING_LOADING);
             setCameraAction(DETECT_ROAD);
@@ -103,11 +109,11 @@ void gpsCallback(const sensor_msgs::NavSatFix &gps) {
             setState(UNLOADING);
             resetTarget();
             setCameraAction(DETECT_QR);
-        } else if (headingState == UNLOADING && sbot_msg.payload == EMPTY && targetValid) {
+        } else if (headingState == UNLOADING && sbot_msg.payload == EMPTY) {
             printf("HEADING_DEST\n");
             say("HEADING DESTINATION");
 
-            localizationAndPlanning->setDestination(newTarget);
+            localizationAndPlanning->setDestination(destinationPoint);
             setState(HEADING_DEST);
             setCameraAction(DETECT_ROAD);
         } else if (headingState == HEADING_DEST) {
@@ -120,8 +126,8 @@ void gpsCallback(const sensor_msgs::NavSatFix &gps) {
     actualHeading.headingState = headingState;
     actionMsg.data = cameraAction;
 
-    printf("Distance: %f\n", localizationAndPlanning->distance(localizationAndPlanning->destinationPoint,
-                                                             localizationAndPlanning->curPoint) * 1000);
+//    printf("Distance: %f\n", localizationAndPlanning->distance(localizationAndPlanning->destinationPoint,
+//                                                             localizationAndPlanning->curPoint) * 1000);
     locPublisher.publish(actualHeading);
     cameraActionPublisher.publish(actionMsg);
 
@@ -143,13 +149,13 @@ int main(int argc, char **argv) {
     cameraActionPublisher = nh.advertise<std_msgs::UInt8>("/control/camera_action", 10);
 
     //localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/zilina.osm");
-    //localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/botanicka.osm");
-    localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/homologacie_fei.osm");
+    localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/botanicka.osm");
+//    localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/homologacie_fei.osm");
 
-/*    loadingPoint.latitude = 49.2129610;
-    loadingPoint.longitude = 18.7447602;
+//    loadingPoint.latitude = 49.2129610;
+//    loadingPoint.longitude = 18.7447602;
 
-    unloadingPoint.latitude = 49.2126778;
+/*    unloadingPoint.latitude = 49.2126778;
     unloadingPoint.longitude = 18.7439919;
 
     destinationPoint.latitude = 49.2128361;
@@ -185,7 +191,12 @@ int main(int argc, char **argv) {
     loadingPoint.longitude = 0;
     localizationAndPlanning->setDestination(loadingPoint);
 
+    destinationPoint.latitude = 48.14721;
+    destinationPoint.longitude = 17.07296;
+
     headingState = START;
+
+    say("WAITING FOR GPS");
 
     ros::spin();
 
