@@ -38,8 +38,8 @@ def prepare_image(image, window, stride):
 
 
 def callback(cv_image):
-    pub = rospy.Publisher('camera_prediction', Image, queue_size=10)
-    pub_triangle = rospy.Publisher('camera_triangles_prediction', Float64MultiArray, queue_size=10)
+    pub = rospy.Publisher('camera_prediction', Image, queue_size=1)
+    pub_triangle = rospy.Publisher('camera_triangles_prediction', Float64MultiArray, queue_size=1)
     try:
         cv_image = cv.resize(cv_image, (320, 240))
 
