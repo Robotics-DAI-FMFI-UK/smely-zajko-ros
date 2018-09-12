@@ -9,6 +9,9 @@ from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
 from smely_zajko_dataset import models
 import pyzbar.pyzbar as zbar
+from ctypes import *
+import numpy.ctypeslib as npct
+
 
 HOST = "192.168.42.129"
 #HOST = "localhost"
@@ -33,11 +36,18 @@ model = models.mlp(n_input=75, architecture=[(100, 'sigmoid'), (100, 'sigmoid'),
 #model.load_weights(
 #    '/home/nvidia/Projects/smely-zajko-ros/src/robot_control/src/scripts/smely_zajko_dataset/mlp_20_sigmoid_2_softmax.hdf5')
 
-model.load_weights(
-    '/home/nvidia/Projects/smely-zajko-ros/src/robot_control/src/scripts/smely_zajko_dataset/hsv/mlp_cat_100_sig_100_sig_2_softmax.h5')
+#model.load_weights(
+#    '/home/nvidia/Projects/smely-zajko-ros/src/robot_control/src/scripts/smely_zajko_dataset/hsv/mlp_cat_100_sig_100_sig_2_softmax.h5')
 
 #model.load_weights(
 #    '/home/nvidia/Projects/smely-zajko-ros/src/robot_control/src/scripts/smely_zajko_dataset/hsv/mlp_cat_80_sig_2_softmax.h5')
+
+model.load_weights(
+    '/home/nvidia/Projects/smely-zajko-ros/src/robot_control/src/scripts/smely_zajko_dataset/hsv/mlp_cat_80_sig_2_softmax.h5')
+
+  hsvlib = npct.load_library("librgb2hsv.so", ".")
+  array_3d_uint8t = npct.ndpointer(dtype=np.ubyte, ndim=3, flags=('CONTIGUOUS','WRITEABLE'))
+  hsvlib.rgb2hsv.argtypes = [array_3d_uint8t, c_int, c_int]
 
 
 def prepare_image(image, window, stride):
@@ -51,10 +61,14 @@ def prepare_image(image, window, stride):
 
 def callback(cv_image):
     cv_image = cv.flip(cv_image, -1)
-    pub = rospy.Publisher('camera_prediction', Image, queue_size=10)
-    pub_triangle = rospy.Publisher('camera_triangles_prediction', Float64MultiArray, queue_size=10)
+    pub = rospy.Publisher('camera_prediction', Image, queue_size=1)
+    pub_triangle = rospy.Publisher('camera_triangles_prediction', Float64MultiArray, queue_size=1)
     try:
         cv_image = cv.resize(cv_image, (640, 480))
+
+        cvi_height, cvi_width, cvi_channels = img.shape
+        hsvlib.rgb2hsv(cv_image, width, height)
+
         X = prepare_image(cv_image, window=window, stride=stride)
         # X = (X - 87.062)
         X = (X / 255.0)
