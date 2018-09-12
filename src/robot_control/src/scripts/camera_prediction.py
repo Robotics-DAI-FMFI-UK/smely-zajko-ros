@@ -9,6 +9,9 @@ from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
 from smely_zajko_dataset import models
 import pyzbar.pyzbar as zbar
+from ctypes import *
+import numpy.ctypeslib as npct
+
 
 HOST = "192.168.42.129"
 #HOST = "localhost"
@@ -39,46 +42,10 @@ model = models.mlp(n_input=75, architecture=[(80, 'sigmoid'), (2, 'softmax')],
 model.load_weights(
     '/home/nvidia/Projects/smely-zajko-ros/src/robot_control/src/scripts/smely_zajko_dataset/hsv/mlp_cat_80_sig_2_softmax.h5')
 
+  hsvlib = npct.load_library("librgb2hsv.so", ".")
+  array_3d_uint8t = npct.ndpointer(dtype=np.ubyte, ndim=3, flags=('CONTIGUOUS','WRITEABLE'))
+  hsvlib.rgb2hsv.argtypes = [array_3d_uint8t, c_int, c_int]
 
-def rgb_to_hsv(r, g, b):
-  if r > g:
-    if r > b:
-      rgb_max = r
-      if g > b:
-        rgb_min = b
-      else:
-        rgb_min = g
-    else:
-      rgb_max = b
-      rgb_min = g
-  elif g > b:
-    rgb_max = g
-    if r > b:
-      rgb_min = b
-    else:
-      rgb_min = r
-  else:
-    rgb_max = b
-    rgb_min = r
-  rgb_c = rgb_max - rgb_min
-  if rgb_c == 0:
-    h = 0
-  elif rgb_max == r:
-    h = ((g - b) / rgb_c) * 42.5
-  elif rgb_max == g:
-    h = ((b - r) / rgb_c + 2) * 42.5
-  else:
-    h = ((r - g) / rgb_c + 4) * 42.5
-  if h < 0:
-    h += 255
-  if rgb_max == 0:
-    s = 0
-  else:
-    s = 255 * (rgb_max - rgb_min) / rgb_max
-  v = rgb_max
-  return h, s, v
-
-        
 
 def prepare_image(image, window, stride):
     window_x, window_y = window
@@ -95,9 +62,9 @@ def callback(cv_image):
     pub_triangle = rospy.Publisher('camera_triangles_prediction', Float64MultiArray, queue_size=1)
     try:
         cv_image = cv.resize(cv_image, (640, 480))
-        for x in range(0, 480):
-            for y in range(0, 640):
-                cv_image[x,y,0], cv_image[x,y,1], cv_image[x,y,2] = rgb_to_hsv(cv_image[x,y,0], cv_image[x,y,1], cv_image[x,y,2])
+        cvi_height, cvi_width, cvi_channels = img.shape
+        hsvlib.rgb2hsv(cv_image, width, height)
+
         X = prepare_image(cv_image, window=window, stride=stride)
         # X = (X - 87.062)
         X = (X / 255.0)
