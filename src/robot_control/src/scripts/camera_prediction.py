@@ -22,63 +22,23 @@ stride = 5
 TRIANGLE_HEIGHT = 34
 TRIANGLE_WIDTH = 6
 
-model = models.mlp(n_input=75, architecture=[(80, 'sigmoid'), (2, 'softmax')],
-                   metrics=['accuracy'])
-
-#model = models.mlp(n_input=75, architecture=[(100, 'sigmoid'), (100, 'sigmoid'), (2, 'softmax')],
+#model = models.mlp(n_input=75, architecture=[(80, 'sigmoid'), (2, 'softmax')],
 #                   metrics=['accuracy'])
+
+model = models.mlp(n_input=75, architecture=[(100, 'sigmoid'), (100, 'sigmoid'), (2, 'softmax')],
+                   metrics=['accuracy'])
 
 
 
 #model.load_weights(
 #    '/home/nvidia/Projects/smely-zajko-ros/src/robot_control/src/scripts/smely_zajko_dataset/mlp_20_sigmoid_2_softmax.hdf5')
 
-#model.load_weights(
-#    '/home/nvidia/Projects/smely-zajko-ros/src/robot_control/src/scripts/smely_zajko_dataset/hsv/mlp_cat_100_sig_100_sig_2_softmax.h5')
-
 model.load_weights(
-    '/home/nvidia/Projects/smely-zajko-ros/src/robot_control/src/scripts/smely_zajko_dataset/hsv/mlp_cat_80_sig_2_softmax.h5')
+    '/home/nvidia/Projects/smely-zajko-ros/src/robot_control/src/scripts/smely_zajko_dataset/hsv/mlp_cat_100_sig_100_sig_2_softmax.h5')
 
+#model.load_weights(
+#    '/home/nvidia/Projects/smely-zajko-ros/src/robot_control/src/scripts/smely_zajko_dataset/hsv/mlp_cat_80_sig_2_softmax.h5')
 
-def rgb_to_hsv(r, g, b):
-  if r > g:
-    if r > b:
-      rgb_max = r
-      if g > b:
-        rgb_min = b
-      else:
-        rgb_min = g
-    else:
-      rgb_max = b
-      rgb_min = g
-  elif g > b:
-    rgb_max = g
-    if r > b:
-      rgb_min = b
-    else:
-      rgb_min = r
-  else:
-    rgb_max = b
-    rgb_min = r
-  rgb_c = rgb_max - rgb_min
-  if rgb_c == 0:
-    h = 0
-  elif rgb_max == r:
-    h = ((g - b) / rgb_c) * 42.5
-  elif rgb_max == g:
-    h = ((b - r) / rgb_c + 2) * 42.5
-  else:
-    h = ((r - g) / rgb_c + 4) * 42.5
-  if h < 0:
-    h += 255
-  if rgb_max == 0:
-    s = 0
-  else:
-    s = 255 * (rgb_max - rgb_min) / rgb_max
-  v = rgb_max
-  return h, s, v
-
-        
 
 def prepare_image(image, window, stride):
     window_x, window_y = window
@@ -95,9 +55,6 @@ def callback(cv_image):
     pub_triangle = rospy.Publisher('camera_triangles_prediction', Float64MultiArray, queue_size=10)
     try:
         cv_image = cv.resize(cv_image, (640, 480))
-        for x in range(0, 480):
-            for y in range(0, 640):
-                cv_image[x,y,0], cv_image[x,y,1], cv_image[x,y,2] = rgb_to_hsv(cv_image[x,y,0], cv_image[x,y,1], cv_image[x,y,2])
         X = prepare_image(cv_image, window=window, stride=stride)
         # X = (X - 87.062)
         X = (X / 255.0)
