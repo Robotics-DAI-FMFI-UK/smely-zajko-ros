@@ -25,8 +25,11 @@ stride = 5
 TRIANGLE_HEIGHT = 34
 TRIANGLE_WIDTH = 6
 
-model = models.mlp(n_input=75, architecture=[(80, 'sigmoid'), (2, 'softmax')],
+model = models.mlp(n_input=75, architecture=[(100, 'relu'), (100, 'relu'), (1, 'sigmoid')],
                    metrics=['accuracy'])
+
+#model = models.mlp(n_input=75, architecture=[(80, 'sigmoid'), (2, 'softmax')],
+#                   metrics=['accuracy'])
 
 #model = models.mlp(n_input=75, architecture=[(100, 'sigmoid'), (100, 'sigmoid'), (2, 'softmax')],
 #                   metrics=['accuracy'])
@@ -39,8 +42,11 @@ model = models.mlp(n_input=75, architecture=[(80, 'sigmoid'), (2, 'softmax')],
 #model.load_weights(
 #    '/home/nvidia/Projects/smely-zajko-ros/src/robot_control/src/scripts/smely_zajko_dataset/hsv/mlp_cat_100_sig_100_sig_2_softmax.h5')
 
-model.load_weights(
-    '/home/nvidia/Projects/smely-zajko-ros/src/robot_control/src/scripts/smely_zajko_dataset/hsv/mlp_cat_80_sig_2_softmax.h5')
+#model.load_weights(
+#    '/home/nvidia/Projects/smely-zajko-ros/src/robot_control/src/scripts/smely_zajko_dataset/hsv/mlp_cat_80_sig_2_softmax.h5')
+
+model.load_weights('/home/nvidia/Projects/smely-zajko-ros/src/robot_control/src/scripts/smely_zajko_dataset/wednesday/mlp_100_relu_100_relu_1_sig.h5')
+
 
 hsvlib = npct.load_library("librgb2hsv.so", "/home/nvidia/Projects/smely-zajko-ros/src/robot_control/src/scripts")
 array_3d_uint8t = npct.ndpointer(dtype=np.ubyte, ndim=3, flags=('CONTIGUOUS','WRITEABLE'))
@@ -70,10 +76,13 @@ def callback(cv_image):
         # X = (X - 87.062)
         X = (X / 255.0)
         y_pred = model.predict(X)
-        prediction_mask = (255 - (y_pred[:, 1].reshape(96, 128) * 255)).astype('uint8')
+        #prediction_mask = (255 - (y_pred[:, 1].reshape(96, 128) * 255)).astype('uint8')
+        prediction_mask = (y_pred.reshape(96, 128) * 255).astype('uint8')
+
+        # nove:
+        # prediction_mask =  (y_pred.reshape(96, 128) * 255).astype('uint8')
 
         # print(prediction_mask.max(), prediction_mask.min(), prediction_mask.mean())
-    
 	
         out = []
         for i in range(2, 64, TRIANGLE_WIDTH):
