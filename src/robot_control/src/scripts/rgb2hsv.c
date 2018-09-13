@@ -46,9 +46,10 @@ static void bgr_to_hsv(uint8_t *p)
   else s = (uint8_t)((rgb_max - rgb_min) / (double)rgb_max * 255);
   v = rgb_max;
 
-  *(p--) = v;
+  // tried: *vsh, svh, shv, *vhs, hvs, hsv,
+  *(p--) = h;
   *(p--) = s;
-  *p = h; 
+  *p = v; 
 }
 
 

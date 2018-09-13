@@ -30,6 +30,10 @@ $ rosdep update
 ```
 For more information follow ROS Kinetic [installation manual](http://wiki.ros.org/kinetic/Installation/Ubuntu).
 
+### RapidXML
+
+$ sudo apt install librapidxml-dev
+
 ### Setting up CLion
 
 ```{r, engine='bash', count_lines}
