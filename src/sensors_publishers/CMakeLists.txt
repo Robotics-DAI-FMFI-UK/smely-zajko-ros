@@ -117,7 +117,7 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(include ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
+include_directories(include ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} /usr/local/rplidar/sdk/sdk/include)
 
 ## Declare a C++ library
 # add_library(sensors_publishers
@@ -130,20 +130,15 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 # add_dependencies(sensors_publishers ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(sbot_publisher_node src/sbot_publisher_node.cpp ../robot_shared_libs/src/sbot/AbstractSbot.h ../robot_shared_libs/src/sbot/Sbot.cpp ../robot_shared_libs/src/sbot/Sbot.h)
-add_dependencies(sbot_publisher_node message_types_gencpp)
-
 add_executable(hokuyo_publisher_node
         src/hokuyo_publisher_node.cpp src/hokuyo/AbstractHokuyo.h
         src/hokuyo/Hokuyo.cpp src/hokuyo/Hokuyo.h
         src/hokuyo/HokuyoSynthetic.cpp src/hokuyo/HokuyoSynthetic.h src/hokuyo/HokuyoFiles.cpp src/hokuyo/HokuyoFiles.h)
 
-add_executable(hokuyo_subscriber_node src/hokuyo_subscriber_node.cpp)
+#add_executable(rplidar_publisher_node src/rplidar_publisher_node.cpp src/rplidar/RpLidar.cpp)
+#add_dependencies(rplidar_publisher_node message_types_gencpp)
 
-add_executable(camera_publisher_node
-        src/camera_publisher_node.cpp src/camera/AbstractCamera.h
-        src/camera/CameraAvi.cpp src/camera/CameraAvi.h
-        src/camera/Camera.cpp src/camera/Camera.h)
+add_executable(hokuyo_subscriber_node src/hokuyo_subscriber_node.cpp)
 
 add_executable(gps_publisher_node src/gps_publisher_node.cpp src/gps/AbstractGps.h src/gps/Gps.cpp src/gps/Gps.h src/gps/GpsFiles.cpp src/gps/GpsFiles.h src/gps/GpsPoints.cpp src/gps/GpsPoints.h)
 add_executable(gps_mock_publisher_node src/gps_mock_publisher_node.cpp src/gps/AbstractGps.h src/gps/Gps.cpp src/gps/Gps.h src/gps/GpsFiles.cpp src/gps/GpsFiles.h src/gps/GpsPoints.cpp src/gps/GpsPoints.h)
@@ -156,10 +151,9 @@ add_executable(imu_publisher_node src/imu_publisher_node.cpp src/imu/AbstractImu
 # add_dependencies(sbot_publisher_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(sbot_publisher_node ${catkin_LIBRARIES})
 target_link_libraries(hokuyo_publisher_node ${catkin_LIBRARIES})
+#target_link_libraries(rplidar_publisher_node ${catkin_LIBRARIES} rplidar_sdk)
 target_link_libraries(hokuyo_subscriber_node ${catkin_LIBRARIES})
-target_link_libraries(camera_publisher_node ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 target_link_libraries(gps_publisher_node ${catkin_LIBRARIES})
 target_link_libraries(gps_mock_publisher_node ${catkin_LIBRARIES})
 target_link_libraries(gps_subscriber_node ${catkin_LIBRARIES})

@@ -141,7 +141,7 @@ int main(int argc, char **argv) {
     ros::NodeHandle nh;
     ros::Subscriber gps_subscriber = nh.subscribe("/sensors/gps_publisher", 1, gpsCallback);
 
-    ros::Subscriber sbot_subscriber = nh.subscribe("/sensors/sbot_publisher", 10, sbotCallback);
+    ros::Subscriber sbot_subscriber = nh.subscribe("/control/base_data", 10, sbotCallback);
 
     ros::Subscriber target_subscriber = nh.subscribe("/control/camera_qr_target", 1, targetCallback);
 

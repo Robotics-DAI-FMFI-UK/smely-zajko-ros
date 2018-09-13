@@ -9,10 +9,13 @@ int main(int argc, char **argv) {
     ros::NodeHandle nh;
     ros::Publisher sbot_publisher = nh.advertise<message_types::SbotMsg>("sbot_publisher", 10);
 
-    ros::Rate loop_rate(10);
+    ros::Rate loop_rate(20);
 
     AbstractSbot *sbot = new Sbot();
-    sbot->init();
+    if (sbot->init() != 0) {
+        ROS_ERROR("sbot_publisher not started");
+        return 1;
+    }
 
     ros::Duration(0.5).sleep();
 
@@ -27,6 +30,7 @@ int main(int argc, char **argv) {
             loop_rate.sleep();
         //}
     }
+    sbot->shutdown();
 
     return 0;
 }

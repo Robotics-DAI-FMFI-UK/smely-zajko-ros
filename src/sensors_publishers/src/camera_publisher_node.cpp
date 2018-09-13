@@ -35,11 +35,11 @@ int main(int argc, char **argv) {
                 msg = cv_bridge::CvImage(std_msgs::Header(), sensor_msgs::image_encodings::BGRA8, image).toImageMsg();
                 camera_publisher.publish(msg);
             }
-
-            ros::spinOnce();
-
-            loop_rate.sleep();
         }
+
+        ros::spinOnce();
+
+        loop_rate.sleep();
     }
 
     return 0;

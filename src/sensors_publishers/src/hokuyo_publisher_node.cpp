@@ -11,7 +11,7 @@ int main(int argc, char **argv) {
 
     ros::init(argc, argv, "hokuyo_publisher");
     ros::NodeHandle nh;
-    ros::Publisher hokuyo_publisher = nh.advertise<std_msgs::Int32MultiArray>("hokuyo_publisher", 100);
+    ros::Publisher hokuyo_publisher = nh.advertise<std_msgs::Int32MultiArray>("hokuyo_publisher", 1);
 
     ros::Rate loop_rate(10);
 
@@ -25,11 +25,11 @@ int main(int argc, char **argv) {
             hokuyo->readData();
 
             hokuyo_publisher.publish(hokuyo->getData());
-
-            ros::spinOnce();
-
-            loop_rate.sleep();
         }
+
+        ros::spinOnce();
+
+        loop_rate.sleep();
     }
 
     return 0;

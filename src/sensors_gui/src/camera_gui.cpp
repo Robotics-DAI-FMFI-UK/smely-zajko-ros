@@ -8,13 +8,13 @@ double direction;
 IplImage *direction_image;
 
 void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
-    try {
-        cv::imshow("camera_gui", cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGRA8)->image);
-        cv::waitKey(30);
-    }
-    catch (cv_bridge::Exception &e) {
-        ROS_ERROR("Could not convert from '%s' to 'bgra8'.", msg->encoding.c_str());
-    }
+//    try {
+//        cv::imshow("camera_gui", cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGRA8)->image);
+//        cv::waitKey(30);
+//    }
+//    catch (cv_bridge::Exception &e) {
+//        ROS_ERROR("Could not convert from '%s' to 'bgra8'.", msg->encoding.c_str());
+//    }
 }
 
 void directionCallback(const std_msgs::Float64ConstPtr &dir) {
@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "camera_gui");
     ros::NodeHandle nh;
 
-    cv::namedWindow("camera_gui");
+//    cv::namedWindow("camera_gui");
     cv::namedWindow("prediction_gui");
     cv::namedWindow("direction");
 
@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
     ros::Subscriber directionSubscriber = nh.subscribe("/control/directionPublisher", 1, directionCallback);
     ros::spin();
 
-    cv::destroyWindow("camera_gui");
+//    cv::destroyWindow("camera_gui");
     cv::destroyWindow("prediction_gui");
     cv::destroyWindow("direction");
 

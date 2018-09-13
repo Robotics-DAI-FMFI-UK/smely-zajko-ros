@@ -52,6 +52,8 @@ add_message_files(
   GpsAngles.msg
   HeadingState.msg
   HokuyoObstacle.msg
+  RpLidarObstacle.msg
+  SteeringMsg.msg
 )
 
 ## Generate services in the 'srv' folder

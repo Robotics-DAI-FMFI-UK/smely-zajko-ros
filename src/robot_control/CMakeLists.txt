@@ -141,9 +141,7 @@ include_directories(
 
 ## Declare a C++ executable
 add_executable(robot_control src/robot_control.cpp
-        src/robot/AbstractRobot.h
         src/robot/Robot.cpp src/robot/Robot.h
-        ../robot_shared_libs/src/sbot/AbstractSbot.h
         ../robot_shared_libs/src/sbot/Sbot.cpp ../robot_shared_libs/src/sbot/Sbot.h
         )
 
@@ -151,13 +149,22 @@ add_executable(localization_and_planning src/localization_and_planning.cpp
         src/localizationAndPlanning/LocalizationAndPlanning.cpp src/localizationAndPlanning/LocalizationAndPlanning.h
         )
 
+add_executable(local_map src/local_map_steering.cpp
+        src/localMap/LocalMap.cpp src/localMap/LocalMap.h)
+
 add_executable(hokuyo_algo src/hokuyo_algo.cpp
         src/hokuyo_algos/openPath/OpenPath.cpp src/hokuyo_algos/openPath/OpenPath.h src/hokuyo_algos/basicAlgo/BasicAlgo.cpp src/hokuyo_algos/basicAlgo/BasicAlgo.h src/hokuyo_algos/previousAlgo/PreviousAlgo.cpp src/hokuyo_algos/previousAlgo/PreviousAlgo.h)
 
+add_executable(base_handler src/base_handler.cpp
+        src/robot/Robot.cpp src/robot/Robot.h
+        ../robot_shared_libs/src/sbot/Sbot.cpp ../robot_shared_libs/src/sbot/Sbot.h
+        )
 
 add_dependencies(robot_control message_types_generate_messages_cpp)
 add_dependencies(localization_and_planning message_types_generate_messages_cpp)
+add_dependencies(local_map message_types_generate_messages_cpp)
 add_dependencies(hokuyo_algo message_types_generate_messages_cpp)
+add_dependencies(base_handler message_types_generate_messages_cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -167,7 +174,9 @@ add_dependencies(hokuyo_algo message_types_generate_messages_cpp)
 ## Specify libraries to link a library or executable target against
 target_link_libraries(robot_control ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 target_link_libraries(localization_and_planning ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+target_link_libraries(local_map ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 target_link_libraries(hokuyo_algo ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+target_link_libraries(base_handler ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
 #############
 ## Install ##

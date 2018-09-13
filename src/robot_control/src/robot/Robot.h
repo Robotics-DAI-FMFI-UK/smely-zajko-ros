@@ -2,18 +2,20 @@
 #define PROJECT_ROBOT_H
 
 
-#include "AbstractRobot.h"
 #include "ros/ros.h"
 #include "../../../robot_shared_libs/src/sbot/Sbot.h"
 #include <stdio.h>
 #include <string.h>
 #include <string>
 #include <unistd.h>
+#include "message_types/SbotMsg.h"
 
-class Robot : public AbstractRobot {
+
+class Robot {
     Sbot *sbot;
+    ros::Publisher publisher;
 public:
-    Robot();
+    Robot(ros::Publisher publisher);
 
     void send_command(const char *command);
 
@@ -28,6 +30,15 @@ public:
     void unblock();
 
     void ignore_obstacle(bool val);
+
+    void publish();
+  
+    void get_latest_data(message_types::SbotMsg *msg);
+
+    void shutdown();
+
+private:
+    bool isInit;
 };
 
 

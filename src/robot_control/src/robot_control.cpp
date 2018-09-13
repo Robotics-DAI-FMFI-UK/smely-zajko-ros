@@ -12,8 +12,7 @@
 #include "message_types/GpsAngles.h"
 #include "message_types/HeadingState.h"
 #include "message_types/HokuyoObstacle.h"
-
-AbstractRobot *robot;
+#include "message_types/SteeringMsg.h"
 
 message_types::SbotMsg sbot_msg;
 message_types::GpsAngles gps_msg;
@@ -25,6 +24,8 @@ std::vector<double> hokuyo_algo_msg;
 std::vector<double> camera_prediction_msg;
 
 ros::Publisher directionPublisher;
+
+ros::Publisher steeringPublisher;
 
 const int START = 0;
 const int HEADING_LOADING = 1;
@@ -52,6 +53,12 @@ void imuCallback(const sensor_msgs::Imu &msg) {
     imu_msg = msg;
 }
 
+void sendSteeringMsg(int direction, int speed) {
+    message_types::SteeringMsg steering_msg;
+    steering_msg.direction = direction;
+    steering_msg.speed = speed;
+    steeringPublisher.publish(steering_msg);
+}
 
 void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
     try {
@@ -176,14 +183,12 @@ int move() {
         wrong_dir = 1;
         if (delta > 0) {
             if (autonomy) {
-                robot->set_direction(80);
-                robot->set_speed(1);
+                sendSteeringMsg(80, 1);
             }
             display_direction = 5;
         } else {
             if (autonomy) {
-                robot->set_direction(-80);
-                robot->set_speed(1);
+                sendSteeringMsg(-80, 1);
             }
             display_direction = -5;
         }
@@ -198,14 +203,12 @@ int move() {
         // printf("!!!!!!!!!!!!!!!!!!!!!!! Chodnik missing searching..\n");
         if (delta > 0) {
             if (autonomy) {
-                robot->set_direction(40);
-                robot->set_speed(-1);
+                sendSteeringMsg(40, -1);
             }
             display_direction = 5;
         } else {
             if (autonomy) {
-                robot->set_direction(-40);
-                robot->set_speed(-1);
+                sendSteeringMsg(-40, -1);
             }
             display_direction = -5;
         }
@@ -245,6 +248,7 @@ int move() {
 
         int sdir = (maxdir - 5) * 8;
         // sdir -= 3;
+
         if (sbot_msg.away_from_left)
             sdir += 20;
         if (sdir > 40)
@@ -262,13 +266,12 @@ int move() {
         computed_dir = sdir;
 
         if (autonomy) {
-            robot->set_direction(predicted_dir);
             // printf("%.10f %.10f\n", angles.dstToHeadingPoint, speed_down_dst);
             if (gps_msg.dstToHeadingPoint <= speed_down_dst) {
-                robot->set_speed(7);
+                sendSteeringMsg(predicted_dir, 7);
                 // printf("setSpeed: 7\n");
             } else {
-                robot->set_speed(10);
+                sendSteeringMsg(predicted_dir, 10);
                 // printf("setSpeed: 10\n");
             }
         }
@@ -285,13 +288,13 @@ int move() {
 
 void avoid_obstacle(ros::Rate *loop_rate)
 {
-    robot->set_direction(0);
-    robot->set_speed(0);
-    
+    sendSteeringMsg(0, 0);
+
     say("step away, please");
     // wait for the obstacle to go away
     int waiting = 0;
-    while (waiting < 600)
+    int not_see_counter = 0;
+    while (waiting < 400)
     {
       if (ros::ok())
       {
@@ -299,16 +302,25 @@ void avoid_obstacle(ros::Rate *loop_rate)
         loop_rate->sleep();
       } 
       waiting++;
-      if (!hokuyo_sees_obstacle) return;
+      if (!hokuyo_sees_obstacle) 
+      {
+         not_see_counter++;
+         if (not_see_counter > 20)
+         {
+           say("thanks");
+           return;
+         }
+      }
+      else not_see_counter = 0;
     } 
 
-    say("beep peep deep");
+    say("watch out behind me");
     // obstacle is still in front of us after 30 seconds, try backing up a little bit
-    robot->set_speed(-4);
+    sendSteeringMsg(0, -4);
     waiting = 0;
     
     // just a couple of seconds of backing up
-    while (waiting < 80)
+    while (waiting < 90)
     {
       if (ros::ok())
       {
@@ -323,7 +335,7 @@ void avoid_obstacle(ros::Rate *loop_rate)
 int main(int argc, char **argv) {
     ros::init(argc, argv, "ros_control");
     ros::NodeHandle nh;
-    ros::Subscriber sbot_subscriber = nh.subscribe("/sensors/sbot_publisher", 10, sbotCallback);
+    ros::Subscriber sbot_subscriber = nh.subscribe("/control/base_data", 3, sbotCallback);
     ros::Subscriber localization_and_planning_subscriber = nh.subscribe("localization_and_planning", 10,
                                                                         localizationAndPlanningCallback);
     ros::Subscriber hokuyo_algo_subscriber = nh.subscribe("basic_algo", 10, hokuyoAlgoCallback);
@@ -331,41 +343,38 @@ int main(int argc, char **argv) {
     ros::Subscriber camera_prediction_traingle_subscriber = nh.subscribe("/control/camera_triangles_prediction", 10,
                                                                          cameraPredictionCallback);
 
+    steeringPublisher = nh.advertise<message_types::SteeringMsg>("/control/steering", 3);
+
 //    image_transport::ImageTransport it(nh);
 //    image_transport::Subscriber sub = it.subscribe("/sensors/camera/image", 1, imageCallback);
 
     directionPublisher = nh.advertise<std_msgs::Float64>("directionPublisher", 10);
 
-    robot = new Robot();
-
     ros::Rate loop_rate(20);
 
     int index = 0;
     while (ros::ok()) {
-        if (robot != NULL) {
+        // printf("CURRENT STATE: %d PAYLOAD: %f\n", gps_msg.headingState, sbot_msg.payload);
 
-            // printf("CURRENT STATE: %d PAYLOAD: %f\n", gps_msg.headingState, sbot_msg.payload);
-
-            if (previousState == LOADING && gps_msg.headingState == HEADING_UNLOADING ||
-                previousState == UNLOADING && gps_msg.headingState == HEADING_DEST) {
-                ros::Duration(3).sleep();
-            }
-
-            if (gps_msg.headingState == START ||
-                gps_msg.headingState == LOADING ||
-                gps_msg.headingState == UNLOADING ||
-                gps_msg.headingState == END) {
-                robot->set_direction(0);
-                robot->set_speed(0);
-            } else {
-                if (hokuyo_sees_obstacle)
-                   avoid_obstacle(&loop_rate);
-                else     
-                   move();
-            }
-
-            previousState = gps_msg.headingState;
+        if (previousState == LOADING && gps_msg.headingState == HEADING_UNLOADING ||
+            previousState == UNLOADING && gps_msg.headingState == HEADING_DEST) {
+            ros::Duration(3).sleep();
         }
+
+        if (gps_msg.headingState == START ||
+            gps_msg.headingState == LOADING ||
+            gps_msg.headingState == UNLOADING ||
+            gps_msg.headingState == END) {
+            sendSteeringMsg(0, 0);
+        } else {
+            if (hokuyo_sees_obstacle)
+               avoid_obstacle(&loop_rate);
+            else
+               move();
+        }
+
+        previousState = gps_msg.headingState;
+
         ros::spinOnce();
 
         loop_rate.sleep();

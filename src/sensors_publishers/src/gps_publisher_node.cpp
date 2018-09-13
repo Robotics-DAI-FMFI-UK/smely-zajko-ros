@@ -25,10 +25,11 @@ int main(int argc, char **argv) {
             if (g.latitude) {
                 gps_publisher.publish(g);
             }
-            ros::spinOnce();
-
-            loop_rate.sleep();
         }
+
+        ros::spinOnce();
+
+        loop_rate.sleep();
     }
 
     return 0;

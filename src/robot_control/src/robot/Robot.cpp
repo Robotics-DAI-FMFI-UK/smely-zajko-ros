@@ -1,13 +1,16 @@
+#include <stdio.h>
 #include "Robot.h"
 
 using namespace std;
 
-Robot::Robot() {
+Robot::Robot(ros::Publisher publisher) {
+    this->publisher = publisher;
     sbot = new Sbot();
-    sbot->init();
+    isInit = (sbot->init() == 0);
 }
 
 void Robot::send_command(const char *command) {
+    if (!isInit) return;
     write(sbot->fdR[1], command, strlen(command));
 }
 
@@ -45,3 +48,20 @@ void Robot::unblock() {
 void Robot::ignore_obstacle(bool val) {
     send_command(val ? "i;" : "o;");
 }
+
+void Robot::publish() 
+{
+   message_types::SbotMsg msg;
+   sbot->getData(&msg); 
+   publisher.publish(msg);
+}
+
+void Robot::get_latest_data(message_types::SbotMsg *msg)
+{
+   sbot->getData(msg);
+}
+
+void Robot::shutdown() {
+    sbot->shutdown();
+}
+

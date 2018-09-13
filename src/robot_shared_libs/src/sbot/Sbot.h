@@ -1,23 +1,27 @@
 #ifndef PROJECT_SBOT_H
 #define PROJECT_SBOT_H
 
-#include "AbstractSbot.h"
-
 #include"ros/ros.h"
+#include "message_types/SbotMsg.h"
 
-class Sbot : public AbstractSbot {
+class Sbot {
     int fdW[2];
     int child;
     pthread_mutex_t m_read;
     message_types::SbotMsg result;
+    int running;
+
+    friend void *base_module_thread(void *arg);
+
 public:
     int fdR[2];
 
-    void init();
+    int init();
 
-    void readData();
+    void getData(message_types::SbotMsg *result);
 
-    message_types::SbotMsg getData();
+    void shutdown();
+
 };
 
 
