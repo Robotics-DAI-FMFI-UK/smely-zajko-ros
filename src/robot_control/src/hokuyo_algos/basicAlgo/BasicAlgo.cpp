@@ -79,7 +79,7 @@ uint8_t detect_obstacle(int arr[1081])
     {
       if (arr[i] <= 330) obs++;
       else if (obs) obs--;
-      if (obs > 3) return 1;
+      if (obs > 5) return 1;
     }
     return 0;
 }

@@ -39,7 +39,7 @@ static void bgr_to_hsv(uint8_t *p)
   if (rgb_c == 0) h = 0;
   else if (rgb_max == r) hD = (g - b) * 42.5 / rgb_c;
   else if (rgb_max == g) hD = (b - r) * 42.5 / rgb_c + 85;
-  else hD = (r - g) / rgb_c * 42.5 + 170;
+  else hD = (r - g) * 42.5 / rgb_c + 170;
   if (hD < 0) h = (uint8_t)(hD + 255);
   else h = (uint8_t)hD;
   if (rgb_max == 0) s = 0;

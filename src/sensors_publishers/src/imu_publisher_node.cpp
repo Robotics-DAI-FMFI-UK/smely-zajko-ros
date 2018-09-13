@@ -7,7 +7,7 @@
 int main(int argc, char **argv) {
     ros::init(argc, argv, "imu_publisher");
     ros::NodeHandle nh;
-    ros::Publisher imu_publisher = nh.advertise<sensor_msgs::Imu>("imu_publisher", 100);
+    ros::Publisher imu_publisher = nh.advertise<sensor_msgs::Imu>("imu_publisher", 1);
 
     AbstractImu *imu = new Imu();
     imu->init();
@@ -21,11 +21,11 @@ int main(int argc, char **argv) {
             imu->readData();
 
             imu_publisher.publish(imu->getData());
-
-            ros::spinOnce();
-
-            loop_rate.sleep();
         }
+
+        ros::spinOnce();
+
+        loop_rate.sleep();
     }
 
     return 0;
