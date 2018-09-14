@@ -7,6 +7,7 @@ Robot::Robot(ros::Publisher publisher) {
     this->publisher = publisher;
     sbot = new Sbot();
     isInit = (sbot->init() == 0);
+    startThread();
 }
 
 void Robot::send_command(const char *command) {
@@ -65,3 +66,21 @@ void Robot::shutdown() {
     sbot->shutdown();
 }
 
+void* publisher_thread(void* args) {
+    Robot* me = (Robot*) args;
+    ros::Rate loop_rate(20);
+    while (ros::ok()) {
+        me->publish();
+        loop_rate.sleep();
+    }
+}
+
+void Robot::startThread() {
+    pthread_t t;
+    if (pthread_create(&t, 0, publisher_thread, this) != 0)
+    {
+        perror("robot publisher");
+        printf("creating publisher thread\n");
+    }
+
+}
