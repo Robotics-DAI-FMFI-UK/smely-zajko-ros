@@ -4,6 +4,7 @@ import rospy, socket, struct, re
 import cv2 as cv
 from sensor_msgs.msg import Image, NavSatFix
 from std_msgs.msg import Float64MultiArray, UInt8
+from std_msgs.msg import UInt8MultiArray
 from skimage.util.shape import view_as_windows
 from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
@@ -24,6 +25,9 @@ stride = 5
 
 TRIANGLE_HEIGHT = 34
 TRIANGLE_WIDTH = 6
+
+pub_eval = 0
+counterr = 0
 
 model = models.mlp(n_input=75, architecture=[(100, 'relu'), (100, 'relu'), (1, 'sigmoid')],
                    metrics=['accuracy'])
@@ -50,8 +54,15 @@ model.load_weights('/home/nvidia/Projects/smely-zajko-ros/src/robot_control/src/
 
 hsvlib = npct.load_library("librgb2hsv.so", "/home/nvidia/Projects/smely-zajko-ros/src/robot_control/src/scripts")
 array_3d_uint8t = npct.ndpointer(dtype=np.ubyte, ndim=3, flags=('CONTIGUOUS','WRITEABLE'))
+array_2d_float64 = npct.ndpointer(dtype=np.float64, ndim=2, flags=('CONTIGUOUS','WRITEABLE'))
+array_2d_uint8t = npct.ndpointer(dtype=np.ubyte, ndim=2, flags=('CONTIGUOUS','WRITEABLE'))
+array_1d_uint8t = npct.ndpointer(dtype=np.ubyte, ndim=1, flags=('CONTIGUOUS','WRITEABLE'))
 hsvlib.rgb2hsv.argtypes = [array_3d_uint8t, c_int, c_int]
-
+hsvlib.init.argtypes = [array_3d_uint8t]
+hsvlib.evaluate.argtypes = [array_3d_uint8t, array_2d_uint8t, c_int, c_int]
+positive_img = cv.imread("/home/nvidia/Projects/smely-zajko-ros/src/robot_control/src/scripts/positive.png");
+hsvlib.init(positive_img)
+evaluated_img = np.zeros((60,60), np.uint8)
 
 def prepare_image(image, window, stride):
     window_x, window_y = window
@@ -63,15 +74,32 @@ def prepare_image(image, window, stride):
 
 
 def callback(cv_image):
+    global counterr
     cv_image = cv.flip(cv_image, -1)
     pub = rospy.Publisher('camera_prediction', Image, queue_size=1)
     pub_triangle = rospy.Publisher('camera_triangles_prediction', Float64MultiArray, queue_size=1)
+    pub_eval = rospy.Publisher('/sensors/camera/evaluated_image', UInt8MultiArray, queue_size=3)
     try:
         cv_image = cv.resize(cv_image, (640, 480))
         
         cvi_height, cvi_width, cvi_channels = cv_image.shape
         hsvlib.rgb2hsv(cv_image, cvi_width, cvi_height)
+        hsvlib.evaluate(cv_image, evaluated_img, cvi_width, cvi_height)
         
+        print("publishing evaluated image" + str(counterr))
+        counterr += 1
+        eval_msg = UInt8MultiArray()
+
+        evalout = []
+        for i in range(0, 60):
+          for j in range(0, 60):
+            evalout.append(evaluated_img[i][j])
+
+        eval_msg.data = evalout
+        pub_eval.publish(eval_msg)
+     
+        print("published evaluated image")
+
         X = prepare_image(cv_image, window=window, stride=stride)
         # X = (X - 87.062)
         X = (X / 255.0)
@@ -143,7 +171,9 @@ def recv_n(sock, n):
     return data
 
 def main():
+    global pub_eval
     rospy.init_node('camera_predictor', anonymous=True)
+    pub_eval = rospy.Publisher('/sensors/camera/evaluated_image', UInt8MultiArray, queue_size=3)
 
 #    rospy.Subscriber('/sensors/camera/image', Image, callback)
     rospy.Subscriber('/control/camera_action', UInt8, setAction)

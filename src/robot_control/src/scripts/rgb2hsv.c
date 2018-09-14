@@ -3,8 +3,9 @@
 
 static void bgr_to_hsv(uint8_t *p)
 {
-  uint8_t rgb_max, rgb_min, rgb_c, r, g, b, h, s, v;
+  uint8_t h, s, v;
   double hD;
+  double r, g, b, rgb_c, rgb_max, rgb_min;
 
   b = *(p++);
   g = *(p++);
@@ -36,17 +37,19 @@ static void bgr_to_hsv(uint8_t *p)
     rgb_min = r;
   }
   rgb_c = rgb_max - rgb_min;
-  if (rgb_c == 0) h = 0;
+  if (rgb_c == 0) hD = 0;
   else if (rgb_max == r) hD = (g - b) * 42.5 / rgb_c;
   else if (rgb_max == g) hD = (b - r) * 42.5 / rgb_c + 85;
   else hD = (r - g) * 42.5 / rgb_c + 170;
-  if (hD < 0) h = (uint8_t)(hD + 255);
-  else h = (uint8_t)hD;
+  if (hD < 0) hD += 255;
+  h = (uint8_t)(hD + 0.5);
   if (rgb_max == 0) s = 0;
-  else s = (uint8_t)((rgb_max - rgb_min) / (double)rgb_max * 255);
+  else s = (uint8_t)(0.5 + (rgb_max - rgb_min) / (double)rgb_max * 255.0);
   v = rgb_max;
 
-  // tried: *vsh, svh, shv, *vhs, hvs, hsv,
+//  *(p--) = r / 2;
+//  *(p--) = g;
+//  *p = b; 
   *(p--) = h;
   *(p--) = s;
   *p = v; 
