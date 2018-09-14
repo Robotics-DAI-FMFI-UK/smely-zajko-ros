@@ -95,27 +95,42 @@ void gpsCallback(const sensor_msgs::NavSatFix &gps) {
             setState(LOADING);
             resetTarget();
             setCameraAction(DETECT_QR);
-        } else if (headingState == LOADING && sbot_msg.payload == FULL && targetValid) {
-            printf("HEADING_UNLOADING\n");
-            say("HEADING UNLOADING");
+        } else if (headingState == LOADING) {
+            if (sbot_msg.payload == FULL && targetValid) {
+                printf("HEADING_UNLOADING\n");
+                say("HEADING UNLOADING");
 
-            localizationAndPlanning->setDestination(newTarget);
-            setState(HEADING_UNLOADING);
-            setCameraAction(DETECT_ROAD);
+                localizationAndPlanning->setDestination(newTarget);
+                setState(HEADING_UNLOADING);
+                setCameraAction(DETECT_ROAD);
+            } else {
+                setCameraAction(DETECT_QR);
+                if (spamCounter == 0) {
+                    if (sbot_msg.payload != FULL) say("LOADING");
+                    else say("WAITING FOR QR CODE");
+                }
+                spamCounter++;
+                if (spamCounter > 10) spamCounter = 0;
+            }
         } else if (headingState == HEADING_UNLOADING) {
             printf("UNLOADING\n");
             say("UNLOADING");
 
             setState(UNLOADING);
             resetTarget();
-            setCameraAction(DETECT_QR);
-        } else if (headingState == UNLOADING && sbot_msg.payload == EMPTY) {
-            printf("HEADING_DEST\n");
-            say("HEADING DESTINATION");
+        } else if (headingState == UNLOADING) {
+            if (sbot_msg.payload == EMPTY) {
+                printf("HEADING_DEST\n");
+                say("HEADING DESTINATION");
 
-            localizationAndPlanning->setDestination(destinationPoint);
-            setState(HEADING_DEST);
-            setCameraAction(DETECT_ROAD);
+                localizationAndPlanning->setDestination(destinationPoint);
+                setState(HEADING_DEST);
+                setCameraAction(DETECT_ROAD);
+            } else {
+                if (spamCounter == 0) say("UNLOADING");
+                spamCounter++;
+                if (spamCounter > 10) spamCounter = 0;
+            }
         } else if (headingState == HEADING_DEST) {
             printf("FINISH\n");
             setState(END);
