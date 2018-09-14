@@ -101,7 +101,7 @@ void RpLidar::get_data(lidar_data_type *buffer)
 
 void *lidar_thread(void *args)
 {
-    RpLidar *me = args[0];
+    RpLidar *me =  (RpLidar *) args;
 
     while (me->program_runs)
     {
@@ -123,7 +123,7 @@ void *lidar_thread(void *args)
         }
 
         u_result ans;    
-        int local_data_count = MAX_LIDAR_DATA_COUNT;
+        size_t local_data_count = MAX_LIDAR_DATA_COUNT;
 
         // fetech extactly one 0-360 degrees' scan
         ans = me->drv->grabScanData(me->local_data, local_data_count);
@@ -140,7 +140,7 @@ void *lidar_thread(void *args)
         usleep(45000);
     }
 
-    me->get->stop();
+    me->drv->stop();
     me->drv->stopMotor();
 
     RPlidarDriver::DisposeDriver(me->drv);

@@ -18,6 +18,8 @@ message_types::SbotMsg sbot_msg;
 message_types::GpsAngles gps_msg;
 message_types::HeadingState state_msg;
 
+double local_map_heading;
+
 sensor_msgs::Imu imu_msg;
 cv::Mat image;
 std::vector<double> hokuyo_algo_msg;
@@ -40,6 +42,10 @@ int previousState = -1;
 int direction = 0;
 
 static volatile int8_t hokuyo_sees_obstacle;
+
+void localMapCallback(const std_msgs::Float64 &msg) {
+    local_map_heading = msg.data;
+}
 
 void sbotCallback(const message_types::SbotMsg &msg) {
     sbot_msg = msg;
@@ -342,6 +348,8 @@ int main(int argc, char **argv) {
     ros::Subscriber imu_subscriber = nh.subscribe("/sensors/imu_publisher", 10, imuCallback);
     ros::Subscriber camera_prediction_traingle_subscriber = nh.subscribe("/control/camera_triangles_prediction", 10,
                                                                          cameraPredictionCallback);
+
+    ros::Subscriber local_map_subscriber = nh.subscribe("/control/local_map", 10, localMapCallback);
 
     steeringPublisher = nh.advertise<message_types::SteeringMsg>("/control/steering", 3);
 

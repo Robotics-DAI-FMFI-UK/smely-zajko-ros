@@ -149,7 +149,8 @@ int main(int argc, char **argv) {
     cameraActionPublisher = nh.advertise<std_msgs::UInt8>("/control/camera_action", 10);
 
     //localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/zilina.osm");
-    localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/botanicka.osm");
+    localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/lednice_hom.osm");
+//    localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/botanicka.osm");
 //    localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/homologacie_fei.osm");
 
 //    loadingPoint.latitude = 49.2129610;
@@ -187,8 +188,8 @@ int main(int argc, char **argv) {
     */
 
     // default bod aby LocalizationAndPlanning nerobilo chyby kym sa caka na QRkod
-    loadingPoint.latitude = 0;
-    loadingPoint.longitude = 0;
+    loadingPoint.latitude = 48.14703;
+    loadingPoint.longitude = 17.07314;
     localizationAndPlanning->setDestination(loadingPoint);
 
     destinationPoint.latitude = 48.14721;

@@ -848,6 +848,23 @@ message_types::GpsAngles LocalizationAndPlanning::update(sensor_msgs::NavSatFix 
     // bearing in degrees to heading point
     result.map = calc_bearing(curPoint, headingPoint);
 
+    if (bestWay.size() > 1) {
+        result.currWayHeading = calc_bearing(points.at(bestWay[bestWay.size() - 1]),
+                                             points.at(bestWay[bestWay.size() - 2]));
+        if (bestWay.size() > 2) {
+            result.nextWayHeading = calc_bearing(points.at(bestWay[bestWay.size() - 2]),
+                                                 points.at(bestWay[bestWay.size() - 3]));
+        } else {
+            result.nextWayHeading = result.currWayHeading;
+        }
+
+        result.distToWayEnd = distance(curPoint, points.at(bestWay[bestWay.size() - 2]));
+    } else {
+        result.currWayHeading = 0;
+        result.nextWayHeading = 0;
+        result.distToWayEnd = 0;
+    }
+
     if (result.dstToFin < 0.002) { // dst v km
         ROS_INFO("SME V CIELI ( %f m ) \n", result.dstToFin * 1000);
         result.map = DBL_MAX;

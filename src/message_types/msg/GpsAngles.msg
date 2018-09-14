@@ -3,3 +3,6 @@ float64 map
 float64 dstToFin
 float64 dstToHeadingPoint
 int8 headingState
+float64 currWayHeading
+float64 nextWayHeading
+float64 distToWayEnd
