@@ -14,7 +14,8 @@
 #include "message_types/HokuyoObstacle.h"
 #include "message_types/SteeringMsg.h"
 
-message_types::SbotMsg sbot_msg;
+#define USE_LOCAL_MAP 1
+
 message_types::GpsAngles gps_msg;
 message_types::HeadingState state_msg;
 
@@ -141,18 +142,18 @@ int move() {
     double max_neural_dir_val = 0.0;
     int neuron_dir = 0;
     // TODO: z lokalizacie
-    double mapAngle;
-    if (true) {
-        mapAngle = gps_msg.map;
-    } else {
-        mapAngle = local_map_heading * (180 / 3.141592);
-    }
+    double mapAngle = gps_msg.map;
+
     double speed_down_dst = 0.003;
     std::string move_status;
 
     for (int i = 0; i < 11; i++) {
-        double f = 1.0;
+        double f = (camera_prediction_msg.size() ? camera_prediction_msg[i] : 0.0) - 0.4;
         double g = hokuyo_algo_msg.size() ? hokuyo_algo_msg[i] : 0.0;
+        if (USE_LOCAL_MAP) {
+            f = 1.0;
+            g = 1.0;
+        }
         if (f < 0) {
             f = 0;
 
@@ -258,6 +259,9 @@ int move() {
         }
 
         int sdir = (maxdir - 5) * 8;
+        if (USE_LOCAL_MAP) {
+            sdir = local_map_heading * (180 / 3.141592) * 0.4444;
+        }
         // sdir -= 3;
 
         if (sbot_msg.away_from_left)
@@ -282,7 +286,7 @@ int move() {
                 setSteering(predicted_dir, 7);
                 // printf("setSpeed: 7\n");
             } else {
-                setSteering(predicted_dir, 10);
+                setSteering(predicted_dir, 12);
                 // printf("setSpeed: 10\n");
             }
         }
@@ -331,7 +335,7 @@ void avoid_obstacle(ros::Rate *loop_rate)
     waiting = 0;
     
     // just a couple of seconds of backing up
-    while (waiting < 90)
+    while (waiting < 110)
     {
       if (ros::ok())
       {
