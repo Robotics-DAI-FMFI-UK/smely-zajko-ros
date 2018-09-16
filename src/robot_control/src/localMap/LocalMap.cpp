@@ -130,14 +130,14 @@ void LocalMap::updateRobotPosition_(long L, long R, bool force) {
     newAngle = newAngle > 2*pi? newAngle - 2*pi : newAngle;
     angle = newAngle < 0? newAngle + 2*pi : newAngle;
 
-    decayMap();
+//    decayMap();
     applyHokuyoData();
     applyImage();
     applyCompassHeading();
     findBestHeading();
 
     std_msgs::Float64 msg;
-    msg.data = bestHeading;
+    msg.data = getHeading();
     publisher.publish(msg);
 }
 
@@ -168,15 +168,15 @@ cv::Mat LocalMap::getGui() {
     cv::Point b = a + cv::Point(100 * sin(angle), -100 * cos(angle));
     cv::arrowedLine(result, a, b, cv::Scalar(0, 0, 0), 2, CV_AA, 0, 0.2);
 
-    // draw target directions (thin blue 20-20 / 40)
+    // draw target directions (blue 30-30 / 60)
     if (wayEndDistance < sensorCutoff) { // draw next heading when close
-        b = a + cv::Point(20 * sin(angle - compassHeading + currWayHeading), -20 * cos(angle - compassHeading + currWayHeading));
-        cv::Point c = b + cv::Point(20 * sin(angle - compassHeading + nextWayHeading), -20 * cos(angle - compassHeading + nextWayHeading));
-        cv::line(result, a, b, cv::Scalar(255, 0, 0));
-        cv::arrowedLine(result, b, c, cv::Scalar(255, 0, 0));
+        b = a + cv::Point(30 * sin(angle - compassHeading + currWayHeading), -30 * cos(angle - compassHeading + currWayHeading));
+        cv::Point c = b + cv::Point(30 * sin(angle - compassHeading + nextWayHeading), -30 * cos(angle - compassHeading + nextWayHeading));
+        cv::line(result, a, b, cv::Scalar(255, 0, 0), 2);
+        cv::arrowedLine(result, b, c, cv::Scalar(255, 0, 0), 2);
     } else {
-        b = a + cv::Point(40 * sin(angle - compassHeading + currWayHeading), -40 * cos(angle - compassHeading + currWayHeading));
-        cv::arrowedLine(result, a, b, cv::Scalar(255, 0, 0));
+        b = a + cv::Point(60 * sin(angle - compassHeading + currWayHeading), -60 * cos(angle - compassHeading + currWayHeading));
+        cv::arrowedLine(result, a, b, cv::Scalar(255, 0, 0), 2);
     }
 
     // draw north (thin red 50)
@@ -353,7 +353,7 @@ double calcDist(double x1, double y1, double x2, double y2, double x, double y) 
     return fabs(a * x + b * y + c) / sqrt(a * a + b * b);
 }
 
-double angleDiff(double a, double b) {
+double angleDiffAbs(double a, double b) {
     a = fmod(a, 2*pi);
     a = a < 0? a + 2*pi : a;
     b = fmod(b, 2*pi);
@@ -362,6 +362,20 @@ double angleDiff(double a, double b) {
     if (d < pi) return d;
     else return 2*pi - d;
 }
+
+double angleDiffDir(double a, double b) {
+    double d = b - a;
+    if (d > pi) d -= 2*pi;
+    if (d < -pi) d += 2*pi;
+    return d;
+}
+
+double angleInterpolate(double a, double b, double p) {
+    double d = angleDiffDir(a, b);
+    return a + p * d;
+}
+
+const double pathWidth = wheelDistance * 0.8;
 
 void LocalMap::findBestHeading() {
     // check directions in 1 degree intervals
@@ -378,14 +392,14 @@ void LocalMap::findBestHeading() {
         /* c--end--d
            |   |   |
            a--pos--b */
-        double aX = posX + 0.6 * wheelDistance * sin(dir + (pi / 2));
-        double aY = posY + 0.6 * wheelDistance * cos(dir + (pi / 2));
-        double bX = posX + 0.6 * wheelDistance * sin(dir - (pi / 2));
-        double bY = posY + 0.6 * wheelDistance * cos(dir - (pi / 2));
-        double cX = endX + 0.6 * wheelDistance * sin(dir + (pi / 2));
-        double cY = endY + 0.6 * wheelDistance * cos(dir + (pi / 2));
-        double dX = endX + 0.6 * wheelDistance * sin(dir - (pi / 2));
-        double dY = endY + 0.6 * wheelDistance * cos(dir - (pi / 2));
+        double aX = posX + pathWidth* sin(dir + (pi / 2));
+        double aY = posY + pathWidth* cos(dir + (pi / 2));
+        double bX = posX + pathWidth* sin(dir - (pi / 2));
+        double bY = posY + pathWidth* cos(dir - (pi / 2));
+        double cX = endX + pathWidth* sin(dir + (pi / 2));
+        double cY = endY + pathWidth* cos(dir + (pi / 2));
+        double dX = endX + pathWidth* sin(dir - (pi / 2));
+        double dY = endY + pathWidth* cos(dir - (pi / 2));
 
         // calculate bounding box
         int left = map2gridX_(std::min({aX, bX, cX, dX}));
@@ -401,9 +415,9 @@ void LocalMap::findBestHeading() {
                 double pY = gridSize * y;
                 double lineDist = calcDist(posX, posY, endX, endY, pX, pY);
                 double pointDist = sqrt(pow(posX - pX, 2) + pow(posY - pY, 2));
-                if (lineDist < 0.6 * wheelDistance && pointDist < sensorCutoff) {
+                if (lineDist < pathWidth&& pointDist < sensorCutoff) {
                     // contribution to score weighted by distance
-                    scores[i] += (1-matrix[clampGridX(x)][clampGridY(y)]) * (sensorCutoff - pointDist);
+                    scores[i] += (1-matrix[clampGridX(x)][clampGridY(y)]) * (1 - pointDist / sensorCutoff);//(1 / pow(2, pointDist));
                     count++;
                 }
             }
@@ -413,13 +427,13 @@ void LocalMap::findBestHeading() {
 
         // reduce score of paths in wrong direction
         double target;
-        if (wayEndDistance < sensorCutoff) {
+        if (wayEndDistance > sensorCutoff) {
             target = angle - compassHeading + currWayHeading;
         } else {
-            target = angle - compassHeading + nextWayHeading;
+            target = angleInterpolate(currWayHeading, nextWayHeading, wayEndDistance / sensorCutoff);
         }
-        double diff = angleDiff(target, dir);
-        scores[i] *= 1.0 - (diff / pi);
+        double diff = angleDiffAbs(target, dir);
+        scores[i] *= 1 - (diff / pi);
     }
     int best = 0;
     double bestScore = scores[0];
@@ -440,5 +454,8 @@ void LocalMap::findBestHeading() {
 }
 
 double LocalMap::getHeading() {
-    return angleDiff(bestHeading, angle);
+    double d = bestHeading - angle;
+    if (d > pi) d -= 2*pi;
+    if (d < -pi) d += 2*pi;
+    return d;
 }

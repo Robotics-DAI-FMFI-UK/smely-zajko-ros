@@ -164,7 +164,7 @@ int main(int argc, char **argv) {
     cameraActionPublisher = nh.advertise<std_msgs::UInt8>("/control/camera_action", 10);
 
     //localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/zilina.osm");
-    localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/lednice.osm");
+    localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/lednice_velka.osm");
 //    localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/botanicka.osm");
 //    localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/homologacie_fei.osm");
 
@@ -207,8 +207,8 @@ int main(int argc, char **argv) {
     loadingPoint.longitude = 17.07314;
     localizationAndPlanning->setDestination(loadingPoint);
 
-    destinationPoint.latitude = 48.14721;
-    destinationPoint.longitude = 17.07296;
+    destinationPoint.latitude = 48.80182;
+    destinationPoint.longitude = 16.8059;
 
     headingState = START;
 

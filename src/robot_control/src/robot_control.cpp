@@ -25,6 +25,7 @@ sensor_msgs::Imu imu_msg;
 cv::Mat image;
 std::vector<double> hokuyo_algo_msg;
 std::vector<double> camera_prediction_msg;
+message_types::SbotMsg sbot_msg;
 
 ros::Publisher directionPublisher;
 
@@ -148,7 +149,7 @@ int move() {
     std::string move_status;
 
     for (int i = 0; i < 11; i++) {
-        double f = (camera_prediction_msg.size() ? camera_prediction_msg[i] : 0.0) - 0.4;
+        double f = (camera_prediction_msg.size() ? camera_prediction_msg[i] : 0.0);
         double g = hokuyo_algo_msg.size() ? hokuyo_algo_msg[i] : 0.0;
         if (USE_LOCAL_MAP) {
             f = 1.0;
@@ -157,7 +158,7 @@ int move() {
         if (f < 0) {
             f = 0;
 
-        } else if (f > 0 && g > 0.5) {
+        } else if (f > 0.3 && g > 0.5) {
             isChodnik = 1;
         }
 
@@ -190,8 +191,8 @@ int move() {
     if (abs(delta) > 150 || wrong_dir) {
         if (!status_from_subroutines)
             move_status = "turning";
-        // printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Going in wrong direction,
-        // delta %f turning...\n",delta);
+        printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Going in wrong direction, \
+         delta %f turning...\n",delta);
         wrong_dir = 1;
         if (delta > 0) {
             if (autonomy) {
@@ -212,7 +213,7 @@ int move() {
         if (!status_from_subroutines)
             move_status = "searching";
 
-        // printf("!!!!!!!!!!!!!!!!!!!!!!! Chodnik missing searching..\n");
+         printf("!!!!!!!!!!!!!!!!!!!!!!! Chodnik missing searching..\n");
         if (delta > 0) {
             if (autonomy) {
                 setSteering(40, -1);
@@ -266,17 +267,17 @@ int move() {
 
         if (sbot_msg.away_from_left)
             sdir += 20;
-        if (sdir > 40)
-            sdir = 40;
+        if (sdir > 25)
+            sdir = 25;
         if (sbot_msg.away_from_right)
             sdir -= 20;
-        if (sdir < -40)
-            sdir = -40;
+        if (sdir < -25)
+            sdir = -25;
 
         predicted_dir = (running_mean * running_mean_weight) + (sdir * (1 - running_mean_weight));
         running_mean = (running_mean * 3.0 + predicted_dir) / 4.0;
 
-        // printf("Inferred dir: %d\tProposed dir: %f\n", sdir, predicted_dir);
+         printf("Inferred dir: %d\tProposed dir: %f\n", sdir, predicted_dir);
 
         computed_dir = sdir;
 
@@ -286,7 +287,7 @@ int move() {
                 setSteering(predicted_dir, 7);
                 // printf("setSpeed: 7\n");
             } else {
-                setSteering(predicted_dir, 12);
+                setSteering(predicted_dir, 14);
                 // printf("setSpeed: 10\n");
             }
         }
@@ -331,11 +332,11 @@ void avoid_obstacle(ros::Rate *loop_rate)
 
     say("watch out behind me");
     // obstacle is still in front of us after 30 seconds, try backing up a little bit
-    setSteering(0, -4);
+    setSteering(0, -8);
     waiting = 0;
     
     // just a couple of seconds of backing up
-    while (waiting < 110)
+    while (waiting < 200)
     {
       if (ros::ok())
       {
