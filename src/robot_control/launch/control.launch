@@ -6,6 +6,5 @@
     <node pkg="robot_control" name="hokuyo_algo" type="hokuyo_algo" />
     <!--<node pkg="robot_control" name="camera_prediction" type="camera_prediction.py" />-->
     <node pkg="robot_control" name="robot_control" type="robot_control" />
-    <node pkg="robot_control" name="base_handler" type="base_handler" />
   </group>
 </launch>

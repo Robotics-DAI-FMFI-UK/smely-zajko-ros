@@ -38,6 +38,7 @@ public:
 
 private:
     // best heading
+    double scores[360];
     double bestHeading;
 
     // sensor data
@@ -87,6 +88,9 @@ private:
     int map2gridX(double x);
     int map2gridY(double y);
 
+    int map2gridX_(double x);
+    int map2gridY_(double y);
+
     int map2guiX(double x);
     int map2guiY(double y);
 
@@ -95,6 +99,8 @@ private:
     cv::Scalar getMatrixColor(int x, int y);
 
     // internal methods
+    void decayMap();
+
     void applyHokuyoData();
 
     void updateRobotPosition_(long L, long R, bool force);

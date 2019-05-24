@@ -95,27 +95,42 @@ void gpsCallback(const sensor_msgs::NavSatFix &gps) {
             setState(LOADING);
             resetTarget();
             setCameraAction(DETECT_QR);
-        } else if (headingState == LOADING && sbot_msg.payload == FULL && targetValid) {
-            printf("HEADING_UNLOADING\n");
-            say("HEADING UNLOADING");
+        } else if (headingState == LOADING) {
+            if (sbot_msg.payload == FULL && targetValid) {
+                printf("HEADING_UNLOADING\n");
+                say("HEADING UNLOADING");
 
-            localizationAndPlanning->setDestination(newTarget);
-            setState(HEADING_UNLOADING);
-            setCameraAction(DETECT_ROAD);
+                localizationAndPlanning->setDestination(newTarget);
+                setState(HEADING_UNLOADING);
+                setCameraAction(DETECT_ROAD);
+            } else {
+                setCameraAction(DETECT_QR);
+                if (spamCounter == 0) {
+                    if (sbot_msg.payload != FULL) say("LOADING");
+                    else say("WAITING FOR QR CODE");
+                }
+                spamCounter++;
+                if (spamCounter > 10) spamCounter = 0;
+            }
         } else if (headingState == HEADING_UNLOADING) {
             printf("UNLOADING\n");
             say("UNLOADING");
 
             setState(UNLOADING);
             resetTarget();
-            setCameraAction(DETECT_QR);
-        } else if (headingState == UNLOADING && sbot_msg.payload == EMPTY) {
-            printf("HEADING_DEST\n");
-            say("HEADING DESTINATION");
+        } else if (headingState == UNLOADING) {
+            if (sbot_msg.payload == EMPTY) {
+                printf("HEADING_DEST\n");
+                say("HEADING DESTINATION");
 
-            localizationAndPlanning->setDestination(destinationPoint);
-            setState(HEADING_DEST);
-            setCameraAction(DETECT_ROAD);
+                localizationAndPlanning->setDestination(destinationPoint);
+                setState(HEADING_DEST);
+                setCameraAction(DETECT_ROAD);
+            } else {
+                if (spamCounter == 0) say("UNLOADING");
+                spamCounter++;
+                if (spamCounter > 10) spamCounter = 0;
+            }
         } else if (headingState == HEADING_DEST) {
             printf("FINISH\n");
             setState(END);
@@ -149,7 +164,7 @@ int main(int argc, char **argv) {
     cameraActionPublisher = nh.advertise<std_msgs::UInt8>("/control/camera_action", 10);
 
     //localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/zilina.osm");
-    localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/lednice_hom.osm");
+    localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/lednice_velka.osm");
 //    localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/botanicka.osm");
 //    localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/homologacie_fei.osm");
 
@@ -192,8 +207,8 @@ int main(int argc, char **argv) {
     loadingPoint.longitude = 17.07314;
     localizationAndPlanning->setDestination(loadingPoint);
 
-    destinationPoint.latitude = 48.14721;
-    destinationPoint.longitude = 17.07296;
+    destinationPoint.latitude = 48.80182;
+    destinationPoint.longitude = 16.8059;
 
     headingState = START;
 

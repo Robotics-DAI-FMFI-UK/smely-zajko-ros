@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
 
     localMap = new LocalMap(600, 600, heading_publisher);
 
-    ros::Timer draw = nh.createTimer(ros::Duration(1), drawMap);
+    ros::Timer draw = nh.createTimer(ros::Duration(0.5), drawMap);
 
 //    cv::imshow("local map", localMap->getGui());
 //    cv::waitKey(0);

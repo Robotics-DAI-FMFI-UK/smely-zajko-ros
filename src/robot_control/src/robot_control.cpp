@@ -14,7 +14,8 @@
 #include "message_types/HokuyoObstacle.h"
 #include "message_types/SteeringMsg.h"
 
-message_types::SbotMsg sbot_msg;
+#define USE_LOCAL_MAP 1
+
 message_types::GpsAngles gps_msg;
 message_types::HeadingState state_msg;
 
@@ -24,10 +25,11 @@ sensor_msgs::Imu imu_msg;
 cv::Mat image;
 std::vector<double> hokuyo_algo_msg;
 std::vector<double> camera_prediction_msg;
+message_types::SbotMsg sbot_msg;
 
 ros::Publisher directionPublisher;
 
-ros::Publisher steeringPublisher;
+//ros::Publisher steeringPublisher;
 
 const int START = 0;
 const int HEADING_LOADING = 1;
@@ -40,6 +42,8 @@ const int END = 6;
 int previousState = -1;
 
 int direction = 0;
+
+Robot *robot;
 
 static volatile int8_t hokuyo_sees_obstacle;
 
@@ -59,11 +63,9 @@ void imuCallback(const sensor_msgs::Imu &msg) {
     imu_msg = msg;
 }
 
-void sendSteeringMsg(int direction, int speed) {
-    message_types::SteeringMsg steering_msg;
-    steering_msg.direction = direction;
-    steering_msg.speed = speed;
-    steeringPublisher.publish(steering_msg);
+void setSteering(int direction, int speed) {
+    robot->set_direction(direction);
+    robot->set_speed(speed);
 }
 
 void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
@@ -142,16 +144,21 @@ int move() {
     int neuron_dir = 0;
     // TODO: z lokalizacie
     double mapAngle = gps_msg.map;
+
     double speed_down_dst = 0.003;
     std::string move_status;
 
     for (int i = 0; i < 11; i++) {
-        double f = 1.0;
+        double f = (camera_prediction_msg.size() ? camera_prediction_msg[i] : 0.0);
         double g = hokuyo_algo_msg.size() ? hokuyo_algo_msg[i] : 0.0;
+        if (USE_LOCAL_MAP) {
+            f = 1.0;
+            g = 1.0;
+        }
         if (f < 0) {
             f = 0;
 
-        } else if (f > 0 && g > 0.5) {
+        } else if (f > 0.3 && g > 0.5) {
             isChodnik = 1;
         }
 
@@ -184,17 +191,17 @@ int move() {
     if (abs(delta) > 150 || wrong_dir) {
         if (!status_from_subroutines)
             move_status = "turning";
-        // printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Going in wrong direction,
-        // delta %f turning...\n",delta);
+        printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Going in wrong direction, \
+         delta %f turning...\n",delta);
         wrong_dir = 1;
         if (delta > 0) {
             if (autonomy) {
-                sendSteeringMsg(80, 1);
+                setSteering(80, 1);
             }
             display_direction = 5;
         } else {
             if (autonomy) {
-                sendSteeringMsg(-80, 1);
+                setSteering(-80, 1);
             }
             display_direction = -5;
         }
@@ -206,15 +213,15 @@ int move() {
         if (!status_from_subroutines)
             move_status = "searching";
 
-        // printf("!!!!!!!!!!!!!!!!!!!!!!! Chodnik missing searching..\n");
+         printf("!!!!!!!!!!!!!!!!!!!!!!! Chodnik missing searching..\n");
         if (delta > 0) {
             if (autonomy) {
-                sendSteeringMsg(40, -1);
+                setSteering(40, -1);
             }
             display_direction = 5;
         } else {
             if (autonomy) {
-                sendSteeringMsg(-40, -1);
+                setSteering(-40, -1);
             }
             display_direction = -5;
         }
@@ -253,31 +260,34 @@ int move() {
         }
 
         int sdir = (maxdir - 5) * 8;
+        if (USE_LOCAL_MAP) {
+            sdir = local_map_heading * (180 / 3.141592) * 0.4444;
+        }
         // sdir -= 3;
 
         if (sbot_msg.away_from_left)
             sdir += 20;
-        if (sdir > 40)
-            sdir = 40;
+        if (sdir > 25)
+            sdir = 25;
         if (sbot_msg.away_from_right)
             sdir -= 20;
-        if (sdir < -40)
-            sdir = -40;
+        if (sdir < -25)
+            sdir = -25;
 
         predicted_dir = (running_mean * running_mean_weight) + (sdir * (1 - running_mean_weight));
         running_mean = (running_mean * 3.0 + predicted_dir) / 4.0;
 
-        // printf("Inferred dir: %d\tProposed dir: %f\n", sdir, predicted_dir);
+         printf("Inferred dir: %d\tProposed dir: %f\n", sdir, predicted_dir);
 
         computed_dir = sdir;
 
         if (autonomy) {
             // printf("%.10f %.10f\n", angles.dstToHeadingPoint, speed_down_dst);
             if (gps_msg.dstToHeadingPoint <= speed_down_dst) {
-                sendSteeringMsg(predicted_dir, 7);
+                setSteering(predicted_dir, 7);
                 // printf("setSpeed: 7\n");
             } else {
-                sendSteeringMsg(predicted_dir, 10);
+                setSteering(predicted_dir, 14);
                 // printf("setSpeed: 10\n");
             }
         }
@@ -294,7 +304,7 @@ int move() {
 
 void avoid_obstacle(ros::Rate *loop_rate)
 {
-    sendSteeringMsg(0, 0);
+    setSteering(0, 0);
 
     say("step away, please");
     // wait for the obstacle to go away
@@ -322,11 +332,11 @@ void avoid_obstacle(ros::Rate *loop_rate)
 
     say("watch out behind me");
     // obstacle is still in front of us after 30 seconds, try backing up a little bit
-    sendSteeringMsg(0, -4);
+    setSteering(0, -8);
     waiting = 0;
     
     // just a couple of seconds of backing up
-    while (waiting < 90)
+    while (waiting < 200)
     {
       if (ros::ok())
       {
@@ -351,12 +361,16 @@ int main(int argc, char **argv) {
 
     ros::Subscriber local_map_subscriber = nh.subscribe("/control/local_map", 10, localMapCallback);
 
-    steeringPublisher = nh.advertise<message_types::SteeringMsg>("/control/steering", 3);
+//    steeringPublisher = nh.advertise<message_types::SteeringMsg>("/control/steering", 3);
 
 //    image_transport::ImageTransport it(nh);
 //    image_transport::Subscriber sub = it.subscribe("/sensors/camera/image", 1, imageCallback);
 
     directionPublisher = nh.advertise<std_msgs::Float64>("directionPublisher", 10);
+
+    ros::Publisher base_publisher = nh.advertise<message_types::SbotMsg>("/control/base_data", 3);
+
+    robot = new Robot(base_publisher);
 
     ros::Rate loop_rate(20);
 
@@ -373,7 +387,7 @@ int main(int argc, char **argv) {
             gps_msg.headingState == LOADING ||
             gps_msg.headingState == UNLOADING ||
             gps_msg.headingState == END) {
-            sendSteeringMsg(0, 0);
+            setSteering(0, 0);
         } else {
             if (hokuyo_sees_obstacle)
                avoid_obstacle(&loop_rate);

@@ -39,6 +39,8 @@ public:
 
 private:
     bool isInit;
+
+    void startThread();
 };
 
 
