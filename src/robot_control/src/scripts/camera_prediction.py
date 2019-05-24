@@ -25,15 +25,16 @@ stride = 5
 
 TRIANGLE_HEIGHT = 34
 TRIANGLE_WIDTH = 6
+NEURON_IN_USE = False
 
 pub_eval = 0
 counterr = 0
 
-model = models.mlp(n_input=75, architecture=[(100, 'relu'), (100, 'relu'), (1, 'sigmoid')],
-                   metrics=['accuracy'])
-
-#model = models.mlp(n_input=75, architecture=[(80, 'sigmoid'), (2, 'softmax')],
+#model = models.mlp(n_input=75, architecture=[(100, 'relu'), (100, 'relu'), (1, 'sigmoid')],
 #                   metrics=['accuracy'])
+
+model = models.mlp(n_input=75, architecture=[(80, 'sigmoid'), (2, 'softmax')],
+                   metrics=['accuracy'])
 
 #model = models.mlp(n_input=75, architecture=[(100, 'sigmoid'), (100, 'sigmoid'), (2, 'softmax')],
 #                   metrics=['accuracy'])
@@ -46,10 +47,10 @@ model = models.mlp(n_input=75, architecture=[(100, 'relu'), (100, 'relu'), (1, '
 #model.load_weights(
 #    '/home/nvidia/Projects/smely-zajko-ros/src/robot_control/src/scripts/smely_zajko_dataset/hsv/mlp_cat_100_sig_100_sig_2_softmax.h5')
 
-#model.load_weights(
-#    '/home/nvidia/Projects/smely-zajko-ros/src/robot_control/src/scripts/smely_zajko_dataset/hsv/mlp_cat_80_sig_2_softmax.h5')
+model.load_weights(
+    '/home/nvidia/Projects/smely-zajko-ros/src/robot_control/src/scripts/smely_zajko_dataset/hsv/mlp_cat_80_sig_2_softmax.h5')
 
-model.load_weights('/home/nvidia/Projects/smely-zajko-ros/src/robot_control/src/scripts/smely_zajko_dataset/wednesday/mlp_100_relu_100_relu_1_sig.h5')
+#model.load_weights('/home/nvidia/Projects/smely-zajko-ros/src/robot_control/src/scripts/smely_zajko_dataset/wednesday/mlp_100_relu_100_relu_1_sig.h5')
 
 
 hsvlib = npct.load_library("librgb2hsv.so", "/home/nvidia/Projects/smely-zajko-ros/src/robot_control/src/scripts")
@@ -57,12 +58,18 @@ array_3d_uint8t = npct.ndpointer(dtype=np.ubyte, ndim=3, flags=('CONTIGUOUS','WR
 array_2d_float64 = npct.ndpointer(dtype=np.float64, ndim=2, flags=('CONTIGUOUS','WRITEABLE'))
 array_2d_uint8t = npct.ndpointer(dtype=np.ubyte, ndim=2, flags=('CONTIGUOUS','WRITEABLE'))
 array_1d_uint8t = npct.ndpointer(dtype=np.ubyte, ndim=1, flags=('CONTIGUOUS','WRITEABLE'))
+array_1d_float64 = npct.ndpointer(dtype=np.float64, ndim=1, flags=('CONTIGUOUS','WRITEABLE'))
 hsvlib.rgb2hsv.argtypes = [array_3d_uint8t, c_int, c_int]
 hsvlib.init.argtypes = [array_3d_uint8t]
+hsvlib.init_triangle.argtypes = [array_3d_uint8t]
 hsvlib.evaluate.argtypes = [array_3d_uint8t, array_2d_uint8t, c_int, c_int]
+hsvlib.evaluate_triangles.argtypes = [array_3d_uint8t, array_2d_uint8t, array_1d_float64, c_int, c_int]
 positive_img = cv.imread("/home/nvidia/Projects/smely-zajko-ros/src/robot_control/src/scripts/positive.png");
 hsvlib.init(positive_img)
+hsvlib.init_triangle(positive_img)
 evaluated_img = np.zeros((60,60), np.uint8)
+eval_triangles = np.zeros((11,), np.float64)
+posimage = np.zeros((480,640), np.uint8)
 
 def prepare_image(image, window, stride):
     window_x, window_y = window
@@ -86,7 +93,7 @@ def callback(cv_image):
         hsvlib.rgb2hsv(cv_image, cvi_width, cvi_height)
         hsvlib.evaluate(cv_image, evaluated_img, cvi_width, cvi_height)
         
-        print("publishing evaluated image" + str(counterr))
+        #print("publishing evaluated image" + str(counterr))
         counterr += 1
         eval_msg = UInt8MultiArray()
 
@@ -98,37 +105,49 @@ def callback(cv_image):
         eval_msg.data = evalout
         pub_eval.publish(eval_msg)
      
-        print("published evaluated image")
+        #print("published evaluated image")
 
-        X = prepare_image(cv_image, window=window, stride=stride)
-        # X = (X - 87.062)
-        X = (X / 255.0)
-        y_pred = model.predict(X)
-        #prediction_mask = (255 - (y_pred[:, 1].reshape(96, 128) * 255)).astype('uint8')
-        prediction_mask = (y_pred.reshape(96, 128) * 255).astype('uint8')
+        if NEURON_IN_USE:
+            X = prepare_image(cv_image, window=window, stride=stride)
+            X = (X - 87.062)
+            X = (X / 255.0)
+            y_pred = model.predict(X)
+            prediction_mask = ((y_pred[:, 0].reshape(96, 128) * 255)).astype('uint8')
+            #prediction_mask = (y_pred.reshape(96, 128) * 255).astype('uint8')
+    
+            # nove:
+            # prediction_mask =  (y_pred.reshape(96, 128) * 255).astype('uint8')
+    
+            # print(prediction_mask.max(), prediction_mask.min(), prediction_mask.mean())
+    	
+            out = []
+            for i in range(2, 64, TRIANGLE_WIDTH):
+                out.append(0)
+                s = 0
+                for j in range(47, TRIANGLE_HEIGHT, -1):
+                    b = int(j * TRIANGLE_WIDTH/TRIANGLE_HEIGHT)
+                    for k in range(i-b/2, i+b/2):
+                        if k < 0 or k > 63:
+                            continue
+                        out[-1] += prediction_mask[j][k]
+                        s += 1
+                out[-1] /= s
+    
+            int_list = Float64MultiArray()
+            int_list.data = out
+            pub_triangle.publish(int_list)
+            pub.publish(bridge.cv2_to_imgmsg(prediction_mask))
+        else:
+            hsvlib.evaluate_triangles(cv_image, posimage, eval_triangles, cvi_width, cvi_height)
+            cv.imshow('preview', posimage)
+            cv.waitKey(1)
+            print(eval_triangles)
+            int_list = Float64MultiArray()
+            int_list.data = eval_triangles
+            pub_triangle.publish(int_list)
+            pub.publish(bridge.cv2_to_imgmsg(cv_image))
+           
 
-        # nove:
-        # prediction_mask =  (y_pred.reshape(96, 128) * 255).astype('uint8')
-
-        # print(prediction_mask.max(), prediction_mask.min(), prediction_mask.mean())
-	
-        out = []
-        for i in range(2, 64, TRIANGLE_WIDTH):
-            out.append(0)
-            s = 0
-            for j in range(47, TRIANGLE_HEIGHT, -1):
-                b = int(j * TRIANGLE_WIDTH/TRIANGLE_HEIGHT)
-                for k in range(i-b/2, i+b/2):
-                    if k < 0 or k > 63:
-                        continue
-                    out[-1] += prediction_mask[j][k]
-                    s += 1
-            out[-1] /= s
-
-        int_list = Float64MultiArray()
-        int_list.data = out
-        pub_triangle.publish(int_list)
-        pub.publish(bridge.cv2_to_imgmsg(prediction_mask))
     except CvBridgeError as e:
         print(e)
 
@@ -153,6 +172,7 @@ action = 0
 def setAction(act):
     global action
     action = act.data
+    print act
 
 def recv_msg(sock):
     raw_len = sock.recv(4)
@@ -179,12 +199,12 @@ def main():
     rospy.Subscriber('/control/camera_action', UInt8, setAction)
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect((HOST, PORT))
+    print sock.connect((HOST, PORT))
     print "Connected to camera"
     
     while not rospy.is_shutdown():
         l, m = recv_msg(sock)
-#        print l
+        print l
         img = cv.imdecode(np.fromstring(m, np.uint8), cv.IMREAD_COLOR)
         callback(img)
         if action == 1:
