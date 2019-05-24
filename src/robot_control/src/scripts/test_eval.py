@@ -12,12 +12,13 @@ hsvlib.init.argtypes = [array_3d_uint8t]
 hsvlib.evaluate.argtypes = [array_3d_uint8t, array_2d_uint8t, c_int, c_int] #, array_3d_uint8t]
 positive_img = cv.imread("/home/nvidia/Projects/smely-zajko-ros/src/robot_control/src/scripts/positive.png")
 hsvlib.init(positive_img)
-img = cv.imread("image3.jpg")
+img = cv.imread("image2.jpg")
 height, width, channels = img.shape
 hsvlib.rgb2hsv(img, width, height)
 evaluated_img = np.zeros((60,60), np.uint8)
 #dbg_img = np.zeros((height,width,3), np.uint8)
 hsvlib.evaluate(img, evaluated_img, width, height) #, dbg_img)
+cv.imshow('bgr2hsv', cv.cvtColor(img, cv.COLOR_BGR2HSV))
 cv.imshow('positive', positive_img)
 #cv.imshow('dbg', dbg_img)
 cv.imshow('hsv', img)
