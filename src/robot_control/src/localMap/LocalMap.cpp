@@ -13,6 +13,8 @@ const int ticksPerRotation = 36;
 const double wheelDistance = 52;
 const int hokuyoOffset = 15;
 const int sensorCutoff = 600;
+const double rpLidarAngle = 10 * pi / 180; // TODO measure
+const double rpLidarHeight = 70; // TODO measure
 
 // calculation constants
 const int minUpdateDist = 10;
@@ -52,8 +54,8 @@ LocalMap::LocalMap(int guiWidth, int guiHeight, ros::Publisher publisher) {
             matrix[i][j] = 0.0;//((double) i + j) / (gridHeight + gridWidth);
         }
     }
-    posX = 800;
-    posY = 800;
+    posX = 0;
+    posY = 0;
     angle = 0;
     prevTicksL = 0;
     prevTicksR = 0;
@@ -132,6 +134,7 @@ void LocalMap::updateRobotPosition_(long L, long R, bool force) {
 
 //    decayMap();
     applyHokuyoData();
+    applyRpLidarData();
     applyImage();
     applyCompassHeading();
     findBestHeading();
@@ -139,6 +142,30 @@ void LocalMap::updateRobotPosition_(long L, long R, bool force) {
     std_msgs::Float64 msg;
     msg.data = getHeading();
     publisher.publish(msg);
+}
+
+void LocalMap::setPose(double x, double y, double a) {
+    double newX = x, newY = y, newAngle = a;
+
+    // normalize new position data into map
+    newX = newX > mapWidth? newX - mapWidth : newX;
+    posX = newX < 0? newX + mapWidth : newX;
+    newY = newY > mapHeight? newY - mapHeight : newY;
+    posY = newY < 0? newY + mapHeight : newY;
+    newAngle = newAngle > 2*pi? newAngle - 2*pi : newAngle;
+    angle = newAngle < 0? newAngle + 2*pi : newAngle;
+
+//    decayMap();
+    applyHokuyoData();
+    applyRpLidarData();
+    applyImage();
+    applyCompassHeading();
+    findBestHeading();
+
+    std_msgs::Float64 msg;
+    msg.data = getHeading();
+    publisher.publish(msg);
+
 }
 
 cv::Scalar LocalMap::getMatrixColor(int x, int y) {
@@ -211,12 +238,55 @@ void LocalMap::setHokuyoData(int* rays) {
     validHokuyo = true;
 }
 
+void LocalMap::setRpLidarData(int rays, double *distances, double *angles) {
+    rpRays = rays;
+    memcpy(rpDistances, distances, sizeof(double) * rpRays);
+    memcpy(rpAngles, angles, sizeof(double) * rpRays);
+    validRpLidar = true;
+//    for (int i = 0; i < rpRays; i++) {
+//        printf("%f\t%f\n", rpDistances[i], rpAngles[i]);
+//    }
+}
+
 void LocalMap::decayMap() {
     for (int i = 0; i < gridWidth; i++) {
         for (int j = 0; j < gridHeight; j++) {
             matrix[i][j] *= 0.95;
         }
     }
+}
+
+void LocalMap::applyRay(double sensorX, double sensorY, double rayAngle, double rayLen) {
+    // ray end point
+    double rayX = sensorX + rayLen * sin(angle + rayAngle);
+    double rayY = sensorY + rayLen * cos(angle + rayAngle);
+
+    // end point in grid
+    int gX = map2gridX(rayX);
+    int gY = map2gridY(rayY);
+
+    // mark as obstacle (also mark 8-neighborhood)
+    matrix[clampGridX(gX-1)][clampGridY(gY-1)] = (matrix[clampGridX(gX-1)][clampGridY(gY-1)] + 2) / 3;
+    matrix[clampGridX(gX-1)][gY] = (matrix[clampGridX(gX-1)][gY] + 2) / 3;
+    matrix[clampGridX(gX-1)][clampGridY(gY+1)] = (matrix[clampGridX(gX-1)][clampGridY(gY+1)] + 2) / 3;
+    matrix[gX][clampGridY(gY-1)] = (matrix[gX][clampGridY(gY-1)] + 2) / 3;
+    matrix[gX][gY] = (matrix[gX][gY] + 2) / 3;
+    matrix[gX][clampGridY(gY+1)] = (matrix[gX][clampGridY(gY+1)] + 2) / 3;
+    matrix[clampGridX(gX+1)][clampGridY(gY-1)] = (matrix[clampGridX(gX+1)][clampGridY(gY-1)] + 2) / 3;
+    matrix[clampGridX(gX+1)][gY] = (matrix[clampGridX(gX+1)][gY] + 2) / 3;
+    matrix[clampGridX(gX+1)][clampGridY(gY+1)] = (matrix[clampGridX(gX+1)][clampGridY(gY+1)] + 2) / 3;
+
+    // mark points on ray as empty
+    for (int j = 0; j < rayLen; j += 10) {
+        double p = ((double) j) / rayLen;
+        double pX = sensorX + p * (rayX - sensorX);
+        double pY = sensorY + p * (rayY - sensorY);
+        int gX = map2gridX(pX);
+        int gY = map2gridY(pY);
+        // don't overwrite obstacles found by previous rays from this batch
+        if (matrix[gX][gY] < 1.0) matrix[gX][gY] = matrix[gX][gY] / 3;
+    }
+
 }
 
 void LocalMap::applyHokuyoData() {
@@ -237,36 +307,37 @@ void LocalMap::applyHokuyoData() {
             continue; // skip too long rays
         }
 
-        // ray end point
-        double rayX = sensorX + rayLen * sin(angle + rayAngle);
-        double rayY = sensorY + rayLen * cos(angle + rayAngle);
-
-        // end point in grid
-        int gX = map2gridX(rayX);
-        int gY = map2gridY(rayY);
-
-        // mark as obstacle (also mark 8-neighborhood)
-        matrix[clampGridX(gX-1)][clampGridY(gY-1)] = (matrix[clampGridX(gX-1)][clampGridY(gY-1)] + 2) / 3;
-        matrix[clampGridX(gX-1)][gY] = (matrix[clampGridX(gX-1)][gY] + 2) / 3;
-        matrix[clampGridX(gX-1)][clampGridY(gY+1)] = (matrix[clampGridX(gX-1)][clampGridY(gY+1)] + 2) / 3;
-        matrix[gX][clampGridY(gY-1)] = (matrix[gX][clampGridY(gY-1)] + 2) / 3;
-        matrix[gX][gY] = (matrix[gX][gY] + 2) / 3;
-        matrix[gX][clampGridY(gY+1)] = (matrix[gX][clampGridY(gY+1)] + 2) / 3;
-        matrix[clampGridX(gX+1)][clampGridY(gY-1)] = (matrix[clampGridX(gX+1)][clampGridY(gY-1)] + 2) / 3;
-        matrix[clampGridX(gX+1)][gY] = (matrix[clampGridX(gX+1)][gY] + 2) / 3;
-        matrix[clampGridX(gX+1)][clampGridY(gY+1)] = (matrix[clampGridX(gX+1)][clampGridY(gY+1)] + 2) / 3;
-
-        // mark points on ray as empty
-        for (int j = 0; j < rayLen; j += 10) {
-            double p = ((double) j) / rayLen;
-            double pX = sensorX + p * (rayX - sensorX);
-            double pY = sensorY + p * (rayY - sensorY);
-            int gX = map2gridX(pX);
-            int gY = map2gridY(pY);
-            // don't overwrite obstacles found by previous rays from this batch
-            if (matrix[gX][gY] < 1.0) matrix[gX][gY] = matrix[gX][gY] / 3;
-        }
+        applyRay(sensorX, sensorY, rayAngle, rayLen);
     }
+}
+
+void LocalMap::applyRpLidarData() {
+    if (!validRpLidar) return;
+
+    for (int i = 0; i < rpRays; i++) {
+        // find hit coords in lidar plane
+        double lX = sin(rpAngles[i]) * rpDistances[i];
+        double lY = cos(rpAngles[i]) * rpDistances[i];
+
+        // compensate angle
+        double hX = lX * sin(rpLidarAngle);
+        double z = lX * cos(rpLidarAngle);
+
+        if (abs(z) > rpLidarHeight) // skip rays that would hit undeground / too high
+            continue;
+
+        // calculate new length and angle
+        double rayAngle = atan2(hX, lY);
+        double rayLen = sqrt(hX*hX + lY*lY) / 10;
+
+        // clamp ray length
+        if (rayLen > sensorCutoff) {
+            continue; // skip too long rays
+        }
+
+        applyRay(posX, posY, rayAngle, rayLen);
+    }
+
 }
 
 void LocalMap::setGlobalMapData(double currHeading, double nextHeading, double distance) {

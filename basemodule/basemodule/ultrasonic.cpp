@@ -70,7 +70,7 @@ uint8_t wait_for_echo_and_read_it(uint8_t which)
     {
       uint32_t dist = (tm_ultrasonic2 - tm_ultrasonic1) / 58;
       if (dist < CRITICAL_REAR_DISTANCE_WHILE_BACKING_UP_CM)
-        return 1;      
+        return 0;      
     }
     else unstuck_us(which);
     return 0;
