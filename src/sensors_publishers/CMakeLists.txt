@@ -135,8 +135,8 @@ add_executable(hokuyo_publisher_node
         src/hokuyo/Hokuyo.cpp src/hokuyo/Hokuyo.h
         src/hokuyo/HokuyoSynthetic.cpp src/hokuyo/HokuyoSynthetic.h src/hokuyo/HokuyoFiles.cpp src/hokuyo/HokuyoFiles.h)
 
-add_executable(rplidar_publisher_node src/rplidar_publisher_node.cpp src/rplidar/RpLidar.cpp)
-add_dependencies(rplidar_publisher_node message_types_gencpp)
+#add_executable(rplidar_publisher_node src/rplidar_publisher_node.cpp src/rplidar/RpLidar.cpp)
+#add_dependencies(rplidar_publisher_node message_types_gencpp)
 
 add_executable(hokuyo_subscriber_node src/hokuyo_subscriber_node.cpp)
 
@@ -152,7 +152,7 @@ add_executable(imu_publisher_node src/imu_publisher_node.cpp src/imu/AbstractImu
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(hokuyo_publisher_node ${catkin_LIBRARIES})
-target_link_libraries(rplidar_publisher_node ${catkin_LIBRARIES} /usr/local/rplidar/sdk/output/Linux/Release/librplidar_sdk.a)
+#target_link_libraries(rplidar_publisher_node ${catkin_LIBRARIES} /usr/local/rplidar/sdk/output/Linux/Release/librplidar_sdk.a)
 target_link_libraries(hokuyo_subscriber_node ${catkin_LIBRARIES})
 target_link_libraries(gps_publisher_node ${catkin_LIBRARIES})
 target_link_libraries(gps_mock_publisher_node ${catkin_LIBRARIES})
