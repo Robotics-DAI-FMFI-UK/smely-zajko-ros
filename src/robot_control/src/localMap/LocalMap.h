@@ -20,7 +20,11 @@ public:
     // calculate new position from odometry
     void updateRobotPosition(long L, long R);
 
+    void setPose(double x, double y, double a);
+
     void setHokuyoData(int rays[1081]);
+
+    void setRpLidarData(int rays, double* distances, double* angles);
 
     void setGlobalMapData(double currHeading, double nextHeading, double distance);
 
@@ -49,9 +53,13 @@ private:
     double nextWayHeading;
     double wayEndDistance;
     unsigned char cameraData[60][60];
+    int rpRays;
+    double rpDistances[400];
+    double rpAngles[400];
 
     //sensor data checks;
     bool validHokuyo = false;
+    bool validRpLidar = false;
     bool validImage = false;
 
     // gui dimensions
@@ -101,7 +109,11 @@ private:
     // internal methods
     void decayMap();
 
+    void applyRay(double sensorX, double sensorY, double rayAngle, double rayLen);
+
     void applyHokuyoData();
+
+    void applyRpLidarData();
 
     void updateRobotPosition_(long L, long R, bool force);
 

@@ -1,6 +1,7 @@
 <launch>
   <group ns="gui">
     <node pkg="sensors_gui" name="hokuyo_gui" type="hokuyo_gui" />
+    <node pkg="sensors_gui" name="rplidar_gui" type="rplidar_gui" />
     <node pkg="sensors_gui" name="camera_gui" type="camera_gui" />
   </group>
 </launch>

@@ -47,7 +47,14 @@ int ana(uint8_t *img, uint8_t *output, int width, int height)
   return 0;
 }
 
-static int fn(int x)
+static int fn1(int x)
+{
+  int y = (int)(20.0 * logf(x) / logf_2);
+  if (y > 255) return 255;
+  else return y;
+}
+
+static int fn2(int x)
 {
   int y = (int)(20.0 * logf(x) / logf_2);
   if (y > 255) return 255;
@@ -63,9 +70,9 @@ int dump_results(uint8_t *img1, uint8_t *img2)
     for (int j = 0; j < 255; j++)
     {
       printf("%5d", positive[i][j]);
-       img1[i * 255 * 3 + j * 3] = fn(positive[i][j]);
-       img1[i * 255 * 3 + j * 3 + 1] = fn(positive[i][j]);
-       img1[i * 255 * 3 + j * 3 + 2] = fn(positive[i][j]);
+       img1[i * 255 * 3 + j * 3] = fn1(positive[i][j]);
+       img1[i * 255 * 3 + j * 3 + 1] = fn1(positive[i][j]);
+       img1[i * 255 * 3 + j * 3 + 2] = fn1(positive[i][j]);
       if (positive[i][j] > max_p) max_p = positive[i][j];
     }
     printf("\n");
@@ -77,9 +84,9 @@ int dump_results(uint8_t *img1, uint8_t *img2)
     for (int j = 0; j < 255; j++)
     {
       printf("%5d", negative[i][j]);
-       img2[i * 255 * 3 + j * 3] = fn(negative[i][j]);
-       img2[i * 255 * 3 + j * 3 + 1] = fn(negative[i][j]);
-       img2[i * 255 * 3 + j * 3 + 2] = fn(negative[i][j]);
+       img2[i * 255 * 3 + j * 3] = fn2(negative[i][j]);
+       img2[i * 255 * 3 + j * 3 + 1] = fn2(negative[i][j]);
+       img2[i * 255 * 3 + j * 3 + 2] = fn2(negative[i][j]);
       if (negative[i][j] > max_n) max_n = negative[i][j];
     }
     printf("\n");

@@ -24,17 +24,19 @@ public:
 
     void init();
     void get_data(lidar_data_type *buffer);
+    void stop();
 
     friend void *lidar_thread(void *args);
 
 private:
 
-  pthread_mutex_t lidar_lock;
-  rplidar_response_measurement_node_t *lidar_data;
-  size_t lidar_data_count;
-  rp::standalone::rplidar::RPlidarDriver *drv;
-  rplidar_response_measurement_node_t *local_data;
-  lidar_data_type lidar_output_data;
+    pthread_mutex_t lidar_lock;
+    rplidar_response_measurement_node_t *lidar_data;
+    size_t lidar_data_count;
+    rp::standalone::rplidar::RPlidarDriver *drv;
+    rplidar_response_measurement_node_t *local_data;
+    lidar_data_type lidar_output_data;
+    pthread_t t;
 
   int connect_lidar();
 };

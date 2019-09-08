@@ -7,6 +7,8 @@
 
 using namespace std;
 
+const double pi = 3.141592653589793238463;
+
 int main(int argc, char **argv) 
 {
     ros::init(argc, argv, "rplidar_publisher");
@@ -28,22 +30,29 @@ int main(int argc, char **argv)
         if (rplidar_publisher.getNumSubscribers() > 0)  {
             rplidar->get_data(&msg);
 
-	    rpl_obstacle.rays = msg.count;
+//	        rpl_obstacle.rays = msg.count;
             uint8_t possible_obstacles = 0;
+            rpl_obstacle.distances.data.clear();
+            rpl_obstacle.angles.data.clear();
+
+            int filter_count = 0;
             for (size_t i = 0; i < msg.count; ++i) {
-	         rpl_obstacle.distances.data.push_back(msg.distance[i]);
-	         rpl_obstacle.angles.data.push_back(msg.angle[i]);
-                 
-		 if (msg.distance[i] < MIN_OBSTACLE_DISTANCE) possible_obstacles++; 
+                if (msg.distance[i] < 2000) continue;
+                rpl_obstacle.distances.data.push_back(msg.distance[i]);
+                rpl_obstacle.angles.data.push_back((msg.angle[i] / 64) * (pi / 180.0));
+                filter_count++;
+
+		        if (msg.distance[i] < MIN_OBSTACLE_DISTANCE) possible_obstacles++;
             }
             rpl_obstacle.obstacle = (uint8_t) (possible_obstacles > 3);
-            
+            rpl_obstacle.rays = filter_count;
+
             rplidar_publisher.publish(rpl_obstacle);
         }
         ros::spinOnce();
         loop_rate.sleep();
     }
-    rplidar->program_runs = 0;
+    rplidar->stop();
 
     return 0;
 }

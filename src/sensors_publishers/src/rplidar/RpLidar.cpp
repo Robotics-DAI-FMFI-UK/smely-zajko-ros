@@ -7,7 +7,7 @@
 
 #include "RpLidar.h"
 
-#define LIDAR_PORT "/dev/lidar"
+#define LIDAR_PORT "/dev/rplidar"
 #define LIDAR_BAUD_RATE 115200
 
 using namespace rp::standalone::rplidar;
@@ -127,9 +127,9 @@ void *lidar_thread(void *args)
 
         // fetech extactly one 0-360 degrees' scan
         ans = me->drv->grabScanData(me->local_data, local_data_count);
-        if (IS_OK(ans) || ans == RESULT_OPERATION_TIMEOUT) 
+        if (IS_OK(ans) || ans == RESULT_OPERATION_TIMEOUT)
             me->drv->ascendScanData(me->local_data, local_data_count);
-        else 
+        else
             printf("lidar error code: %d\n", ans);
         
         pthread_mutex_lock(&me->lidar_lock);
@@ -154,7 +154,6 @@ void *lidar_thread(void *args)
 
 void RpLidar::init()
 {
-    pthread_t t;
     lidar_data = (rplidar_response_measurement_node_t *) malloc(sizeof(rplidar_response_measurement_node_t) * MAX_LIDAR_DATA_COUNT);
     local_data = (rplidar_response_measurement_node_t *) malloc(sizeof(rplidar_response_measurement_node_t) * MAX_LIDAR_DATA_COUNT);
     if ((lidar_data == 0) || (local_data == 0) )
@@ -169,11 +168,17 @@ void RpLidar::init()
       printf("connect lidar returned 0, exiting\n");
       exit(1);
     }
+    program_runs = 1;
     if (pthread_create(&t, 0, lidar_thread, this) != 0)
     {
       perror("mikes:lidar");
       printf("creating thread for lidar\n");
     }
+}
+
+void RpLidar::stop() {
+    program_runs = 0;
+    pthread_join(t, NULL);
 }
 
 

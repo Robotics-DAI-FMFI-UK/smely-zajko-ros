@@ -12,6 +12,7 @@
 
     <node pkg="sensors_publishers" name="gps_publisher_node" type="gps_publisher_node" />
     <node pkg="sensors_publishers" name="imu_publisher_node" type="imu_publisher_node" />
+    <node pkg="sensors_publishers" name="rplidar_publisher_node" type="rplidar_publisher_node" />
   </group>
 
 </launch>
