@@ -47,6 +47,53 @@ Robot *robot;
 
 static volatile int8_t hokuyo_sees_obstacle;
 
+int said_wrong = 0;
+
+//---------------------------------------
+#define LOG_FILE_DIR "/home/zajko/logs/"
+static char log_file_name[100];
+
+long long msec()
+{
+  struct timeval tv;
+  gettimeofday(&tv, 0);
+  return 1000L * tv.tv_sec + tv.tv_usec / 1000L;
+}
+
+void log_msg(const char *msg)
+{
+	FILE *f = fopen(log_file_name, "a+");
+	long long tm = msec();
+	fprintf(f, "%.2lf %s\n", tm / 1000.0, msg);
+	fclose(f);
+}
+
+void log_msg(const char *msg, double val)
+{
+	FILE *f = fopen(log_file_name, "a+");
+	long long tm = msec();
+	fprintf(f, "%.2lf %s %.4lf\n", tm / 1000.0, msg, val);
+	fclose(f);
+}
+
+void log_msg(const char *msg, double val1, double val2)
+{
+	FILE *f = fopen(log_file_name, "a+");
+	long long tm = msec();
+	fprintf(f, "%.2lf %s %.4lf %.4lf\n", tm / 1000.0, msg, val1, val2);
+	fclose(f);
+}
+
+void setup_log_file()
+{
+    time_t tm;
+    time(&tm);
+    snprintf(log_file_name, 100, "%s%ld_robot_control.log", LOG_FILE_DIR, tm);
+    printf("logging to: %s\n", log_file_name);
+    log_msg("started");	
+}
+//---------------------------------------
+
 void localMapCallback(const std_msgs::Float64 &msg) {
     local_map_heading = msg.data;
 }
@@ -68,6 +115,11 @@ void setSteering(int direction, int speed) {
     robot->set_speed(speed);
 }
 
+void stopNowAbruptly() {
+    robot->stop_now();
+    robot->set_direction(0);
+}
+
 void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
     try {
         image = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image;
@@ -80,14 +132,14 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
 void say(const char * msg) 
 {
     char out[256];
-      snprintf(out, 255, "echo \"%s\" | espeak -a 200 -p 20 -s 80", msg);
+    snprintf(out, 255, "echo \"%s\" | espeak -a 200 -p 20 -s 80", msg);
     system(out);
 }
 
 //TODO: refactor this
 double predicted_dir = 0.0;
 double running_mean = 0.0;
-double running_mean_weight = 0.7;
+double running_mean_weight = 0.5;
 
 void hokuyoAlgoCallback(const message_types::HokuyoObstacle::ConstPtr &msg) {
 //    double max = 0.0;
@@ -188,11 +240,14 @@ int move() {
     }
 
     // significantly off course(> 150deg), turn
-    if (abs(delta) > 150 || wrong_dir) {
+    //if (abs(delta) > 150 || wrong_dir) {
+    if (0) {
         if (!status_from_subroutines)
             move_status = "turning";
         printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Going in wrong direction, \
          delta %f turning...\n",delta);
+        log_msg("going in wrong direction", delta);
+        say("its the other way, zyco");
         wrong_dir = 1;
         if (delta > 0) {
             if (autonomy) {
@@ -260,8 +315,30 @@ int move() {
         }
 
         int sdir = (maxdir - 5) * 8;
+        double heading;
         if (USE_LOCAL_MAP) {
-            sdir = local_map_heading * (180 / 3.141592) * 0.4444;
+                        if (local_map_heading >= 9999) // GOING_WRONG
+                        {
+                          setSteering(80, 6);
+                          if (!said_wrong)
+                          {
+                            say("its the other way, zyco");
+                            said_wrong = 1;
+                          }
+                          return 0;
+                        }
+                        else if (said_wrong) 
+                        {
+                          said_wrong = 0;
+                          say("corrected");
+                        }
+			heading = local_map_heading * (180 / M_PI);
+			// 0.4444 comes from 180 deg => turning rate 80              
+			sdir = 0.5 + heading * 0.4444;
+
+			// we try to amplify turning for small angles		
+			if (fabs(heading) < 45)
+			  sdir *= 2;
         }
         // sdir -= 3;
 
@@ -275,9 +352,13 @@ int move() {
             sdir = -25;
 
         predicted_dir = (running_mean * running_mean_weight) + (sdir * (1 - running_mean_weight));
-        running_mean = (running_mean * 3.0 + predicted_dir) / 4.0;
+
+        //running_mean = (running_mean * 3.0 + predicted_dir) / 4.0;
+        running_mean = (running_mean * 1.0 + predicted_dir * 3.0) / 4.0;
 
          printf("Inferred dir: %d\tProposed dir: %f\n", sdir, predicted_dir);
+         log_msg("local_map_heading, sdir: ", heading, sdir);
+         log_msg("pdir, rmean: ", predicted_dir, running_mean);
 
         computed_dir = sdir;
 
@@ -304,7 +385,8 @@ int move() {
 
 void avoid_obstacle(ros::Rate *loop_rate)
 {
-    setSteering(0, 0);
+    setSteering(0, 0); // TODO: check if we need this
+    stopNowAbruptly();
 
     say("step away, please");
     // wait for the obstacle to go away
@@ -349,6 +431,7 @@ void avoid_obstacle(ros::Rate *loop_rate)
 }
 
 int main(int argc, char **argv) {
+	setup_log_file();
     ros::init(argc, argv, "ros_control");
     ros::NodeHandle nh;
     ros::Subscriber sbot_subscriber = nh.subscribe("/control/base_data", 3, sbotCallback);
