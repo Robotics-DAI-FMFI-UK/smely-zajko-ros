@@ -1,6 +1,30 @@
+#include <time.h>
 #include "Hokuyo.h"
 
+#define HOKUYO_DATA_LOGFILE_PATH "/home/zajko/logs/"
+
+char hokuyo_log_filename[100];
+
+long long msec()
+{
+  struct timeval tv;
+  gettimeofday(&tv, 0);
+  return 1000L * tv.tv_sec + tv.tv_usec / 1000L;
+}
+
+long long usec()
+{
+  struct timeval tv;
+  gettimeofday(&tv, 0);
+  return (1000000L * (long long)tv.tv_sec) + tv.tv_usec;
+}
+
+
 void Hokuyo::init() {
+    time_t tm;
+    time(&tm);
+    snprintf(hokuyo_log_filename, 100, "%s%ld_hokuyo.log", HOKUYO_DATA_LOGFILE_PATH, tm);
+    
     data = new int[RANGE_DATA_COUNT];
 
     struct sockaddr_in remoteaddr;
@@ -45,6 +69,8 @@ void Hokuyo::init() {
         }
     } while ((x[0] != 10) || (x[1] != 10));
 }
+
+long long lastLogTime;
 
 void Hokuyo::readData() {
     char *request_measurement = (char *) "GD0000108000\n";
@@ -111,7 +137,18 @@ void Hokuyo::readData() {
 
         beam_index--;
     }
+
     pthread_mutex_unlock(&m_read);
+
+    if (msec() - lastLogTime > 400)
+    {
+        lastLogTime = msec();
+        FILE *f = fopen(hokuyo_log_filename, "a+");
+        for (int i = 0; i < RANGE_DATA_COUNT - 1; i++)
+          fprintf(f, "%.2lf %d ", msec() / 1000.0, data[i]);
+        fprintf(f, "%d\n", data[RANGE_DATA_COUNT - 1]);
+        fclose(f);
+    }
 }
 
 Int32MultiArray Hokuyo::getData() {
