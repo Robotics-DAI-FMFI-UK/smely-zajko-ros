@@ -145,11 +145,11 @@ add_executable(robot_control src/robot_control.cpp
         ../robot_shared_libs/src/sbot/Sbot.cpp ../robot_shared_libs/src/sbot/Sbot.h
         )
 
-add_executable(localization_and_planning src/localization_and_planning.cpp
-        src/localizationAndPlanning/LocalizationAndPlanning.cpp src/localizationAndPlanning/LocalizationAndPlanning.h
+add_executable(localization_and_planning src/localization_and_planning.cpp 
+        src/netutil.cpp src/netutil.h src/localizationAndPlanning/LocalizationAndPlanning.cpp src/localizationAndPlanning/LocalizationAndPlanning.h
         )
 
-add_executable(local_map src/local_map_steering.cpp
+add_executable(local_map src/local_map_steering.cpp src/netutil.cpp src/netutil.h
         src/localMap/LocalMap.cpp src/localMap/LocalMap.h)
 
 add_executable(hokuyo_algo src/hokuyo_algo.cpp
