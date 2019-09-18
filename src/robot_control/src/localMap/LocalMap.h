@@ -5,6 +5,16 @@
 #include <utility>
 #include <std_msgs/Float64.h>
 
+#define EVALUATED_IMAGE_PACKET_TYPE   1
+#define POSITION_PACKET_TYPE 3
+#define DEPTH_MAP_PACKET_TYPE 4
+#define EVALUATED_IMAGE_LISTENER_PORT 9771
+#define POSITION_AND_DEPTH_MAP_PORT 9772
+
+void log_msg(const char *msg);
+void log_msg(const char *msg, double val);
+void log_msg(const char *msg, double val1, double val2);
+double angleDiffAbs(double a, double b);
 
 class RobotPos {
 public:
@@ -32,6 +42,8 @@ public:
 
     void setImageData(unsigned char data[3600]);
 
+    void setDepthMap(unsigned char *data);
+
     void doUpdate();
 
     double getHeading();
@@ -43,7 +55,7 @@ public:
 private:
     // best heading
     double scores[360];
-    double bestHeading;
+    volatile double bestHeading;
 
     // sensor data
     int hokuyo[1081];
@@ -53,14 +65,23 @@ private:
     double nextWayHeading;
     double wayEndDistance;
     unsigned char cameraData[60][60];
+    unsigned char depthMap[60][60];
     int rpRays;
     double rpDistances[400];
     double rpAngles[400];
 
+
+	double** mask_val;
+	int** mask_count;
+
+	double** depth_mask_val;
+	int** depth_mask_count;
+	
     //sensor data checks;
-    bool validHokuyo = false;
-    bool validRpLidar = false;
-    bool validImage = false;
+    volatile bool validHokuyo = false;
+    volatile bool validRpLidar = false;
+    volatile bool validImage = false;
+    volatile bool validDepthMap = false;
 
     // gui dimensions
     int guiWidth;
@@ -68,11 +89,12 @@ private:
 
     // matrix to store all data
     double** matrix;
+    double** matrix_cam;
     
     // robot position
-    double posX;
-    double posY;
-    double angle;
+    volatile double posX;
+    volatile double posY;
+    volatile double angle;
     
     // odometry
     long prevTicksL;
@@ -109,8 +131,8 @@ private:
     // internal methods
     void decayMap();
 
-    void applyRay(double sensorX, double sensorY, double rayAngle, double rayLen);
-
+    void applyRay_clear_and_mark(double sensorX, double sensorY, double rayAngle, double rayLen);
+    
     void applyHokuyoData();
 
     void applyRpLidarData();
@@ -122,4 +144,6 @@ private:
     void findBestHeading();
 
     void applyImage();
+
+    void applyDepthMap();
 };
