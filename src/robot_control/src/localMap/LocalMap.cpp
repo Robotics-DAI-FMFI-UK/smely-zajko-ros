@@ -1,5 +1,9 @@
 #include "LocalMap.h"
 
+#define IGNORE_TOO_LONG_RAY 3000
+
+#define GOING_WRONG 10000
+
 // map constants
 const int gridSize = 10;
 const int gridWidth = 120;
@@ -19,6 +23,9 @@ const double rpLidarHeight = 70; // TODO measure
 // calculation constants
 const int minUpdateDist = 10;
 const double straightMovementThreshold = 0.07;
+
+
+static int transmitting_going_wrong = 0;
 
 // calculation utilities
 int LocalMap::clamp(int val, int max) {
@@ -48,12 +55,27 @@ LocalMap::LocalMap(int guiWidth, int guiHeight, ros::Publisher publisher) {
     this->guiWidth = guiWidth;
     this->guiHeight = guiHeight;
     matrix = new double* [gridWidth];
+    matrix_cam = new double* [gridWidth];
     for (int i = 0; i < gridWidth; i++) {
         matrix[i] = new double[gridHeight];
+        matrix_cam[i] = new double[gridHeight];
         for (int j = 0; j < gridHeight; j++) {
             matrix[i][j] = 0.0;//((double) i + j) / (gridHeight + gridWidth);
+            matrix_cam[i][j] = 0.0;
         }
     }
+
+    mask_val = new double* [gridWidth];
+    depth_mask_val = new double* [gridWidth];
+    mask_count = new int* [gridWidth];    
+    depth_mask_count = new int* [gridWidth];    
+    for (int i = 0; i < gridWidth; i++) {
+        mask_val[i] = new double[gridHeight];
+        depth_mask_val[i] = new double[gridHeight];
+        mask_count[i] = new int[gridHeight];
+        depth_mask_count[i] = new int[gridHeight];
+    }
+
     posX = 0;
     posY = 0;
     angle = 0;
@@ -125,16 +147,23 @@ void LocalMap::updateRobotPosition_(long L, long R, bool force) {
         newAngle = angle;
     }
     // normalize new position data into map
-    newX = newX > mapWidth? newX - mapWidth : newX;
-    posX = newX < 0? newX + mapWidth : newX;
-    newY = newY > mapHeight? newY - mapHeight : newY;
-    posY = newY < 0? newY + mapHeight : newY;
-    newAngle = newAngle > 2*pi? newAngle - 2*pi : newAngle;
-    angle = newAngle < 0? newAngle + 2*pi : newAngle;
+   while (newX > mapWidth) newX = newX - mapWidth;    
+    while (newX < 0) newX = newX + mapWidth;    
+    posX = newX;
+    
+    while (newY > mapHeight) newY = newY - mapHeight;    
+    while (newY < 0) newY = newY + mapHeight;    
+    posY = newY;
 
-//    decayMap();
+    while (newAngle > 2 * pi) newAngle -= 2 * pi;
+    while (newAngle < 0) newAngle += 2 * pi;
+    angle = newAngle;
+ 
+    
+    decayMap();
     applyHokuyoData();
     applyRpLidarData();
+    applyDepthMap();
     applyImage();
     applyCompassHeading();
     findBestHeading();
@@ -148,16 +177,22 @@ void LocalMap::setPose(double x, double y, double a) {
     double newX = x, newY = y, newAngle = a;
 
     // normalize new position data into map
-    newX = newX > mapWidth? newX - mapWidth : newX;
-    posX = newX < 0? newX + mapWidth : newX;
-    newY = newY > mapHeight? newY - mapHeight : newY;
-    posY = newY < 0? newY + mapHeight : newY;
-    newAngle = newAngle > 2*pi? newAngle - 2*pi : newAngle;
-    angle = newAngle < 0? newAngle + 2*pi : newAngle;
+    while (newX > mapWidth) newX = newX - mapWidth;    
+    while (newX < 0) newX = newX + mapWidth;    
+    posX = newX;
+    
+    while (newY > mapHeight) newY = newY - mapHeight;    
+    while (newY < 0) newY = newY + mapHeight;    
+    posY = newY;
 
-//    decayMap();
+    while (newAngle > 2 * pi) newAngle -= 2 * pi;
+    while (newAngle < 0) newAngle += 2 * pi;
+    angle = newAngle;
+ 
+    decayMap();
     applyHokuyoData();
     applyRpLidarData();
+    applyDepthMap();
     applyImage();
     applyCompassHeading();
     findBestHeading();
@@ -168,9 +203,14 @@ void LocalMap::setPose(double x, double y, double a) {
 
 }
 
+// representation:
+//   matrix[x][y]       0 => free       1 => obstacle
+//   cam_matrix[x][y]   0 => off-road   1 => road
+
 cv::Scalar LocalMap::getMatrixColor(int x, int y) {
     double val = matrix[clampGridX(x)][clampGridY(y)];
-    return cv::Scalar((1-val)*255 , 255 - 100*val, (1-val)*255);
+    double val_cam = matrix_cam[clampGridX(x)][clampGridY(y)];
+    return cv::Scalar(128, (1-val)*255, (val_cam)*255);
 }
 
 cv::Mat LocalMap::getGui() {
@@ -235,7 +275,7 @@ RobotPos* LocalMap::getPos() {
 
 void LocalMap::setHokuyoData(int* rays) {
     memcpy(hokuyo, rays, sizeof(int) * 1081);
-    validHokuyo = true;
+    validHokuyo = true; 
 }
 
 void LocalMap::setRpLidarData(int rays, double *distances, double *angles) {
@@ -251,42 +291,49 @@ void LocalMap::setRpLidarData(int rays, double *distances, double *angles) {
 void LocalMap::decayMap() {
     for (int i = 0; i < gridWidth; i++) {
         for (int j = 0; j < gridHeight; j++) {
-            matrix[i][j] *= 0.95;
+            //matrix[i][j] *= 0.99; //0.85;
+            matrix[i][j] *= 0.99; //0.85;
+            matrix_cam[i][j] *= 1.0;
         }
     }
 }
 
-void LocalMap::applyRay(double sensorX, double sensorY, double rayAngle, double rayLen) {
+// first pass - clear 
+void LocalMap::applyRay_clear_and_mark(double sensorX, double sensorY, double rayAngle, double rayLen) {
     // ray end point
-    double rayX = sensorX + rayLen * sin(angle + rayAngle);
-    double rayY = sensorY + rayLen * cos(angle + rayAngle);
-
-    // end point in grid
-    int gX = map2gridX(rayX);
-    int gY = map2gridY(rayY);
-
-    // mark as obstacle (also mark 8-neighborhood)
-    matrix[clampGridX(gX-1)][clampGridY(gY-1)] = (matrix[clampGridX(gX-1)][clampGridY(gY-1)] + 2) / 3;
-    matrix[clampGridX(gX-1)][gY] = (matrix[clampGridX(gX-1)][gY] + 2) / 3;
-    matrix[clampGridX(gX-1)][clampGridY(gY+1)] = (matrix[clampGridX(gX-1)][clampGridY(gY+1)] + 2) / 3;
-    matrix[gX][clampGridY(gY-1)] = (matrix[gX][clampGridY(gY-1)] + 2) / 3;
-    matrix[gX][gY] = (matrix[gX][gY] + 2) / 3;
-    matrix[gX][clampGridY(gY+1)] = (matrix[gX][clampGridY(gY+1)] + 2) / 3;
-    matrix[clampGridX(gX+1)][clampGridY(gY-1)] = (matrix[clampGridX(gX+1)][clampGridY(gY-1)] + 2) / 3;
-    matrix[clampGridX(gX+1)][gY] = (matrix[clampGridX(gX+1)][gY] + 2) / 3;
-    matrix[clampGridX(gX+1)][clampGridY(gY+1)] = (matrix[clampGridX(gX+1)][clampGridY(gY+1)] + 2) / 3;
+    //double rayX = sensorX + rayLen * sin(angle + rayAngle);
+    //double rayY = sensorY + rayLen * cos(angle + rayAngle);
+    double rayX = sensorX + sensorCutoff * sin(angle + rayAngle);
+    double rayY = sensorY + sensorCutoff * cos(angle + rayAngle);
 
     // mark points on ray as empty
-    for (int j = 0; j < rayLen; j += 10) {
-        double p = ((double) j) / rayLen;
+    for (int j = 0; j < sensorCutoff; j += 10) {
+        double p = ((double) j) / sensorCutoff;
         double pX = sensorX + p * (rayX - sensorX);
         double pY = sensorY + p * (rayY - sensorY);
         int gX = map2gridX(pX);
         int gY = map2gridY(pY);
+        
+        if (j > rayLen)
+        {
+			// mark as obstacle (also mark 8-neighborhood)
+			matrix[clampGridX(gX-1)][clampGridY(gY-1)] = (matrix[clampGridX(gX-1)][clampGridY(gY-1)] + 2) / 3;
+			matrix[clampGridX(gX-1)][gY] = (matrix[clampGridX(gX-1)][gY] + 2) / 3;
+			matrix[clampGridX(gX-1)][clampGridY(gY+1)] = (matrix[clampGridX(gX-1)][clampGridY(gY+1)] + 2) / 3;
+			matrix[gX][clampGridY(gY-1)] = (matrix[gX][clampGridY(gY-1)] + 2) / 3;
+			matrix[gX][gY] = (matrix[gX][gY] + 2) / 3;
+			matrix[gX][clampGridY(gY+1)] = (matrix[gX][clampGridY(gY+1)] + 2) / 3;
+			matrix[clampGridX(gX+1)][clampGridY(gY-1)] = (matrix[clampGridX(gX+1)][clampGridY(gY-1)] + 2) / 3;
+			matrix[clampGridX(gX+1)][gY] = (matrix[clampGridX(gX+1)][gY] + 2) / 3;
+			matrix[clampGridX(gX+1)][clampGridY(gY+1)] = (matrix[clampGridX(gX+1)][clampGridY(gY+1)] + 2) / 3;			
+		}
+		else
+		{
         // don't overwrite obstacles found by previous rays from this batch
-        if (matrix[gX][gY] < 1.0) matrix[gX][gY] = matrix[gX][gY] / 3;
+        // ???if (matrix[gX][gY] < 1.0) 
+          matrix[gX][gY] = matrix[gX][gY] / 3;
+	    }
     }
-
 }
 
 void LocalMap::applyHokuyoData() {
@@ -296,18 +343,19 @@ void LocalMap::applyHokuyoData() {
     double sensorX = posX + hokuyoOffset * sin(angle);
     double sensorY = posY + hokuyoOffset * cos(angle);
 
-    // iterate valid rays
+    // iterate valid rays   
     for (int i = 180; i <= 900; i++) {
         // calculate ray angle
         double rayAngle = ((-(double) i) / 4 + 135) * (pi / 180);
 
         // clamp ray length
         double rayLen = ((double) hokuyo[i]) / 10;
-        if (rayLen > sensorCutoff) {
+        //if (rayLen > sensorCutoff) {
+        if (rayLen > IGNORE_TOO_LONG_RAY) {
             continue; // skip too long rays
         }
 
-        applyRay(sensorX, sensorY, rayAngle, rayLen);
+        applyRay_clear_and_mark(sensorX, sensorY, rayAngle, rayLen);
     }
 }
 
@@ -335,9 +383,8 @@ void LocalMap::applyRpLidarData() {
             continue; // skip too long rays
         }
 
-        applyRay(posX, posY, rayAngle, rayLen);
+        applyRay_clear_and_mark(posX, posY, rayAngle, rayLen);
     }
-
 }
 
 void LocalMap::setGlobalMapData(double currHeading, double nextHeading, double distance) {
@@ -361,6 +408,74 @@ void LocalMap::setImageData(unsigned char* data) {
     validImage = true;
 }
 
+void LocalMap::setDepthMap(unsigned char *data) 
+{
+    return;
+/*
+    for (int i = 0; i < 3600; i++) {
+        depthMap[i%60][i/60] = data[i];
+    }
+    validDepthMap = true; */
+}
+
+void LocalMap::applyDepthMap()
+{
+    if (!validDepthMap) return;
+    double r11 = cos(angle);
+    double r12 = -sin(angle);
+    double r21 = sin(angle);
+    double r22 = cos(angle);
+
+    FILE *f = fopen("depth.log", "w+");
+
+    for (int i = 0; i < gridWidth; i++) {
+        for (int j = 0; j < gridHeight; j++) {
+            depth_mask_val[i][j] = 0.0;
+            depth_mask_count[i][j] = 0;
+        }
+    }
+
+    for (int x = -30; x < 30; x++) {
+        for (int y = 0; y < 60; y++) {
+            // rotate
+            fprintf(f, "%d", depthMap[30 - x][y]);
+            double rX = -((double) x*10) * r11 - ((double) y*10) * r12;
+            double rY = ((double) x*10) * r21 + ((double) y*10) * r22;
+            // move to robot
+            int gX = map2gridX(rX + posX);
+            int gY = map2gridY(rY + posY);
+            if (depthMap[30 - x][y] == 1)
+            {
+              depth_mask_val[gX][gY] ++;
+              depth_mask_count[gX][gY] ++;            
+            }
+            else if (depthMap[30 - x][y] == 2)
+            {
+              depth_mask_count[gX][gY] ++;
+            }
+        }
+        fprintf(f, "\n");
+    }
+    fclose(f);
+
+    for (int x = -30; x < 30; x++) {
+        for (int y = 0; y < 60; y++) {
+            // rotate
+            double rX = -((double) x*10) * r11 - ((double) y*10) * r12;
+            double rY = ((double) x*10) * r21 + ((double) y*10) * r22;
+            // move to robot
+            int gX = map2gridX(rX + posX);
+            int gY = map2gridY(rY + posY);
+            
+            if (depth_mask_count[gX][gY])
+            {
+              double val = depth_mask_val[gX][gY] / depth_mask_count[gX][gY];
+              matrix[gX][gY] = (matrix[gX][gY] + 2 * val) / 3;
+            }
+        }
+    }
+}
+
 void LocalMap::applyImage() {
     if (!validImage) return;
     double r11 = cos(angle);
@@ -368,14 +483,50 @@ void LocalMap::applyImage() {
     double r21 = sin(angle);
     double r22 = cos(angle);
 
-    bool** done = new bool* [gridWidth];
     for (int i = 0; i < gridWidth; i++) {
-        done[i] = new bool[gridHeight];
         for (int j = 0; j < gridHeight; j++) {
-            done[i][j] = false;
+            mask_val[i][j] = 0.0;
+            mask_count[i][j] = 0;
         }
     }
 
+    for (int x = -30; x < 30; x++) {
+        for (int y = 0; y < 60; y++) {
+            // rotate
+            double rX = -((double) x*10) * r11 - ((double) y*10) * r12;
+            double rY = ((double) x*10) * r21 + ((double) y*10) * r22;
+            // move to robot
+            int gX = map2gridX(rX + posX);
+            int gY = map2gridY(rY + posY);
+            if (cameraData[30 - x][y] > 0)
+            {
+              double val = (double) cameraData[30 - x][y] / 255.0;
+            
+              mask_val[gX][gY] += val;
+              mask_count[gX][gY] ++;            
+            }
+        }
+    }
+
+    for (int x = -30; x < 30; x++) {
+        for (int y = 0; y < 60; y++) {
+            // rotate
+            double rX = -((double) x*10) * r11 - ((double) y*10) * r12;
+            double rY = ((double) x*10) * r21 + ((double) y*10) * r22;
+            // move to robot
+            int gX = map2gridX(rX + posX);
+            int gY = map2gridY(rY + posY);
+            
+            if (mask_count[gX][gY])
+            {
+              double val = mask_val[gX][gY] / mask_count[gX][gY];
+              matrix_cam[gX][gY] = (matrix_cam[gX][gY] + 2 * val) / 3;
+            }
+        }
+    }
+
+    /* previous version:
+     
     for (int x = -30; x < 30; x++) {
         for (int y = 0; y < 60; y++) {
             // rotate
@@ -388,11 +539,11 @@ void LocalMap::applyImage() {
                 done[gX][gY] = true;
                 double val = (double) cameraData[30 - x][y] / 255.0;
                 if (!isZero(val)) {
-                    matrix[gX][gY] = (matrix[gX][gY] + 2 * val) / 3;
+                    matrix_cam[gX][gY] = (matrix_cam[gX][gY] + 2 * val) / 3;
                 }
             }
         }
-    }
+    } */
 }
 
 double calcDist(double x1, double y1, double x2, double y2, double x, double y) {
@@ -443,12 +594,14 @@ double angleDiffDir(double a, double b) {
 
 double angleInterpolate(double a, double b, double p) {
     double d = angleDiffDir(a, b);
-    return a + p * d;
+    double i = a + p * d;
+    return i < 0 ? i + 2*pi : i;
 }
 
-const double pathWidth = wheelDistance * 0.8;
+const double pathWidth = wheelDistance * 2;
 
 void LocalMap::findBestHeading() {
+    static int going_wrong = 0;
     // check directions in 1 degree intervals
     for (int i = 0; i < 360; i++) {
         double dir = ((double) i) * (pi / 180);
@@ -486,9 +639,10 @@ void LocalMap::findBestHeading() {
                 double pY = gridSize * y;
                 double lineDist = calcDist(posX, posY, endX, endY, pX, pY);
                 double pointDist = sqrt(pow(posX - pX, 2) + pow(posY - pY, 2));
-                if (lineDist < pathWidth&& pointDist < sensorCutoff) {
+                if (lineDist <= pathWidth&& pointDist < sensorCutoff) {
+                    double v = (1 - matrix[clampGridX(x)][clampGridY(y)]) * matrix_cam[clampGridX(x)][clampGridY(y)];
                     // contribution to score weighted by distance
-                    scores[i] += (1-matrix[clampGridX(x)][clampGridY(y)]) * (1 - pointDist / sensorCutoff);//(1 / pow(2, pointDist));
+                    scores[i] += v * (1 - pointDist / sensorCutoff / 1.2);//(1 / pow(2, pointDist));
                     count++;
                 }
             }
@@ -498,18 +652,19 @@ void LocalMap::findBestHeading() {
 
         // reduce score of paths in wrong direction
         double target;
-        if (wayEndDistance > sensorCutoff) {
+        if (wayEndDistance > sensorCutoff/2.4) {
             target = angle - compassHeading + currWayHeading;
         } else {
-            target = angleInterpolate(currWayHeading, nextWayHeading, wayEndDistance / sensorCutoff);
+            target = angleInterpolate(currWayHeading, nextWayHeading, 1 - wayEndDistance / (sensorCutoff/2.4));
         }
         double diff = angleDiffAbs(target, dir);
-        scores[i] *= 1 - (diff / pi);
+        //scores[i] *= 1 - (diff / pi);
+        scores[i] *= 0.5 + (1 - (diff / pi)) / 2;
     }
     int best = 0;
     double bestScore = scores[0];
     // find path with highest score
-    for (int i = 0; i < 360; i++) {
+    for (int i = 1; i < 360; i++) {		
         if (scores[i] > scores[best]) {
             best = i;
             bestScore = scores[i];
@@ -518,6 +673,21 @@ void LocalMap::findBestHeading() {
 
     bestHeading = ((double) best) * (pi / 180);
 
+    if (angleDiffAbs(bestHeading, currWayHeading) > 150 / 180.0 * pi)
+    { 
+      going_wrong++;
+      if (going_wrong > 100) transmitting_going_wrong = 1;
+      if (going_wrong % 20 == 0) printf("wrong %d\n", going_wrong);
+    }
+    else if (going_wrong) going_wrong--;
+
+    if (angleDiffAbs(bestHeading, currWayHeading) < 30 / 180.0 * pi)
+      if (transmitting_going_wrong) 
+    {
+      transmitting_going_wrong = 0;
+      going_wrong = 0;
+    }
+
     // rescale scores
     for (int i = 0; i < 360; i++) {
         scores[i] = scores[i] / bestScore;
@@ -525,8 +695,20 @@ void LocalMap::findBestHeading() {
 }
 
 double LocalMap::getHeading() {
+		
+	static double last_d = 0;
+	static double last_returned_d = 0;
+	
     double d = bestHeading - angle;
-    if (d > pi) d -= 2*pi;
-    if (d < -pi) d += 2*pi;
-    return d;
+    while (d > pi) d -= 2*pi;
+    while (d < -pi) d += 2*pi;
+    
+    // do not return change by more than 30 degrees per iteration
+    if (angleDiffAbs(last_d, d) < 30 / 180.0 * pi)
+	   last_returned_d = d;
+	
+	last_d = d;
+	
+    if (transmitting_going_wrong) return GOING_WRONG;
+    return last_returned_d;
 }
