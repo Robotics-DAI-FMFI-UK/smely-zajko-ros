@@ -138,8 +138,8 @@ add_executable(hokuyo_publisher_node
 #add_executable(rplidar_publisher_node src/rplidar_publisher_node.cpp src/rplidar/RpLidar.cpp)
 #add_dependencies(rplidar_publisher_node message_types_gencpp)
 
-add_executable(rplidar_test_node src/rplidar_test_node.cpp)
-add_dependencies(rplidar_test_node message_types_gencpp)
+#add_executable(rplidar_test_node src/rplidar_test_node.cpp)
+#add_dependencies(rplidar_test_node message_types_gencpp)
 
 add_executable(hokuyo_subscriber_node src/hokuyo_subscriber_node.cpp)
 
