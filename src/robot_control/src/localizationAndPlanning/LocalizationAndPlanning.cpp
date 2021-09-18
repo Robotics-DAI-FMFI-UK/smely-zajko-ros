@@ -913,7 +913,7 @@ message_types::GpsAngles LocalizationAndPlanning::update(sensor_msgs::NavSatFix 
         result.distToWayEnd = 0;
     }
 
-    if (result.dstToFin < 0.002) { // dst v km
+    if (result.dstToFin < 0.007) { // dst v km
         ROS_INFO("SME V CIELI ( %f m ) \n", result.dstToFin * 1000);
         result.map = DBL_MAX;
     }

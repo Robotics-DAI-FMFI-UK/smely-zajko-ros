@@ -251,12 +251,12 @@ int move() {
         wrong_dir = 1;
         if (delta > 0) {
             if (autonomy) {
-                setSteering(80, 1);
+                setSteering(80, 4);
             }
             display_direction = 5;
         } else {
             if (autonomy) {
-                setSteering(-80, 1);
+                setSteering(-80, 4);
             }
             display_direction = -5;
         }
@@ -271,12 +271,12 @@ int move() {
          printf("!!!!!!!!!!!!!!!!!!!!!!! Chodnik missing searching..\n");
         if (delta > 0) {
             if (autonomy) {
-                setSteering(40, -1);
+                setSteering(80, -4);
             }
             display_direction = 5;
         } else {
             if (autonomy) {
-                setSteering(-40, -1);
+                setSteering(-80, -4);
             }
             display_direction = -5;
         }
@@ -319,7 +319,7 @@ int move() {
         if (USE_LOCAL_MAP) {
                         if (local_map_heading >= 9999) // GOING_WRONG
                         {
-                          setSteering(80, 6);
+                          setSteering(80, 4);
                           if (!said_wrong)
                           {
                             say("its the other way, zyco");
@@ -392,7 +392,7 @@ void avoid_obstacle(ros::Rate *loop_rate)
     // wait for the obstacle to go away
     int waiting = 0;
     int not_see_counter = 0;
-    while (waiting < 400)
+    while (waiting < 360)
     {
       if (ros::ok())
       {
@@ -418,7 +418,19 @@ void avoid_obstacle(ros::Rate *loop_rate)
     waiting = 0;
     
     // just a couple of seconds of backing up
-    while (waiting < 200)
+    while (waiting < 140)
+    {
+      if (ros::ok())
+      {
+        ros::spinOnce();
+        loop_rate->sleep();
+      } 
+      waiting++;
+    } 
+    int rnd = rand() % 2 * 2 - 1;
+    setSteering(80, rnd * 5);
+    waiting = 0;
+    while (waiting < 70)
     {
       if (ros::ok())
       {

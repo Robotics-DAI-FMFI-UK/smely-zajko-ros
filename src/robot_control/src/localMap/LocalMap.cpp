@@ -555,7 +555,7 @@ void LocalMap::applyImage() {
             if (mask_count[gX][gY])
             {
               double val = mask_val[gX][gY] / mask_count[gX][gY];
-              matrix_cam[gX][gY] = (matrix_cam[gX][gY] + 2 * val) / 3;
+              matrix_cam[gX][gY] = doublemin(1.0, (matrix_cam[gX][gY] + 2 * val) / 3);
             }
         }
     }
