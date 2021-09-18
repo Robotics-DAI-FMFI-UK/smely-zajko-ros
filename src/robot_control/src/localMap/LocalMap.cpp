@@ -328,6 +328,8 @@ void LocalMap::decayMap() {
     }
 }
 
+double doublemin(double a, double b) { if (a < b) return a; else return b; }
+
 // first pass - clear 
 void LocalMap::applyRay_clear_and_mark(double sensorX, double sensorY, double rayAngle, double rayLen) {
     // ray end point
@@ -337,7 +339,9 @@ void LocalMap::applyRay_clear_and_mark(double sensorX, double sensorY, double ra
     double rayY = sensorY + sensorCutoff * cos(angle + rayAngle);
 
     // mark points on ray as empty
+    double q = 2.0/3;
     for (int j = 0; j < sensorCutoff; j += 10) {
+        double qq = 1.0 - q;
         double p = ((double) j) / sensorCutoff;
         double pX = sensorX + p * (rayX - sensorX);
         double pY = sensorY + p * (rayY - sensorY);
@@ -347,15 +351,16 @@ void LocalMap::applyRay_clear_and_mark(double sensorX, double sensorY, double ra
         if (j > rayLen)
         {
 			// mark as obstacle (also mark 8-neighborhood)
-			matrix[clampGridX(gX-1)][clampGridY(gY-1)] = (matrix[clampGridX(gX-1)][clampGridY(gY-1)] + 2) / 3;
-			matrix[clampGridX(gX-1)][gY] = (matrix[clampGridX(gX-1)][gY] + 2) / 3;
-			matrix[clampGridX(gX-1)][clampGridY(gY+1)] = (matrix[clampGridX(gX-1)][clampGridY(gY+1)] + 2) / 3;
-			matrix[gX][clampGridY(gY-1)] = (matrix[gX][clampGridY(gY-1)] + 2) / 3;
-			matrix[gX][gY] = (matrix[gX][gY] + 2) / 3;
-			matrix[gX][clampGridY(gY+1)] = (matrix[gX][clampGridY(gY+1)] + 2) / 3;
-			matrix[clampGridX(gX+1)][clampGridY(gY-1)] = (matrix[clampGridX(gX+1)][clampGridY(gY-1)] + 2) / 3;
-			matrix[clampGridX(gX+1)][gY] = (matrix[clampGridX(gX+1)][gY] + 2) / 3;
-			matrix[clampGridX(gX+1)][clampGridY(gY+1)] = (matrix[clampGridX(gX+1)][clampGridY(gY+1)] + 2) / 3;			
+			matrix[clampGridX(gX-1)][clampGridY(gY-1)] = doublemin(1.0, qq * matrix[clampGridX(gX-1)][clampGridY(gY-1)] + q);
+			matrix[clampGridX(gX-1)][gY] = doublemin(1.0, qq * (matrix[clampGridX(gX-1)][gY]) + q);
+			matrix[clampGridX(gX-1)][clampGridY(gY+1)] = doublemin(1.0, qq * matrix[clampGridX(gX-1)][clampGridY(gY+1)] + q);
+			matrix[gX][clampGridY(gY-1)] = doublemin(1.0, qq * matrix[gX][clampGridY(gY-1)] + q);
+			matrix[gX][gY] = doublemin(1.0, qq * matrix[gX][gY] + q);
+			matrix[gX][clampGridY(gY+1)] = doublemin(1.0, qq * matrix[gX][clampGridY(gY+1)] + q);
+			matrix[clampGridX(gX+1)][clampGridY(gY-1)] = doublemin(1.0, qq * matrix[clampGridX(gX+1)][clampGridY(gY-1)] + q);
+			matrix[clampGridX(gX+1)][gY] = doublemin(1.0, qq * matrix[clampGridX(gX+1)][gY] + q);
+			matrix[clampGridX(gX+1)][clampGridY(gY+1)] = doublemin(1.0, qq * matrix[clampGridX(gX+1)][clampGridY(gY+1)] + q);
+                        q *= 0.5;   // pixels behind the detected obstacles are not marked as obstacle so much
 		}
 		else
 		{
