@@ -129,6 +129,8 @@ private:
     cv::Scalar getMatrixColor(int x, int y);
 
     // internal methods
+    void eraseAustralia();
+
     void decayMap();
 
     void applyRay_clear_and_mark(double sensorX, double sensorY, double rayAngle, double rayLen);

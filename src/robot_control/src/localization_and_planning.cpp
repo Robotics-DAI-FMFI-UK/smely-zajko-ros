@@ -21,7 +21,7 @@ const int DETECT_QR = 1;
 //ros::Publisher cameraActionPublisher;
 
 ros::Publisher locPublisher;
-LocalizationAndPlanning *localizationAndPlanning = new LocalizationAndPlanning(500, 500);
+LocalizationAndPlanning *localizationAndPlanning = new LocalizationAndPlanning(650, 650);
 
 message_types::SbotMsg sbot_msg;
 
@@ -305,9 +305,11 @@ int main(int argc, char **argv) {
     locPublisher = nh.advertise<message_types::GpsAngles>("localization_and_planning", 10);
     //cameraActionPublisher = nh.advertise<std_msgs::UInt8>("/control/camera_action", 10);
 
-    //localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/zilina.osm");
+    localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/fablab_a_okolie.osm");
     //localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/matfyz.osm");
-    localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/deggendorf2019.osm");
+    //localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/sad.osm");
+    //localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/zilina.osm");
+    //localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/deggendorf2019.osm");
 //    localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/lednice_velka.osm");
 //    localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/botanicka.osm");
 //    localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/homologacie_fei.osm");
@@ -359,8 +361,10 @@ int main(int argc, char **argv) {
     say("WAITING FOR GPS");
 
     log_msg("spinning ros...");
+    cvShowImage("loc and planning", localizationAndPlanning->getGui());
 
     ros::spin();
+
 
     return 0;
 }

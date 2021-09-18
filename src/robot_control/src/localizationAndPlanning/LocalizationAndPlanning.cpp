@@ -47,6 +47,8 @@ sensor_msgs::NavSatFix LocalizationAndPlanning::reverse(geometry_msgs::Point loc
 
 void LocalizationAndPlanning::readMap(char *filename) {
 
+    printf("reading map %s\n", filename);
+
     ifstream is;
     is.open(filename);
 
@@ -98,9 +100,12 @@ void LocalizationAndPlanning::readMap(char *filename) {
     for (xml_node<> *way_node = base_node->first_node("way"); way_node;
          way_node = way_node->next_sibling("way")) {
         int candidate = 0;
+        int refused = 0;
+        
         for (xml_node<> *tag_node = way_node->first_node("tag"); tag_node;
              tag_node = tag_node->next_sibling("tag")) {
 
+            xml_attribute<> *attr_k = tag_node->first_attribute("k");
             xml_attribute<> *attr_v = tag_node->first_attribute("v");
 
             if (attr_v == 0) {
@@ -108,22 +113,29 @@ void LocalizationAndPlanning::readMap(char *filename) {
             }
 
             if ((strcmp(attr_v->value(), "footway") == 0) ||
-                (strcmp(attr_v->value(), "path") == 0) ||
-                (strcmp(attr_v->value(), "track") == 0) ||
-                (strcmp(attr_v->value(), "unclassified") == 0) ||
-                (strcmp(attr_v->value(), "pedestrian") == 0) ||
+            //    (strcmp(attr_v->value(), "path") == 0) ||
+            //    (strcmp(attr_v->value(), "track") == 0) ||
+            //    (strcmp(attr_v->value(), "unclassified") == 0) ||
+            //    (strcmp(attr_v->value(), "pedestrian") == 0) ||
                 (strcmp(attr_v->value(), "service") == 0)) {
-                candidate++;
+                //candidate++;
+                candidate = 1;
             }
+            if ((strcmp(attr_k->value(), "indoor") == 0) &&
+                (strcmp(attr_v->value(), "yes") == 0)) refused = 1;
+
+            if ((strcmp(attr_k->value(), "access") == 0) &&
+                (strcmp(attr_v->value(), "private") == 0)) refused = 1;
 
             if ((strcmp(attr_v->value(), "sand") == 0) ||
+                (strcmp(attr_v->value(), "dirt") == 0) ||
                 (strcmp(attr_v->value(), "residential") == 0) ||
                 (strcmp(attr_v->value(), "grass") == 0)
                ){
-                candidate--;
+                refused = 1;
             }
         }
-        if (candidate > 0) {
+        if (candidate && !refused) {
             Path path;
 
             // read all nodes
@@ -157,6 +169,19 @@ void LocalizationAndPlanning::readMap(char *filename) {
                         istr2 >> point.longitude;
 
                         double id = atof(node->first_attribute("id")->value());
+ 
+        		xml_node<> *tag_node = node->first_node("tag"); 
+			while (tag_node)
+			{
+                           xml_attribute<> *attr_v = tag_node->first_attribute("v");
+                           if (strcmp(attr_v->value(), "raised") == 0) 
+                           {
+                               point.barrier = 1;
+                               printf("setting barrier for node %.0f\n", id); 
+                               break;
+                           }
+                           tag_node = tag_node->next_sibling("tag");
+                        }
 
                         points[id] = point;
 
@@ -187,21 +212,25 @@ void LocalizationAndPlanning::readMap(char *filename) {
             double id2 = paths[i].points[j - 1];
             double id3 = paths[i].points[j + 1];
 
-            points[id1].nextPoints.push_back(id2);
-            points[id1].nextPoints.push_back(id3);
+            if (!points[id2].barrier)
+              points[id1].nextPoints.push_back(id2);
+            if (!points[id3].barrier)
+              points[id1].nextPoints.push_back(id3);
         }
         // first
         double id0 = paths[i].points[0];
         double id1 = paths[i].points[1];
 
-        points[id0].nextPoints.push_back(id1);
+        if (!points[id1].barrier)
+            points[id0].nextPoints.push_back(id1);
 
         if (paths[i].points.size() >= 2) {
             // last
             id0 = paths[i].points[paths[i].points.size() - 1];
             id1 = paths[i].points[paths[i].points.size() - 2];
 
-            points[id0].nextPoints.push_back(id1);
+            if (!points[id1].barrier)
+                points[id0].nextPoints.push_back(id1);
         }
     }
 }
@@ -426,13 +455,31 @@ IplImage *LocalizationAndPlanning::getGui() {
     // cesty
     for (unsigned long i = 0; i < paths.size(); i++) {
         if (paths.at(i).points.size() > 1) {
-            geometry_msgs::Point p1 = convert(points.at(paths.at(i).points[0]));
+            
+	    WayPoint pt = points.at(paths.at(i).points[0]);
+            geometry_msgs::Point p1 = convert(pt);
 
-            for (int j = 1; j < paths.at(i).points.size(); j++) {
-                geometry_msgs::Point p2 = convert(points.at(paths.at(i).points[j]));
+            if (pt.barrier) 
+	    {
+              printf("drawing point with kerb\n");
+              cvCircle(result, cvPoint(p1.x, p1.y), 2, CV_RGB(1, 0, 0));
+            }
+            else cvCircle(result, cvPoint(p1.x, p1.y), 2, CV_RGB(0, 0, 0));
 
+            for (int j = 1; j < paths.at(i).points.size(); j++) 
+            {
+	        pt = points.at(paths.at(i).points[j]);
+                geometry_msgs::Point p2 = convert(pt);
+                
                 cvLine(result, cvPoint(p1.x, p1.y), cvPoint(p2.x, p2.y),
                        cvScalar(0, 0, 0));
+
+                if (pt.barrier) 
+                {
+                  printf("drawing point with kerb\n");
+                  cvCircle(result, cvPoint(p2.x, p2.y), 2, CV_RGB(1, 0, 0));
+                }
+                else cvCircle(result, cvPoint(p2.x, p2.y), 2, CV_RGB(0, 0, 0));
                 p1 = p2;
             }
         }

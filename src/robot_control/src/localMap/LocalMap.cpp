@@ -101,6 +101,36 @@ void LocalMap::updateRobotPosition(long L, long R) {
     updateRobotPosition_(L, R, false);
 }
 
+int intmin(int a, int b) { if (a < b) return a; else return b; }
+int intmax(int a, int b) { if (a > b) return a; else return b; }
+
+// this erases all pixels that are further or equal than 1/2 of grid size
+// i.e. we keep only a circle in a distance < 1/2 of a grid
+void LocalMap::eraseAustralia()
+{
+    for (int x = 0; x < gridWidth; x++)
+      for (int y = 0; y < gridHeight; y++)
+      {
+        // calculate distance of pixel [x,y] - first normalize x,y distances to 0-1 range (1=grid size)
+        int left = intmin(x, posX);
+        int right = intmax(x, posX);
+        int gridXDistance = 1 + intmin(right - left, (gridWidth - right) + left);   // 1+ to catch "borders"
+
+        int bottom = intmin(y, posY);
+        int top = intmax(y, posY);
+        int gridYDistance = 1 + intmin(top - bottom, (gridHeight - top) + bottom);
+        
+        double gridXDist = gridXDistance / (double)gridWidth;
+        double gridYDist = gridYDistance / (double)gridHeight;
+
+        if (gridXDist * gridXDist + gridYDist * gridYDist > 0.25)  // (0.5 ^ 2)
+        {
+          matrix[x][y] = 0.0;
+          matrix_cam[x][y] = 0.0;
+        }
+      } 
+}
+
 void LocalMap::updateRobotPosition_(long L, long R, bool force) {
     L = -L;
     R = -R;
@@ -159,7 +189,7 @@ void LocalMap::updateRobotPosition_(long L, long R, bool force) {
     while (newAngle < 0) newAngle += 2 * pi;
     angle = newAngle;
  
-    
+    eraseAustralia();
     decayMap();
     applyHokuyoData();
     applyRpLidarData();

@@ -37,17 +37,20 @@ public:
     // for searching
     double dist;
     double previous;
+    int barrier;
 
     WayPoint() {
         dist = DBL_MAX;
         previous = -1;
+        barrier = 0;
     };
 
     WayPoint(sensor_msgs::NavSatFix src) {
         dist = DBL_MAX;
         previous = -1;
-        this->latitude = src.latitude;
-        this->longitude = src.longitude;
+        latitude = src.latitude;
+        longitude = src.longitude;
+        barrier = 0;
     };
 };
 
