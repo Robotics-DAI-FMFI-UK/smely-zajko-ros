@@ -112,12 +112,14 @@ void LocalMap::eraseAustralia()
       for (int y = 0; y < gridHeight; y++)
       {
         // calculate distance of pixel [x,y] - first normalize x,y distances to 0-1 range (1=grid size)
-        int left = intmin(x, posX);
-        int right = intmax(x, posX);
+        int gridPosX = map2gridX(posX);
+        int left = intmin(x, gridPosX);
+        int right = intmax(x, gridPosX);
         int gridXDistance = 1 + intmin(right - left, (gridWidth - right) + left);   // 1+ to catch "borders"
 
-        int bottom = intmin(y, posY);
-        int top = intmax(y, posY);
+        int gridPosY = map2gridY(posY);
+        int bottom = intmin(y, gridPosY);
+        int top = intmax(y, gridPosY);
         int gridYDistance = 1 + intmin(top - bottom, (gridHeight - top) + bottom);
         
         double gridXDist = gridXDistance / (double)gridWidth;
@@ -140,6 +142,8 @@ void LocalMap::updateRobotPosition_(long L, long R, bool force) {
     
     if (!force && (fabs(dL) + fabs(dR) < minUpdateDist)) return; // don't update on small changes
     
+    log_msg("updateRobotPosition", (double)L, (double)R);
+
     prevTicksL = L;
     prevTicksR = R;
     
@@ -177,7 +181,7 @@ void LocalMap::updateRobotPosition_(long L, long R, bool force) {
         newAngle = angle;
     }
     // normalize new position data into map
-   while (newX > mapWidth) newX = newX - mapWidth;    
+    while (newX > mapWidth) newX = newX - mapWidth;    
     while (newX < 0) newX = newX + mapWidth;    
     posX = newX;
     
@@ -188,8 +192,11 @@ void LocalMap::updateRobotPosition_(long L, long R, bool force) {
     while (newAngle > 2 * pi) newAngle -= 2 * pi;
     while (newAngle < 0) newAngle += 2 * pi;
     angle = newAngle;
+
+    log_msg("newX,newY", newX, newY);
+    log_msg("newAngle", newAngle);
  
-    eraseAustralia();
+    //eraseAustralia();
     decayMap();
     applyHokuyoData();
     applyRpLidarData();
@@ -219,6 +226,10 @@ void LocalMap::setPose(double x, double y, double a) {
     while (newAngle < 0) newAngle += 2 * pi;
     angle = newAngle;
  
+    log_msg("setPose(): newX,newY", newX, newY);
+    log_msg("newAngle", newAngle);
+
+    //eraseAustralia();
     decayMap();
     applyHokuyoData();
     applyRpLidarData();
