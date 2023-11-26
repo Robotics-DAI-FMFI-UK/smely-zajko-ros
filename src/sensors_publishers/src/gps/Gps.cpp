@@ -142,9 +142,14 @@ sensor_msgs::NavSatFix Gps::parseLine(const char *s) {
             fix.longitude = -fix.longitude;
         }
         fix.altitude = stringToDouble(splittedLine[9]);
+        
+
         //numberSatellites = atoi(elementVector[7].c_str());
     }
-
+    // we tried to fake gps this way, but then memory leaks occur, but we no idea why
+    // we spend the whole day on this :(
+    //fix.latitude = 48.152313;
+    //fix.longitude = 17.071149;
 
     return fix;
 }

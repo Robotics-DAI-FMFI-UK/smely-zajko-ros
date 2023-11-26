@@ -126,7 +126,7 @@ void LocalMap::eraseAustralia()
         double gridXDist = gridXDistance / (double)gridWidth;
         double gridYDist = gridYDistance / (double)gridHeight;
 
-        if (gridXDist * gridXDist + gridYDist * gridYDist > 0.23)  // (0.5 ^ 2)
+        if ((gridXDist > 0.45) || (gridYDist > 0.45)) 
         {
           matrix[x][y] = 0.0;
           matrix_cam[x][y] = 0.0;
@@ -260,8 +260,8 @@ cv::Scalar LocalMap::getMatrixColor(int x, int y) {
 cv::Mat LocalMap::getGui() {
     cv::Mat result(guiWidth, guiHeight, CV_8UC3, cv::Scalar(255, 255, 255));
 
-    int guiShiftX = guiWidth / 2 - map2guiX(posX);
-    int guiShiftY = guiHeight / 2 - map2guiY(posY);
+    guiShiftX = guiWidth / 2 - map2guiX(posX);
+    guiShiftY = guiHeight / 2 - map2guiY(posY);
 
     // draw matrix
     for (int x = 0; x < gridWidth; x++) {
@@ -273,7 +273,11 @@ cv::Mat LocalMap::getGui() {
             }
         }
     }
+    return result;
+}
 
+void LocalMap::addArrows(cv::Mat &result)
+{
     // draw robot (black 100)
     cv::Point a(clampGuiX(map2guiX(posX) + guiShiftX), clampGuiY(map2guiY(posY) + guiShiftY));
     cv::Point b = a + cv::Point(100 * sin(angle), -100 * cos(angle));
@@ -305,8 +309,6 @@ cv::Mat LocalMap::getGui() {
         b = a + cv::Point(100 * scores[i] * sin(dir), -100 * scores[i] * cos(dir));
         cv::circle(result, b, 1, cv::Scalar(255, 0, 0), CV_FILLED);
     }
-
-    return result;
 }
 
 RobotPos* LocalMap::getPos() {

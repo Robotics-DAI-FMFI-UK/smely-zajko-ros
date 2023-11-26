@@ -199,9 +199,17 @@ void drawMap(const ros::TimerEvent&) {
     static int log_file_counter = 0;
     
     cv::Mat img = localMap->getGui();
-    cv::imshow("local map", img);
-    snprintf(filename, 200, "%s%s/%d.png", LOCALMAP_LOG_IMAGE_PATH, localmap_log_filename, log_file_counter++);
+    
+    snprintf(filename, 200, "%s%s/%dM.png", LOCALMAP_LOG_IMAGE_PATH, localmap_log_filename, log_file_counter);
     cv::imwrite(filename, img);
+    
+    localMap->addArrows(img);
+    
+    cv::imshow("local map", img);
+    
+    snprintf(filename, 200, "%s%s/%dA.png", LOCALMAP_LOG_IMAGE_PATH, localmap_log_filename, log_file_counter++);
+    cv::imwrite(filename, img);
+    
     cv::waitKey(1);
 }
 

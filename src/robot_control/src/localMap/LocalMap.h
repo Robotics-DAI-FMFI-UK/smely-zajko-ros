@@ -49,6 +49,8 @@ public:
     double getHeading();
 
     cv::Mat getGui();
+    
+    void addArrows(cv::Mat &result);
 
     RobotPos* getPos();
 
@@ -103,6 +105,9 @@ private:
     // last called data (not used if too small)
     long lastTicksL;
     long lastTicksR;
+    
+    // to pass from getGui() to addArrows()
+    int guiShiftX, guiShiftY;
 
     // util
     int clamp(int val, int max);
