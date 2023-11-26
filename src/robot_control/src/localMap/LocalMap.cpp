@@ -108,6 +108,7 @@ int intmax(int a, int b) { if (a > b) return a; else return b; }
 // i.e. we keep only a circle in a distance < 1/2 of a grid
 void LocalMap::eraseAustralia()
 {
+	int auer = 0;
     for (int x = 0; x < gridWidth; x++)
       for (int y = 0; y < gridHeight; y++)
       {
@@ -125,12 +126,14 @@ void LocalMap::eraseAustralia()
         double gridXDist = gridXDistance / (double)gridWidth;
         double gridYDist = gridYDistance / (double)gridHeight;
 
-        if (gridXDist * gridXDist + gridYDist * gridYDist > 0.25)  // (0.5 ^ 2)
+        if (gridXDist * gridXDist + gridYDist * gridYDist > 0.23)  // (0.5 ^ 2)
         {
           matrix[x][y] = 0.0;
           matrix_cam[x][y] = 0.0;
+          auer++;
         }
-      } 
+      }
+    printf("australia erased %d points\n", auer); 
 }
 
 void LocalMap::updateRobotPosition_(long L, long R, bool force) {
@@ -196,7 +199,7 @@ void LocalMap::updateRobotPosition_(long L, long R, bool force) {
     log_msg("newX,newY", newX, newY);
     log_msg("newAngle", newAngle);
  
-    //eraseAustralia();
+    eraseAustralia();
     decayMap();
     applyHokuyoData();
     applyRpLidarData();
@@ -229,7 +232,7 @@ void LocalMap::setPose(double x, double y, double a) {
     log_msg("setPose(): newX,newY", newX, newY);
     log_msg("newAngle", newAngle);
 
-    //eraseAustralia();
+    eraseAustralia();
     decayMap();
     applyHokuyoData();
     applyRpLidarData();
@@ -333,7 +336,7 @@ void LocalMap::decayMap() {
     for (int i = 0; i < gridWidth; i++) {
         for (int j = 0; j < gridHeight; j++) {
             //matrix[i][j] *= 0.99; //0.85;
-            matrix[i][j] *= 0.99; //0.85;
+            matrix[i][j] *= 0.6;  // 0.85; // 0.99; 
             matrix_cam[i][j] *= 1.0;
         }
     }
@@ -517,6 +520,7 @@ void LocalMap::applyDepthMap()
             {
               double val = depth_mask_val[gX][gY] / depth_mask_count[gX][gY];
               matrix[gX][gY] = (matrix[gX][gY] + 2 * val) / 3;
+              depth_mask_count[gX][gY] = 0;
             }
         }
     }
@@ -567,6 +571,7 @@ void LocalMap::applyImage() {
             {
               double val = mask_val[gX][gY] / mask_count[gX][gY];
               matrix_cam[gX][gY] = doublemin(1.0, (matrix_cam[gX][gY] + 2 * val) / 3);
+              mask_count[gX][gY] = 0;
             }
         }
     }
@@ -698,14 +703,19 @@ void LocalMap::findBestHeading() {
 
         // reduce score of paths in wrong direction
         double target;
+        //vrchlabi
+        target = angle - compassHeading + currWayHeading;
+        /*
         if (wayEndDistance > sensorCutoff/2.4) {
             target = angle - compassHeading + currWayHeading;
         } else {
             target = angleInterpolate(currWayHeading, nextWayHeading, 1 - wayEndDistance / (sensorCutoff/2.4));
-        }
+        }*/
         double diff = angleDiffAbs(target, dir);
         //scores[i] *= 1 - (diff / pi);
-        scores[i] *= 0.5 + (1 - (diff / pi)) / 2;
+        //scores[i] *= 0.5 + (1 - (diff / pi)) / 2;
+        //vchlabi 2xviac gps smer
+        scores[i] *= 0.1 + (1 - (diff / pi));
     }
     int best = 0;
     double bestScore = scores[0];
@@ -722,12 +732,13 @@ void LocalMap::findBestHeading() {
     if (angleDiffAbs(bestHeading, currWayHeading) > 150 / 180.0 * pi)
     { 
       going_wrong++;
-      if (going_wrong > 100) transmitting_going_wrong = 1;
+      //if (going_wrong > 100) transmitting_going_wrong = 1;
+      if (going_wrong > 150) going_wrong = 150;	
       if (going_wrong % 20 == 0) printf("wrong %d\n", going_wrong);
     }
     else if (going_wrong) going_wrong--;
 
-    if (angleDiffAbs(bestHeading, currWayHeading) < 30 / 180.0 * pi)
+    if (angleDiffAbs(bestHeading, currWayHeading) < 60 / 180.0 * pi)
       if (transmitting_going_wrong) 
     {
       transmitting_going_wrong = 0;

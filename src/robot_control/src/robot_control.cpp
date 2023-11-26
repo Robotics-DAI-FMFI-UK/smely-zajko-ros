@@ -251,12 +251,12 @@ int move() {
         wrong_dir = 1;
         if (delta > 0) {
             if (autonomy) {
-                setSteering(80, 4);
+                setSteering(80, 2);
             }
             display_direction = 5;
         } else {
             if (autonomy) {
-                setSteering(-80, 4);
+                setSteering(-80, 2);
             }
             display_direction = -5;
         }
@@ -271,12 +271,12 @@ int move() {
          printf("!!!!!!!!!!!!!!!!!!!!!!! Chodnik missing searching..\n");
         if (delta > 0) {
             if (autonomy) {
-                setSteering(80, -4);
+                setSteering(80, -2);
             }
             display_direction = 5;
         } else {
             if (autonomy) {
-                setSteering(-80, -4);
+                setSteering(-80, -2);
             }
             display_direction = -5;
         }
@@ -319,7 +319,7 @@ int move() {
         if (USE_LOCAL_MAP) {
                         if (local_map_heading >= 9999) // GOING_WRONG
                         {
-                          setSteering(80, 4);
+                          setSteering(80, 2);
                           if (!said_wrong)
                           {
                             say("its the other way, zyco");
@@ -331,6 +331,7 @@ int move() {
                         {
                           said_wrong = 0;
                           say("corrected");
+                          setSteering(0, 0);
                         }
 			heading = local_map_heading * (180 / M_PI);
 			// 0.4444 comes from 180 deg => turning rate 80              
@@ -342,12 +343,12 @@ int move() {
         }
         // sdir -= 3;
 
-        if (sbot_msg.away_from_left)
-            sdir += 20;
+//        if (sbot_msg.away_from_left)
+//            sdir += 20;
         if (sdir > 25)
             sdir = 25;
-        if (sbot_msg.away_from_right)
-            sdir -= 20;
+//        if (sbot_msg.away_from_right)
+//            sdir -= 20;
         if (sdir < -25)
             sdir = -25;
 
@@ -356,7 +357,7 @@ int move() {
         //running_mean = (running_mean * 3.0 + predicted_dir) / 4.0;
         running_mean = (running_mean * 1.0 + predicted_dir * 3.0) / 4.0;
 
-         printf("Inferred dir: %d\tProposed dir: %f\n", sdir, predicted_dir);
+         //printf("Inferred dir: %d\tProposed dir: %f\n", sdir, predicted_dir);
          log_msg("local_map_heading, sdir: ", heading, sdir);
          log_msg("pdir, rmean: ", predicted_dir, running_mean);
 
@@ -366,10 +367,10 @@ int move() {
             // printf("%.10f %.10f\n", angles.dstToHeadingPoint, speed_down_dst);
             if (gps_msg.dstToHeadingPoint <= speed_down_dst) {
                 setSteering(predicted_dir, 7);
-                // printf("setSpeed: 7\n");
+                // printf("setSpeed: 3\n");
             } else {
-                setSteering(predicted_dir, 14);
-                // printf("setSpeed: 10\n");
+                setSteering(predicted_dir, 8);
+                // printf("setSpeed: 5\n");
             }
         }
         std_msgs::Float64 directionMsg;
@@ -392,7 +393,7 @@ void avoid_obstacle(ros::Rate *loop_rate)
     // wait for the obstacle to go away
     int waiting = 0;
     int not_see_counter = 0;
-    while (waiting < 360)
+    while (waiting < 200)
     {
       if (ros::ok())
       {
@@ -414,11 +415,11 @@ void avoid_obstacle(ros::Rate *loop_rate)
 
     say("watch out behind me");
     // obstacle is still in front of us after 30 seconds, try backing up a little bit
-    setSteering(0, -8);
+    setSteering(0, -5);
     waiting = 0;
     
     // just a couple of seconds of backing up
-    while (waiting < 140)
+    while (waiting < 90)
     {
       if (ros::ok())
       {

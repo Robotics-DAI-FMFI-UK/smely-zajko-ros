@@ -1,5 +1,15 @@
 #include "LocalizationAndPlanning.h"
 
+const int START = 0;
+const int HEADING_LOADING = 1;
+const int LOADING = 2;
+const int HEADING_UNLOADING = 3;
+const int UNLOADING = 4;
+const int HEADING_DEST = 5;
+const int END = 6;
+
+int headingState;
+
 LocalizationAndPlanning::LocalizationAndPlanning(int guiWidth, int guiHeight) {
     this->guiDebugHeight = 50; // debug border height 0to turn off
     // this->guiDebugHeight = 0;
@@ -461,7 +471,7 @@ IplImage *LocalizationAndPlanning::getGui() {
 
             if (pt.barrier) 
 	    {
-              printf("drawing point with kerb\n");
+              //printf("drawing point with kerb\n");
               cvCircle(result, cvPoint(p1.x, p1.y), 2, CV_RGB(1, 0, 0));
             }
             else cvCircle(result, cvPoint(p1.x, p1.y), 2, CV_RGB(0, 0, 0));
@@ -476,7 +486,7 @@ IplImage *LocalizationAndPlanning::getGui() {
 
                 if (pt.barrier) 
                 {
-                  printf("drawing point with kerb\n");
+                  //printf("drawing point with kerb\n");
                   cvCircle(result, cvPoint(p2.x, p2.y), 2, CV_RGB(1, 0, 0));
                 }
                 else cvCircle(result, cvPoint(p2.x, p2.y), 2, CV_RGB(0, 0, 0));
@@ -913,7 +923,7 @@ message_types::GpsAngles LocalizationAndPlanning::update(sensor_msgs::NavSatFix 
         result.distToWayEnd = 0;
     }
 
-    if (result.dstToFin < 0.007) { // dst v km
+    if ((headingState != START) && (result.dstToFin < 0.007)) { // dst v km
         ROS_INFO("SME V CIELI ( %f m ) \n", result.dstToFin * 1000);
         result.map = DBL_MAX;
     }

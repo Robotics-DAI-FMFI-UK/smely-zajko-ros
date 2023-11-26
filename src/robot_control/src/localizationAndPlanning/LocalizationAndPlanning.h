@@ -12,6 +12,17 @@
 #include "../rapidxml/rapidxml.hpp"
 #include "../rapidxml/rapidxml_utils.hpp"
 
+extern const int START;
+extern const int HEADING_LOADING;
+extern const int LOADING;
+extern const int HEADING_UNLOADING;
+extern const int UNLOADING;
+extern const int HEADING_DEST;
+extern const int END;
+
+extern int headingState;
+
+
 using namespace std;
 using namespace rapidxml;
 

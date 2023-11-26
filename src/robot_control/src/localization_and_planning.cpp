@@ -32,19 +32,10 @@ sensor_msgs::NavSatFix destinationPoint = sensor_msgs::NavSatFix();
 sensor_msgs::NavSatFix newTarget = sensor_msgs::NavSatFix();
 bool targetValid = false;
 
-int headingState;
 
 static int this_module_running;
 static int server_fd, socket_fd;
 static uint8_t socket_buffer[SOCKET_BUFFER_SIZE];
-
-const int START = 0;
-const int HEADING_LOADING = 1;
-const int LOADING = 2;
-const int HEADING_UNLOADING = 3;
-const int UNLOADING = 4;
-const int HEADING_DEST = 5;
-const int END = 6;
 
 const float FULL = 1;
 const float EMPTY = 0;
@@ -132,13 +123,16 @@ void say(const char *msg) {
 
 int spamCounter = 0;
 static sensor_msgs::NavSatFix service_area_gps_remember;
+static time_t next_state_at;
 
 void gpsCallback(const sensor_msgs::NavSatFix &gps) {
     message_types::GpsAngles actualHeading = localizationAndPlanning->update(gps);
     std_msgs::UInt8 actionMsg;
+    time_t tm;
 
     log_msg("gps ", gps.latitude, gps.longitude);
 
+    time(&tm);
     if (headingState == START) {
         if (!targetValid) {
             //setCameraAction(DETECT_QR);
@@ -149,6 +143,7 @@ void gpsCallback(const sensor_msgs::NavSatFix &gps) {
         } else {
             say("HEADING LOADING");
             log_msg("heading loading");
+            next_state_at = tm + 3;
             destinationPoint = gps;
             log_msg("Final destination point lat, long: ", destinationPoint.latitude, destinationPoint.longitude);
             localizationAndPlanning->setDestination(newTarget);
@@ -156,24 +151,12 @@ void gpsCallback(const sensor_msgs::NavSatFix &gps) {
             send_qr_request(DETECT_ROAD);
             //setCameraAction(DETECT_ROAD);
         }
-    }
-    if (actualHeading.map == DBL_MAX) {
-        if (headingState == HEADING_LOADING) {
-            printf("LOADING\n");
-            say("LOADING");
-            log_msg("loading");
-
-            setState(LOADING);
-            resetTarget();
-            send_qr_request(DETECT_QR);
-            //setCameraAction(DETECT_QR);
-            send_qr_request(DETECT_QR);
-        } else if (headingState == LOADING) {
+    } else if ((headingState == LOADING) && (tm > next_state_at)) {
             if (sbot_msg.payload == FULL && targetValid) {
                 printf("HEADING_UNLOADING\n");
                 say("HEADING UNLOADING");
                 log_msg("heading unloading");
-
+                next_state_at = tm + 3;
                 localizationAndPlanning->setDestination(newTarget);
                 setState(HEADING_UNLOADING);
                 send_qr_request(DETECT_ROAD);
@@ -188,14 +171,7 @@ void gpsCallback(const sensor_msgs::NavSatFix &gps) {
                 spamCounter++;
                 if (spamCounter > 10) spamCounter = 0;
             }
-        } else if (headingState == HEADING_UNLOADING) {
-            printf("UNLOADING\n");
-            say("UNLOADING");
-            log_msg("unloading");
-
-            setState(UNLOADING);
-            resetTarget();
-        } else if (headingState == UNLOADING) {
+	}  else if ((headingState == UNLOADING) && (tm > next_state_at)) {
             if (sbot_msg.payload == EMPTY) {
                 printf("HEADING_DEST\n");
                 say("HEADING DESTINATION");
@@ -203,13 +179,34 @@ void gpsCallback(const sensor_msgs::NavSatFix &gps) {
 
                 localizationAndPlanning->setDestination(destinationPoint);
                 setState(HEADING_DEST);
+                next_state_at = tm + 3;
                 //setCameraAction(DETECT_ROAD);
-            } else {
+            } else { 
                 if (spamCounter == 0) say("UNLOADING");
                 spamCounter++;
                 if (spamCounter > 10) spamCounter = 0;
             }
-        } else if (headingState == HEADING_DEST) {
+    }
+        
+    if (actualHeading.map == DBL_MAX) {
+        if ((headingState == HEADING_LOADING) && (tm > next_state_at)) {
+            printf("LOADING\n");
+            say("LOADING");
+            log_msg("loading");
+            next_state_at = tm + 3;
+            setState(LOADING);
+            resetTarget();
+            send_qr_request(DETECT_QR);
+            //setCameraAction(DETECT_QR);
+            send_qr_request(DETECT_QR);
+        } else if ((headingState == HEADING_UNLOADING) && (tm > next_state_at)) {
+            printf("UNLOADING\n");
+            say("UNLOADING");
+            log_msg("unloading");
+            next_state_at = tm + 3;
+            setState(UNLOADING);
+            resetTarget();
+        } else if ((headingState == HEADING_DEST) && (tm > next_state_at)) {
             printf("FINISH\n");
             log_msg("finish");
             setState(END);
@@ -305,8 +302,9 @@ int main(int argc, char **argv) {
     locPublisher = nh.advertise<message_types::GpsAngles>("localization_and_planning", 10);
     //cameraActionPublisher = nh.advertise<std_msgs::UInt8>("/control/camera_action", 10);
 
-    localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/fablab_a_okolie.osm");
-    //localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/matfyz.osm");
+    //localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/vrchlabi.osm");
+  //  localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/fablab_a_okolie.osm");
+    localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/matfyz.osm");
     //localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/sad.osm");
     //localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/zilina.osm");
     //localizationAndPlanning->readMap((char *) "/home/zajko/Projects/smely-zajko-ros/resources/maps/deggendorf2019.osm");
