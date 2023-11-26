@@ -5,7 +5,7 @@
 
 #include "ultrasonic.h"
 
-#define CRITICAL_REAR_DISTANCE_WHILE_BACKING_UP_CM 20
+#define CRITICAL_REAR_DISTANCE_WHILE_BACKING_UP_CM 18
 
 volatile uint8_t THRESHOLD_OBSTACLE_SIDE = 25;
 volatile uint8_t THRESHOLD_OBSTACLE_LR = 30;
@@ -70,7 +70,10 @@ uint8_t wait_for_echo_and_read_it(uint8_t which)
     {
       uint32_t dist = (tm_ultrasonic2 - tm_ultrasonic1) / 58;
       if (dist < CRITICAL_REAR_DISTANCE_WHILE_BACKING_UP_CM)
-        return 0;      
+      {
+        // Serial.print("! "); Serial.print(which); Serial.print(" "); Serial.println(dist);
+        return 1;  // return 0 to not use them
+      }      
     }
     else unstuck_us(which);
     return 0;

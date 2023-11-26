@@ -192,11 +192,14 @@ void steering()
     if (obstacle_on_the_back()) 
     {
       stop_now();
-      blocked_behind = 100;
+      speed = 0;
+      blocked_behind = 30;
+      // Serial.println("!GUGUGUGU");
     }
     else if (blocked_behind) blocked_behind--;
   } else blocked_behind = 0;
 
+  if (backing_up && blocked_behind) return;
   if (speed_req) compute_update_spd();        //REACT  
 }
 
