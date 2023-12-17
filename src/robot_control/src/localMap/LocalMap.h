@@ -4,6 +4,8 @@
 #include <cstdio>
 #include <utility>
 #include <std_msgs/Float64.h>
+#include <pthread.h>
+#include "Graph.h"
 
 #define EVALUATED_IMAGE_PACKET_TYPE   1
 #define POSITION_PACKET_TYPE 3
@@ -16,12 +18,12 @@ void log_msg(const char *msg, double val);
 void log_msg(const char *msg, double val1, double val2);
 double angleDiffAbs(double a, double b);
 
+using namespace std;
+
 class RobotPos {
 public:
     double x, y, angle;
 };
-
-const double pi = 3.141592653589793238463;
 
 class LocalMap {
 public:
@@ -53,11 +55,16 @@ public:
     void addArrows(cv::Mat &result);
 
     RobotPos* getPos();
-
+        
 private:
     // best heading
     double scores[360];
     volatile double bestHeading;
+    
+    //toggle between Fikar algorithm and Slimak algorithm of local map
+    int use_slimak_heading = 1;
+    
+    volatile double bestSlimakHeading;
 
     // sensor data
     int hokuyo[1081];
@@ -108,6 +115,13 @@ private:
     
     // to pass from getGui() to addArrows()
     int guiShiftX, guiShiftY;
+    
+    // last trajectory that has been found
+    vector<pair<int, int>> slimak_trajectory;
+    
+    pthread_mutex_t trajectory_lock;
+
+    Graph visualizedGraph;
 
     // util
     int clamp(int val, int max);
@@ -149,8 +163,14 @@ private:
     void applyCompassHeading();
 
     void findBestHeading();
+    
+    void findBestHeading_slimak();
 
     void applyImage();
+    
+    void applyZed();
 
     void applyDepthMap();
+    
+    void find_border_point_for_angle(double wished_heading, double goal_position[], double map_width);
 };

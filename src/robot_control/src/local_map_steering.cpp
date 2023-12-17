@@ -82,7 +82,7 @@ void setup_log_file()
 //---------------------------------------
 
 double d2r(double d) {
-    return d * (pi / 180);
+    return d * (M_PI / 180);
 }
 
 void say(const char *msg) {
@@ -180,7 +180,7 @@ void poseCallback(double x, double y, double heading) {
 	static double last_heading = 0;
 
     // do not update pose if it changed more than 30 deg per iteration	
-    if (angleDiffAbs(last_heading, heading) < 30 / 180.0 * pi)
+    if (angleDiffAbs(last_heading, heading) < 30 / 180.0 * M_PI)
 		localMap->setPose(-y*100, x*100, -heading);	
 	
 	last_heading = heading;
