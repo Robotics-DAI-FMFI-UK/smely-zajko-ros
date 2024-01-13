@@ -1,12 +1,12 @@
 #include <limits.h>
 
-#include "LocalMap.h"
 #include "Graph.h"
+#include "LocalMap.h"
+#include "Planner.h"
 
 #define IGNORE_TOO_LONG_RAY 3000
 
 #define GOING_WRONG 10000
-
 
 using namespace std;
 
@@ -98,6 +98,8 @@ LocalMap::LocalMap(int guiWidth, int guiHeight, ros::Publisher publisher) {
     nextWayHeading = 0;
 
     this->publisher = publisher;
+
+    planner = new Planner(this);
 }
 
 void LocalMap::doUpdate() {
@@ -216,7 +218,7 @@ void LocalMap::updateRobotPosition_(long L, long R, bool force) {
     applyImage();
     applyCompassHeading();
     if (use_slimak_heading)
-      findBestHeading_slimak();
+      planner->findBestHeading_graph();
     findBestHeading();    
 
     std_msgs::Float64 msg;
@@ -251,7 +253,7 @@ void LocalMap::setPose(double x, double y, double a) {
     applyImage();
     applyCompassHeading();
     if (use_slimak_heading)
-      findBestHeading_slimak();
+      planner->findBestHeading_graph();
     findBestHeading();
     
     std_msgs::Float64 msg;
@@ -358,6 +360,8 @@ void LocalMap::addArrows(cv::Mat &result)
             if (visualizedGraph.adjacencyMatrix[i][j])
             {
 	        cv::Point a(map2guiX(gridSize * visualizedGraph.x[i]), 
+                           
+                           
                             map2guiY(gridSize * visualizedGraph.y[i]));
 	        cv::Point b(map2guiX(gridSize * visualizedGraph.x[j]), 
                             map2guiY(gridSize * visualizedGraph.y[j]));
@@ -829,306 +833,6 @@ double LocalMap::getHeading() {
 	
     if (transmitting_going_wrong) return GOING_WRONG;
     return last_returned_d;
-}
-
-void LocalMap::find_border_point_for_angle(double wished_heading, double goal_position[], double map_width)
-{
-	double target_x, target_y;
-	double epsilon_tan = 0.0001;
-	
-    // ciel je pred nami pod uhlom +- 90 stupov
-	if (fabs(wished_heading - M_PI_2) < epsilon_tan)
-	{
-		if (wished_heading > M_PI)   // +90
-		{		
-		  target_x = map_width;
-		  target_y = int(map_width/2); 
-	    }
-	    else   // -90
-	    {
-		  target_x = 0;
-		  target_y = int(map_width/2); 
-	    }
-	}
-	else if (angleDiffAbs(wished_heading, 0) <= M_PI_4)  // horny kvandrant (+- 45 stupnov)
-	{
-		target_x = map_width / 2 + map_width * tan(wished_heading) / 2;
-		target_y = map_width;
-	}
-	else if (fabs(wished_heading - M_PI_2) <= M_PI_4)   // pravy kvadrant (45..135)
-	{
-		target_x = map_width;
-		target_y = map_width / 2 + map_width * tan(wished_heading - M_PI_2) / 2;
-	}
-	else if (fabs(wished_heading - M_PI) <= M_PI_4)   // dolny kvadrant (135..225)
-	{
-		target_x = map_width / 2 + map_width * tan(wished_heading - M_PI) / 2;
-		target_y = map_width;
-	}
-	else if (fabs(wished_heading - M_PI_2 - M_PI_4) <= M_PI_4)   // lavy kvadrant (225..315)
-	{
-		target_x = 0;
-		target_y = map_width / 2 + map_width * tan(wished_heading - M_PI_2 - M_PI) / 2;
-	}
-	
-	goal_position[0] = target_x;
-	goal_position[1] = target_y;
-    	
-}
-
-void LocalMap::findBestHeading_slimak() {
-	
-        printf("entering findbestS\n");
-	int dlzka_useku = 1;  // 5
-	int n = 100;
-	int saferange = 1;  // 3
-	int nearest = 30; //16
-	
-    int velkostmapy = gridWidth;
-
-    double priamky[n][2];
-    int pocet_priamky = 0;
-
-
-    int max_dvojice = 2 * n;
-    double dvojice[max_dvojice][2];
-    int pocet_dvojice = 0;
-    
-    int max_cesta = 2 * n; 
-    double cesta[max_cesta + 1][2];
-    int pocet_cesta=0;
-
-    int max_vsetky = 4 * n;
-    int vsetky[max_vsetky][2];
-    int pocet_vsetky=0;
-
-    int max_body_zoznam = n;
-    double body_zoznam[max_body_zoznam][max_body_zoznam][2];
-    int pocet_body_zoznam=0;
-    
-    // Nastavenie počiatočného a cieľového bodu
-    double start[2] = {velkostmapy / 2.0, velkostmapy / 2.0};
-    double ciel[2] = {800, 150};
-    double cielovapozicia_x, cielovapozicia_y;
-
-    double wished_heading = angle - compassHeading + currWayHeading;
-
-    find_border_point_for_angle(wished_heading, ciel, velkostmapy);
-
-    //sem treba dosadit ciel (najblizsi bod za krizovatkou...
-    // mozno druhy najblizsi pripadne smer od bodu krizovatky a najblizsi bod za krizovatkou a
-    // ten smer zaznacit na okraj lokalnej mapy ako cielovy bod)
-    //treba vypocitat rovnicu priamky prechadzajucu bodom krizovatky a bodom za krizovatkou a zakreslit ho do lokalnej mapy nech vieme kam sa snazi robot dostat
-
-
-    // Pridanie počiatočného bodu na cestu
-    cesta[pocet_cesta][0]=start[0];
-    cesta[pocet_cesta][1]=start[1];
-    pocet_cesta++;
-
-    // Vytvorenie zoznamu všetkých bodov v obraze
-
-
-    // vygenerujem si 2 body v lokalnej mape a vypocitam ich rovnicu priamky ...
-    // nasledne prejdem po rovnici pre kazde x od 0 do velkosti mapy a pozorujem ci
-    // sa zmeni farba alebo teda ci neprejdem zo zjazdnej casti do nezjazdnej a ak
-    // ano tak si ten bod zapamatam a zapisem do dalsieho pola ktore ma tvar [[m,q],[x1,y1],[x2,y2],...]
-
-        printf("for() before\n");
-    for (int i = 0; i < n; i++) {
-        int x1 = rand() % velkostmapy;
-        int y1 = rand() % velkostmapy;
-        int x2 = rand() % velkostmapy;
-        int y2 = rand() % velkostmapy;
-
-        if (x1 != x2 && y1 != y2) {
-            // Vypočítanie koeficientov priamej úsečky
-            double m = (y2 - y1) / (x2 - x1);
-            double q = y1 - m * x1;
-
-            // Pridanie priamej úsečky do zoznamu
-            double rovnica[2]={m, q};
-            priamky[pocet_priamky][0]=rovnica[0];
-            priamky[pocet_priamky][1]=rovnica[1];
-            pocet_priamky++;
-
-            // Vygenerovanie zoznamu bodov na priamej úseku
-            bool zjazdnost=false;
-            
-            double body[gridWidth][2];
-            int pocet_body=0;
-
-            body[pocet_body][0]=rovnica[0];
-            body[pocet_body][1]=rovnica[1];
-            pocet_body++;
-
-            for (int x = 0; x < velkostmapy; x++) {
-                int y = int(m * x + q);
-                if (y < velkostmapy && y >= 0){
-                    if ((matrix[x][y]==0 && matrix_cam[x][y]>0 && zjazdnost== false))//zmena_farba[0]!=matrix_cam[x][y]//toto treba dokoncit podla aktualnej lokalnej mapy
-                    {
-                        zjazdnost=true;
-
-                        body[pocet_body][0] = x;
-                        body[pocet_body][1] = y;
-                        pocet_body++;
-
-                        if (pocet_vsetky < max_vsetky)
-                        {
-                          vsetky[pocet_vsetky][0] = x;
-                          vsetky[pocet_vsetky][1] = y;
-                          pocet_vsetky++;
-                        }
-                    }
-                    if(((matrix[x][y]!=0 || matrix_cam[x][y]==0) && zjazdnost== true))//zmena_farba[0]!=matrix_cam[x][y]//toto treba dokoncit podla aktualnej lokalnej mapy
-                    {
-                        zjazdnost=false;
-
-                        body[pocet_body][0] = x;
-                        body[pocet_body][1] = y;
-                        pocet_body++;
-
-                        if (pocet_vsetky < max_vsetky)
-                        {
-                          vsetky[pocet_vsetky][0] = x;
-                          vsetky[pocet_vsetky][1] = y;
-                          pocet_vsetky++;
-			}
-                    }
-                }
-            }
-            //ak sa mi podarilo najst priamku na ktorej je aspon jeden bod tak si ju ulozim do pola teda je to pole ktore obsahuje polia roznej dlzky
-            // napriklad body_zoznam = [[[m,q],[x1,y1],[x2,y2],...] , [[m,q],[x1,y1],[x2,y2],[x3,y3],[x4,y4]]]
-            if (pocet_body > 1) {
-                if((pocet_body-1)%2==0) {
-                    if (pocet_body_zoznam < max_body_zoznam)
-                    {
-                      body_zoznam[pocet_body_zoznam][0][0]=pocet_body;
-                      pocet_body_zoznam++;
-                      for (int i = 1; (i < pocet_body) && (pocet_body_zoznam < max_body_zoznam) && (pocet_dvojice < max_dvojice); i++) {
-                        body_zoznam[pocet_body_zoznam][i][0] = body[i][0];
-                        body_zoznam[pocet_body_zoznam][i][1] = body[i][1];
-                        pocet_body_zoznam++;
-                        dvojice[pocet_dvojice][0]=body[i][0];
-                        dvojice[pocet_dvojice][1]=body[i][1];
-                        pocet_dvojice++;
-                      }
-                    }
-                }
-
-            }
-        }
-    }
-    // v tejto casti sa pozeram na ulozene polia v tvare [[[m,q],[x1,y1],[x2,y2],...],[[m,q],[x1,y1],[x2,y2],[x3,y3],[x4,y4]]] a kontrolujem ako daleko su od seba vzdialene body 1,2 a 2,3 atd pritom vynechavam prvy bod lebo ten ma v sebe rovnicu priamky
-
-
-        printf("for2() before\n");
-    for (int i=0; i<pocet_dvojice/2; i++){
-        
-            double p1[2];
-            double p2[2];
-            p1[0]=dvojice[2*i][0];
-            p1[1]=dvojice[2*i][1];
-            p2[0]=dvojice[2*i+1][0];
-            p2[1]=dvojice[2*i+1][1];
-
-            double l = sqrt(pow(fabs(p2[0] - p1[0]), 2) + pow(fabs(p2[1] - p1[1]), 2));
-            bool pridat=true;
-            if (l>dlzka_useku){
-                int new_x, new_y;
-                // Výpočet toho bodu ktory hladame a je sucastou grafu po ktorom chceme hladat najkratsiu cestu
-                new_x = int((p1[0]+p2[0])/2);
-                new_y = int((p1[1]+p2[1])/2);
-                if(matrix[new_x][new_y]==0 && matrix_cam[new_x][new_y]>0)//ak je tam farba vacsia ako 100 tak idem porovnat ten bod so vsetkymi ktore som nasiel aby neboli moc blizko seba
-                {
-                    for (int k=0; k<pocet_vsetky; k++)
-                    {
-                        if(sqrt(pow(fabs(vsetky[k][0] - new_x), 2) + pow(fabs(vsetky[k][1] - new_y), 2))<saferange)
-                        {
-                            pridat=false;
-                        }
-                        if (pridat && (pocet_cesta < max_cesta))
-                        {
-                            cesta[pocet_cesta][0]=new_x;
-                            cesta[pocet_cesta][1]=new_y;
-                            pocet_cesta++;
-                        }
-                    }
-                }
-            }
-        
-    }
-    //tu nasleduje spajanie bodov do grafu
-    // Zjednotenie bodov na ceste
-    // reprezentacia mapa nie je efektivna chcelo by to slovnik
-
-        printf("graph() before pocetcesta=%d\n", pocet_cesta);
-    int numVertices = pocet_cesta;
-    Graph graph(numVertices + 1);
-    int startNode = 0;
-    int endNode = 0;
-    for (int i = 0; i < pocet_cesta; i++) 
-      graph.setXY(i, cesta[i][0], cesta[i][1]);
-
-    double najblizsie_k_cielu[2];
-    najblizsie_k_cielu[0]=start[0];
-    najblizsie_k_cielu[1]=start[1];
-        printf("graph() after\n");
-
-    for (int i = 0; i < pocet_cesta; i++) {
-        for (int j = i + 1; j < pocet_cesta; j++) {
-            // Vypočítanie dĺžky úseku
-            double dlzka = sqrt(pow(fabs(cesta[i][0] - cesta[j][0]), 2) + pow(fabs(cesta[i][1] - cesta[j][1]), 2));
-            if (dlzka < nearest)
-            {
-                graph.addEdge(i, j, dlzka);
-            }
-        }
-        double dlzka1 = sqrt(pow(fabs(ciel[0] - cesta[i][0]), 2) + pow(fabs(ciel[1] - cesta[i][1]), 2));
-        double dlzka2 = sqrt(pow(fabs(ciel[0] - najblizsie_k_cielu[0]), 2) + pow(fabs(ciel[1] - najblizsie_k_cielu[1]), 2));
-
-        if (dlzka1<dlzka2)
-        {
-            endNode=i;
-            najblizsie_k_cielu[0]=cesta[i][0];
-            najblizsie_k_cielu[1]=cesta[i][1];
-        }
-        
-    }
-        printf("last edz\n");
-    if (endNode == 0)
-    {
-      endNode = pocet_cesta;
-      cesta[endNode][0] = ciel[0];
-      cesta[endNode][1] = ciel[1];
-      pocet_cesta++;
-    }
-    graph.addEdge(0, endNode, 10 * gridWidth);
-    // v tejto casti dijkstrovym algoritmom hladam v dvojrozmernom poli mapa[n][n] najkratsiu cestu k najblizsiemu bodu k cielu co moze byt okraj lokalnej mapy robota
-
-        printf("dijkstra() bdefor\n");
-        printf("startNode=%d, endNode=%d\n", startNode, endNode);
-
-    visualizedGraph = graph;
-
-    pair<int,vector<int>> result = graph.dijkstra(startNode, endNode);
-
-        printf("dijkstra() aftr cost=%d, vecsize=%lu\n", result.first, result.second.size());
-    // v premennej result by mala byt cesta do ciela
-    slimak_trajectory.clear();
-    
-    pthread_mutex_lock(&trajectory_lock);
-    for (vector<int>::iterator i = result.second.begin(); i < result.second.end(); i++)
-		slimak_trajectory.push_back(make_pair(cesta[*i][0], cesta[*i][1]));
-	pthread_mutex_unlock(&trajectory_lock);
-	
-	double x1 = slimak_trajectory[0].first;
-	double y1 = slimak_trajectory[0].second;
-	double x2 = slimak_trajectory[1].first;
-	double y2 = slimak_trajectory[1].second;
-	
-	bestSlimakHeading = atan2((y2-y1), (x2-x1));		
-        printf("leaving findbestS\n");
 }
 
 void LocalMap::applyZed()

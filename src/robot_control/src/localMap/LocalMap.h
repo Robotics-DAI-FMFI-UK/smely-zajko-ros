@@ -1,3 +1,6 @@
+#ifndef _LOCALMAP_H_
+#define _LOCALMAP_H_
+
 #include <opencv2/opencv.hpp>
 #include <ros/ros.h>
 #include <cmath>
@@ -6,6 +9,8 @@
 #include <std_msgs/Float64.h>
 #include <pthread.h>
 #include "Graph.h"
+
+class Planner;
 
 #define EVALUATED_IMAGE_PACKET_TYPE   1
 #define POSITION_PACKET_TYPE 3
@@ -18,7 +23,12 @@ void log_msg(const char *msg, double val);
 void log_msg(const char *msg, double val1, double val2);
 double angleDiffAbs(double a, double b);
 
+extern const int gridSize;
+extern const int gridWidth;
+extern const int gridHeight;
+
 using namespace std;
+
 
 class RobotPos {
 public:
@@ -26,6 +36,9 @@ public:
 };
 
 class LocalMap {
+
+friend class Planner;
+
 public:
     LocalMap(int guiWidth, int guiHeight, ros::Publisher publisher);
     
@@ -122,6 +135,7 @@ private:
     pthread_mutex_t trajectory_lock;
 
     Graph visualizedGraph;
+    Planner *planner;
 
     // util
     int clamp(int val, int max);
@@ -174,3 +188,5 @@ private:
     
     void find_border_point_for_angle(double wished_heading, double goal_position[], double map_width);
 };
+
+#endif
