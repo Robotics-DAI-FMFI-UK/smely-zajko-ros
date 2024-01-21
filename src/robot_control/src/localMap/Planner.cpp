@@ -87,7 +87,7 @@ void Planner::generuj_pravidelne(int dvojice_nahodnych_bodov_na_okraji_mapy[poce
 }
 
 void
-Planner::generuj_kostru_grafu(Graph graph, vector<pair<int, int>> *stredove_body, int pocet_bodov_grafu, double **cena_cesty) {
+Planner::generuj_kostru_grafu(Graph &graph, vector<pair<int, int>> *stredove_body, int pocet_bodov_grafu, double **cena_cesty) {
     int navstivene[pocet_bodov_grafu];
     int pocet_kostra = 0;
     vector<int> kostra;
@@ -108,7 +108,7 @@ Planner::generuj_kostru_grafu(Graph graph, vector<pair<int, int>> *stredove_body
         for (int i = 0; i < kostra.size(); ++i) {
             for (int j = 0; j < pocet_bodov_grafu; ++j) {
                 if (minimum > cena_cesty[kostra.at(i)][j] && navstivene[j] == 0) {
-                    index_prveho = i;
+                    index_prveho = kostra.at(i);
                     index_druheho = j;
                     minimum = cena_cesty[kostra.at(i)][j];
                 }
@@ -238,7 +238,7 @@ void Planner::najdi_stredove_body_a_ceny(vector<pair<int, int>> *stredove_body, 
     }
 }
 
-void Planner::napln_graf(Graph graph, vector<pair<int, int>> *stredove_body, int size_stredove_body, double **cena_cesty) {
+void Planner::napln_graf(Graph &graph, vector<pair<int, int>> *stredove_body, int size_stredove_body, double **cena_cesty) {
     //int startNode = 0;
     //int endNode = size_stredove_body - 1;
     for (int i = 0; i < size_stredove_body; i++) {
@@ -250,8 +250,8 @@ void Planner::napln_graf(Graph graph, vector<pair<int, int>> *stredove_body, int
     //najblizsie_k_cielu[1] = start[1];
     //double najblizsi = cena_cesty[0][size_stredove_body - 1];
     //int najblizsi_index = 0;
-
-
+	
+	
     generuj_kostru_grafu(graph, stredove_body, size_stredove_body, cena_cesty);
 	if(false)
     for (int i = 0; i < size_stredove_body; i++) {
@@ -513,6 +513,7 @@ void Planner::findBestHeading_graph() {
       int najblizsi_k_cielu;
 	  double najblizsi=1000000;
 	  double l;
+	  
 	  int pocetStredovychBodov=(int)size_stredove_body;
 	  for (int i=0;i<size_stredove_body-1;i++){
 		l=sqrt((stredove_body[i].first - stredove_body[pocetStredovychBodov-1].first) * (stredove_body[i].first - stredove_body[pocetStredovychBodov-1].first) + (stredove_body[i].second - stredove_body[pocetStredovychBodov-1].second) * (stredove_body[i].second - stredove_body[pocetStredovychBodov-1].second));

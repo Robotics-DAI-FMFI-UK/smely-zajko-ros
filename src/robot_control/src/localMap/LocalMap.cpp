@@ -337,8 +337,7 @@ void LocalMap::addArrows(cv::Mat &result)
       int first = 1;
       for (vector<pair<int, int>>::iterator p = slimak_trajectory.begin(); p < slimak_trajectory.end(); p++)
       {
-	        cv::Point c(map2guiX(gridSize * p->first), 
-                            map2guiY(gridSize * p->second));
+	        cv::Point c(map2guiXFULL(p->first), map2guiYFULL(p->second));
          printf("slim heading (%d, %d)\n", p->first, p->second);
          printf("slim heading (%d, %d)\n", c.x, c.y);
                 if (first) 
@@ -362,12 +361,8 @@ void LocalMap::addArrows(cv::Mat &result)
           for (int j = i + 1; j < visualizedGraph.vertices; j++)
             if (visualizedGraph.adjacencyMatrix[i][j])
             {
-	        cv::Point a(map2guiX(gridSize * visualizedGraph.x[i]), 
-                           
-                           
-                            map2guiY(gridSize * visualizedGraph.y[i]));
-	        cv::Point b(map2guiX(gridSize * visualizedGraph.x[j]), 
-                            map2guiY(gridSize * visualizedGraph.y[j]));
+	        cv::Point a(map2guiXFULL(visualizedGraph.x[i]), map2guiYFULL(visualizedGraph.y[i]));
+	        cv::Point b(map2guiXFULL(visualizedGraph.x[j]), map2guiYFULL(visualizedGraph.y[j]));
 		cv::line(result, a, b, cv::Scalar(10, 10, 10), 1);
             } 
      }
