@@ -51,6 +51,9 @@ int LocalMap::map2gridX_(double x) {return round(rescale(x, mapWidth, gridWidth)
 int LocalMap::map2gridY_(double y) {return round(rescale(y, mapHeight, gridHeight));}
 int LocalMap::map2guiX(double x) {return clampGuiX(round(rescale(x, mapWidth, guiWidth)));}
 int LocalMap::map2guiY(double y) {return clampGuiY(guiHeight - round(rescale(y, mapHeight, guiHeight)));}
+int LocalMap::map2guiXFULL(double x) {return clampGuiX(0.5 + guiWidth / 2 + rescale(x - posX, mapWidth, guiWidth));}
+int LocalMap::map2guiYFULL(double y) {return clampGuiY(0.5 + guiHeight / 2 + guiHeight - rescale(y - posY, mapHeight, guiHeight));}
+
 
 // 0 threshold
 const double eps = 0.0001;

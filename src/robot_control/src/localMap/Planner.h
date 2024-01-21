@@ -22,10 +22,10 @@ private:
 
   int dlzka_useku = 1;  // 5
   int saferange = 1;  // 3
-  int nearest = 30; //16
+  int nearest = 20; //16
   int multiplier = 5;
 
-  static const int pocet_priamok = 100;
+  static const int pocet_priamok = 100; 
 
 
   void generuj_nahodne(int dvojice_nahodnych_bodov_na_okraji_mapy[pocet_priamok][2][2], int pocet_dvojic);
@@ -39,7 +39,7 @@ private:
   void sprav_diagnostiku(bool diagnostika, const char *param, int dvojice_nahodnych_bodov_na_okraji_mapy[pocet_priamok][2][2],
                        int pocet_dvojice_nahodnych_bodov_na_okraji_mapy,
                        vector<pair<Bod, Bod>> *pretnute_okraje_zjazdnej_casti, vector<pair<int, int>> *stredove_body);
-  void find_border_point_for_angle(double wished_heading, double goal_position[], double map_width);
+  void find_border_point_for_angle(double wished_heading, int goal_position[]);
 
 };
 #endif

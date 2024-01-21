@@ -21,32 +21,34 @@ void Planner::generuj_nahodne(int dvojice_nahodnych_bodov_na_okraji_mapy[pocet_p
         int strana = rand() % 4;
         int druha_strana = (strana + ((rand() % 3) + 1)) % 4;
         if (strana == 0) {
-            dvojice_nahodnych_bodov_na_okraji_mapy[i][0][0] = posX + rand() % mapWidth - mapWidth / 2;
-            dvojice_nahodnych_bodov_na_okraji_mapy[i][0][1] = 0;
+            dvojice_nahodnych_bodov_na_okraji_mapy[i][0][0] = (int)(localMap->posX + rand() % mapWidth - mapWidth / 2 - 1);
+            dvojice_nahodnych_bodov_na_okraji_mapy[i][0][1] = (int)(localMap->posY - mapHeight / 2 + 1);
         } else if (strana == 2) {
-            dvojice_nahodnych_bodov_na_okraji_mapy[i][0][0] = rand() % gridWidth;
-            dvojice_nahodnych_bodov_na_okraji_mapy[i][0][1] = gridWidth - 1;
+            dvojice_nahodnych_bodov_na_okraji_mapy[i][0][0] = (int)(localMap->posX + rand() % mapWidth - mapWidth / 2 - 1);
+            dvojice_nahodnych_bodov_na_okraji_mapy[i][0][1] = (int)(localMap->posY + mapHeight / 2 - 1);
         } else if (strana == 1) {
-            dvojice_nahodnych_bodov_na_okraji_mapy[i][0][0] = gridWidth - 1;
-            dvojice_nahodnych_bodov_na_okraji_mapy[i][0][1] = rand() % gridWidth;
+            dvojice_nahodnych_bodov_na_okraji_mapy[i][0][0] = (int)(localMap->posX + mapWidth / 2 - 1);
+            dvojice_nahodnych_bodov_na_okraji_mapy[i][0][1] = (int)(localMap->posY + rand() % mapHeight - mapHeight / 2 - 1);
         } else if (strana == 3) {
-            dvojice_nahodnych_bodov_na_okraji_mapy[i][0][0] = 0;
-            dvojice_nahodnych_bodov_na_okraji_mapy[i][0][1] = rand() % gridWidth;
+            dvojice_nahodnych_bodov_na_okraji_mapy[i][0][0] = (int)(localMap->posX - mapWidth / 2 + 1);
+            dvojice_nahodnych_bodov_na_okraji_mapy[i][0][1] = (int)(localMap->posY + rand() % mapHeight - mapHeight / 2 - 1);
         }
 
         if (druha_strana == 0) {
-            dvojice_nahodnych_bodov_na_okraji_mapy[i][1][0] = (rand() % gridWidth);
-            dvojice_nahodnych_bodov_na_okraji_mapy[i][1][1] = 0;
+            dvojice_nahodnych_bodov_na_okraji_mapy[i][1][0] = (int)(localMap->posX + rand() % mapWidth - mapWidth / 2 - 1);
+            dvojice_nahodnych_bodov_na_okraji_mapy[i][1][1] = (int)(localMap->posY - mapHeight / 2 + 1);
         } else if (druha_strana == 2) {
-            dvojice_nahodnych_bodov_na_okraji_mapy[i][1][0] = (rand() % gridWidth);
-            dvojice_nahodnych_bodov_na_okraji_mapy[i][1][1] = (gridWidth - 1);
+            dvojice_nahodnych_bodov_na_okraji_mapy[i][1][0] = (int)(localMap->posX + rand() % mapWidth - mapWidth / 2 - 1);
+            dvojice_nahodnych_bodov_na_okraji_mapy[i][1][1] = (int)(localMap->posY + mapHeight / 2 - 1);
         } else if (druha_strana == 1) {
-            dvojice_nahodnych_bodov_na_okraji_mapy[i][1][0] = (gridWidth - 1);
-            dvojice_nahodnych_bodov_na_okraji_mapy[i][1][1] = (rand() % gridWidth);
+            dvojice_nahodnych_bodov_na_okraji_mapy[i][1][0] = (int)(localMap->posX + mapWidth / 2 - 1);
+            dvojice_nahodnych_bodov_na_okraji_mapy[i][1][1] = (int)(localMap->posY + rand() % mapHeight - mapHeight / 2 - 1);
         } else if (druha_strana == 3) {
-            dvojice_nahodnych_bodov_na_okraji_mapy[i][1][0] = 0;
-            dvojice_nahodnych_bodov_na_okraji_mapy[i][1][1] = (rand() % gridWidth);
+            dvojice_nahodnych_bodov_na_okraji_mapy[i][1][0] = (int)(localMap->posX - mapWidth / 2 + 1);
+            dvojice_nahodnych_bodov_na_okraji_mapy[i][1][1] = (int)(localMap->posY + rand() % mapHeight - mapHeight / 2 - 1);
         }
+        printf("d: %d,%d - %d,%d\n", dvojice_nahodnych_bodov_na_okraji_mapy[i][0][0], dvojice_nahodnych_bodov_na_okraji_mapy[i][0][1], 
+                                     dvojice_nahodnych_bodov_na_okraji_mapy[i][1][0], dvojice_nahodnych_bodov_na_okraji_mapy[i][1][1] );
     }
 }
 
@@ -134,21 +136,21 @@ void Planner::kontroluj_zjazdnost(int dvojice_nahodnych_bodov_na_okraji_mapy[poc
     bool druhy = false;
     printf("kz1\n");
     for (int i = 0; i < n; i++) {
-        printf("kz(%d)\n", i);
+        //printf("kz(%d)\n", i);
         zjazdnost = false;
         prvy = false;
         druhy = false;
         for (int j = 0; j < gridWidth; j++) {
             x1 = int(dvojice_nahodnych_bodov_na_okraji_mapy[i][0][0] +
                      (dvojice_nahodnych_bodov_na_okraji_mapy[i][1][0] - 
-                     dvojice_nahodnych_bodov_na_okraji_mapy[i][0][0]) * (j / (double)mapWidth));
+                     dvojice_nahodnych_bodov_na_okraji_mapy[i][0][0]) * (j / (double)gridWidth));
             y1 = int(dvojice_nahodnych_bodov_na_okraji_mapy[i][0][1] +
                      (dvojice_nahodnych_bodov_na_okraji_mapy[i][1][1] - 
-                     dvojice_nahodnych_bodov_na_okraji_mapy[i][0][1]) * (j / (double)mapHeight));
+                     dvojice_nahodnych_bodov_na_okraji_mapy[i][0][1]) * (j / (double)gridWidth));
             //printf("x1=%d, y1=%d\n", x1, y1);
-            if (x1 >= 0 && x1 < gridWidth && y1 >= 0 && y1 < gridWidth) {
+            if (x1 >= localMap->posX-mapWidth/2 && x1 < localMap->posX+mapWidth/2 && y1 >= localMap->posY-mapHeight/2 && y1 < localMap->posY+mapHeight/2) {
                 //printf("ojojooo\n");
-                if ((localMap->matrix[localMap->map2gridX(x1)][y1] == 0 && localMap->matrix_cam[x1][y1] > 0 && zjazdnost == false)) {
+                if ((localMap->matrix[localMap->map2gridX(x1)][localMap->map2gridY(y1)] == 0 && localMap->matrix_cam[localMap->map2gridX(x1)][localMap->map2gridY(y1)] > 0 && zjazdnost == false)) {
                     zjazdnost = true;
                     if (prvy == false) {
                         prvy_bod[0] = x1;
@@ -156,7 +158,7 @@ void Planner::kontroluj_zjazdnost(int dvojice_nahodnych_bodov_na_okraji_mapy[poc
                         prvy = true;
                     }
                 }
-                if (((localMap->matrix[x1][y1] != 0 || localMap->matrix_cam[x1][y1] == 0) && zjazdnost == true)) {
+                if (((localMap->matrix[localMap->map2gridX(x1)][localMap->map2gridY(y1)] != 0 || localMap->matrix_cam[localMap->map2gridX(x1)][localMap->map2gridY(y1)] == 0) && zjazdnost == true)) {
                     zjazdnost = false;
                     if (druhy == false) {
                         druhy_bod[0] = x1;
@@ -190,27 +192,38 @@ void Planner::kontroluj_zjazdnost(int dvojice_nahodnych_bodov_na_okraji_mapy[poc
 void Planner::najdi_stredove_body_a_ceny(vector<pair<int, int>> *stredove_body, double **cena_cesty,
                                 vector<pair<Bod, Bod>> *pretnute_okraje_zjazdnej_casti) {
 
-    double start[2] = {gridWidth / 2.0, gridWidth / 2.0};
-    double ciel[2] = {800, 150};
+    int start[2] = {(int)(localMap->posX + 0.5),(int)(localMap->posY + 0.5)};
+    int ciel[2] = {800, 150};
     double wished_heading = localMap->angle - localMap->compassHeading + localMap->currWayHeading;
-    find_border_point_for_angle(wished_heading, ciel, gridWidth);
+    find_border_point_for_angle(wished_heading, ciel);
     printf("okraje size=%lu\n", pretnute_okraje_zjazdnej_casti->size());
     int bod_a[2];
     int bod_b[2];
     int stred[2];
+    //int najblizsi_k_cielu[2];
+    //double najblizsi=1000000;
+    //double l;
     stredove_body->push_back(make_pair(start[0], start[1]));
     for (int i = 0; i < pretnute_okraje_zjazdnej_casti->size(); i++) {
         bod_a[0] = (*pretnute_okraje_zjazdnej_casti)[i].first.first;
         bod_a[1] = (*pretnute_okraje_zjazdnej_casti)[i].first.second;
         bod_b[0] = (*pretnute_okraje_zjazdnej_casti)[i].second.first;
         bod_b[1] = (*pretnute_okraje_zjazdnej_casti)[i].second.second;
-        stred[0] = int((bod_a[0] + bod_b[0]) / 2);
-        stred[1] = int((bod_a[1] + bod_b[1]) / 2);
+        stred[0] = int((bod_a[0] + bod_b[0]) / 2.0+0.5);
+        stred[1] = int((bod_a[1] + bod_b[1]) / 2.0+0.5);
+        //l=sqrt((stred[0] - ciel[0]) * (stred[0] - ciel[0]) + (stred[1] - ciel[1]) * (stred[1] - ciel[1]));
+        //if (l < najblizsi)
+        //{
+			//najblizsi_k_cielu[0]=stred[0];
+			//najblizsi_k_cielu[1]=stred[1];
+			//najblizsi=l;
+		//}
         stredove_body->push_back(make_pair(stred[0], stred[1]));
         printf("prvy_bod=%d,%d     stredovy_bod=%d,%d     druhy_bod=%d,%d\n", bod_a[0],bod_a[1],stred[0],stred[1],bod_b[0],bod_b[1]);
 
     }
-    stredove_body->push_back(make_pair(ciel[0], ciel[1]));
+    //stredove_body->push_back(make_pair(najblizsi_k_cielu[0], najblizsi_k_cielu[1]));
+	stredove_body->push_back(make_pair(ciel[0], ciel[1]));
 
     int size_stredove_body = stredove_body->size();
 
@@ -226,38 +239,32 @@ void Planner::najdi_stredove_body_a_ceny(vector<pair<int, int>> *stredove_body, 
 }
 
 void Planner::napln_graf(Graph graph, vector<pair<int, int>> *stredove_body, int size_stredove_body, double **cena_cesty) {
-    int startNode = 0;
-    int endNode = size_stredove_body - 1;
+    //int startNode = 0;
+    //int endNode = size_stredove_body - 1;
     for (int i = 0; i < size_stredove_body; i++) {
         graph.setXY(i, (*stredove_body)[i].first, (*stredove_body)[i].second);
     }
-    double najblizsie_k_cielu[2];
-    double start[2] = {gridWidth / 2.0, gridWidth / 2.0};
-    najblizsie_k_cielu[0] = start[0];
-    najblizsie_k_cielu[1] = start[1];
-    double najblizsi = cena_cesty[0][size_stredove_body - 1];
-    int najblizsi_index = 0;
+    //double najblizsie_k_cielu[2];
+    //int start[2] = {localMap->posX, localMap->posY};
+    //najblizsie_k_cielu[0] = start[0];
+    //najblizsie_k_cielu[1] = start[1];
+    //double najblizsi = cena_cesty[0][size_stredove_body - 1];
+    //int najblizsi_index = 0;
 
 
     generuj_kostru_grafu(graph, stredove_body, size_stredove_body, cena_cesty);
-
-    //zisti_parametre_saferage();
+	if(false)
     for (int i = 0; i < size_stredove_body; i++) {
         for (int j = i + 1; j < size_stredove_body; j++) {
             if (cena_cesty[i][j] < nearest)
                 graph.addEdge(i, j, cena_cesty[i][j]);
         }
-        if (najblizsi > cena_cesty[i][size_stredove_body - 1]) {
-            najblizsi = cena_cesty[i][0];
-            najblizsi_index = i;
-            endNode = najblizsi_index;
-        }
     }
 }
 
 void Planner::sprav_diagnostiku(bool diagnostika, const char *param, int dvojice_nahodnych_bodov_na_okraji_mapy[pocet_priamok][2][2],
-                       int pocet_dvojice_nahodnych_bodov_na_okraji_mapy,
-                       vector<pair<Bod, Bod>> *pretnute_okraje_zjazdnej_casti, vector<pair<int, int>> *stredove_body) {
+                                int pocet_dvojice_nahodnych_bodov_na_okraji_mapy,
+                                vector<pair<Bod, Bod>> *pretnute_okraje_zjazdnej_casti, vector<pair<int, int>> *stredove_body) {
     //bool diagnostika=true;
     //char param[9]="11111111";
 
@@ -277,15 +284,10 @@ void Planner::sprav_diagnostiku(bool diagnostika, const char *param, int dvojice
 
 
     if (!diagnostika) return;
-    double start[2] = {gridWidth / 2.0, gridWidth / 2.0};
-    double ciel[2] = {800, 150};
+    int start[2] = {(int)(localMap->posX + 0.5), (int)(localMap->posY + 0.5)};
+    int ciel[2] = {800, 150};
     double wished_heading = localMap->angle - localMap->compassHeading + localMap->currWayHeading;
-    find_border_point_for_angle(wished_heading, ciel, gridWidth);
-	
-	Point a(localMap->clampGuiX(localMap->map2guiX(localMap->posX) + localMap->guiShiftX), localMap->clampGuiY(localMap->map2guiY(localMap->posY) + localMap->guiShiftY));
-	//a=Point(0,0);
-
-    printf("A=(%d,%d)\n", a.x, a.y);
+    find_border_point_for_angle(wished_heading, ciel);
 
     Mat image(gridWidth * multiplier, gridWidth * multiplier, CV_8UC3);
     /*
@@ -300,25 +302,23 @@ void Planner::sprav_diagnostiku(bool diagnostika, const char *param, int dvojice
         }
     }*/
 
-    //guiShiftX = guiWidth / 2 - map2guiX(posX);
-    //guiShiftY = guiHeight / 2 - map2guiY(posY);
+    //guiShiftX = guiWidth / 2 - map2guiXFULL(localMap->posX);
+    //guiShiftY = guiHeight / 2 - map2guiYFULL(localMap->posY);
 
     // draw matrix
     for (int x = 0; x < gridWidth; x++) {
         for (int y = 0; y < gridHeight; y++) {
-            Point a(localMap->clampGuiX(localMap->map2guiX(x * gridSize) + localMap->guiShiftX), localMap->clampGuiY(localMap->map2guiY(y * gridSize) + localMap->guiShiftY));
-            Point b(localMap->clampGuiX(localMap->map2guiX((x+1) * gridSize - 1) + localMap->guiShiftX), localMap->clampGuiY(localMap->map2guiY((y+1) * gridSize - 1) + localMap->guiShiftY));
-            if (abs(a.x - b.x) <= localMap->map2guiX(gridSize) && abs(a.y - b.y) <= localMap->map2guiX(gridSize)) {
+            Point a(localMap->map2guiXFULL(x * gridSize), localMap->map2guiYFULL(y * gridSize));
+            Point b(localMap->map2guiXFULL((x+1) * gridSize - 1), localMap->map2guiYFULL((y+1) * gridSize - 1));
+            if (abs(a.x - b.x) <= localMap->map2guiXFULL(gridSize) && abs(a.y - b.y) <= localMap->map2guiXFULL(gridSize)) {
                 rectangle(image, a, b, localMap->getMatrixColor(x, y), CV_FILLED);
             }
         }
     }
     if(true) {
-        line(image, Point((gridWidth / 2) * multiplier, (gridWidth / 2) * multiplier),
-             Point((gridWidth / 2) * multiplier + 100, (gridWidth / 2) * multiplier), Scalar(0, 0, 255), 1);
-        line(image, Point((gridWidth / 2) * multiplier, (gridWidth / 2) * multiplier),
-             Point((gridWidth / 2) * multiplier, (gridWidth / 2) * multiplier + 100), Scalar(0, 255, 0), 1);
-        //circle(image, Point(0, 0), 50, Scalar(0, 0, 0), 5);
+        line(image, Point(localMap->map2guiXFULL(localMap->posX), localMap->map2guiYFULL(localMap->posY)), Point(localMap->map2guiXFULL(localMap->posX) + 100, localMap->map2guiYFULL(localMap->posY)), Scalar(0, 0, 255), 3);
+        line(image, Point(localMap->map2guiXFULL(localMap->posX), localMap->map2guiYFULL(localMap->posY)), Point(localMap->map2guiXFULL(localMap->posX), localMap->map2guiYFULL(localMap->posY) - 100), Scalar(0, 255, 0), 3);
+		circle(image, Point(localMap->map2guiXFULL(ciel[0]), localMap->map2guiYFULL(ciel[1])), 20, Scalar(0, 10, 255), -1);
     }
     //pociatocne body na okrajoch
     for (int i = 0; i < pocet_dvojice_nahodnych_bodov_na_okraji_mapy; i++) {
@@ -329,36 +329,36 @@ void Planner::sprav_diagnostiku(bool diagnostika, const char *param, int dvojice
         bod2[0] = dvojice_nahodnych_bodov_na_okraji_mapy[i][1][0];
         bod2[1] = dvojice_nahodnych_bodov_na_okraji_mapy[i][1][1];
         if (param[0] == '1') {
-            circle(image, Point(map2guiX(bod1[0]), map2guiY(bod1[1])), 3, Scalar(250, 10, 10), -1);
-            circle(image, Point(bod2[0] * multiplier, bod2[1] * multiplier), 3, Scalar(250, 10, 10), -1);
+            circle(image, Point(localMap->map2guiXFULL(bod1[0]), localMap->map2guiYFULL(bod1[1])), 3, Scalar(250, 10, 10), -1);
+            circle(image, Point(localMap->map2guiXFULL(bod2[0]), localMap->map2guiYFULL(bod2[1])), 3, Scalar(250, 10, 10), -1);
         }
         if (param[1] == '1') {
-            line(image, Point(bod1[0] * multiplier, bod1[1] * multiplier), Point(bod2[0] * multiplier, bod2[1] * multiplier), Scalar(255, 0, 0), 1);
+            line(image, Point(localMap->map2guiXFULL(bod1[0]), localMap->map2guiYFULL(bod1[1])), Point(localMap->map2guiXFULL(bod2[0]), localMap->map2guiYFULL(bod2[1])), Scalar(255, 10, 10), 1);
         }
     }
     for (int i = 0; i < pretnute_okraje_zjazdnej_casti->size(); i++) {
 
         if (param[2] == '1') {
-            circle(image, a+Point(multiplier * (*pretnute_okraje_zjazdnej_casti)[i].first.first,
-                                -multiplier * (*pretnute_okraje_zjazdnej_casti)[i].first.second), 3, Scalar(10, 100, 100), -1);
-            circle(image, a+Point(multiplier * (*pretnute_okraje_zjazdnej_casti)[i].second.first,
-                                -multiplier * (*pretnute_okraje_zjazdnej_casti)[i].second.second), 3, Scalar(10, 100, 100), -1);
+            circle(image, Point(localMap->map2guiXFULL((*pretnute_okraje_zjazdnej_casti)[i].first.first),
+                                  localMap->map2guiYFULL((*pretnute_okraje_zjazdnej_casti)[i].first.second)), 3, Scalar(10, 10, 10), -1);
+            circle(image, Point(localMap->map2guiXFULL((*pretnute_okraje_zjazdnej_casti)[i].second.first),
+                                  localMap->map2guiYFULL((*pretnute_okraje_zjazdnej_casti)[i].second.second)), 3, Scalar(10, 10, 10), -1);
         }
         if (param[3] == '1') {
             line(image,
-                 a+Point(multiplier * (*pretnute_okraje_zjazdnej_casti)[i].first.first, -multiplier * (*pretnute_okraje_zjazdnej_casti)[i].first.second),
-                 a+Point(multiplier * (*pretnute_okraje_zjazdnej_casti)[i].second.first,
-                       -multiplier * (*pretnute_okraje_zjazdnej_casti)[i].second.second), Scalar(100, 100, 0), 1);
+                 Point(localMap->map2guiXFULL((*pretnute_okraje_zjazdnej_casti)[i].first.first), localMap->map2guiYFULL((*pretnute_okraje_zjazdnej_casti)[i].first.second)),
+                 Point(localMap->map2guiXFULL((*pretnute_okraje_zjazdnej_casti)[i].second.first),
+                         localMap->map2guiYFULL((*pretnute_okraje_zjazdnej_casti)[i].second.second)), Scalar(10, 10, 0), 1);
         }
     }
 
     for (int i = 0; i < stredove_body->size(); i++) {
 
         if (param[4] == '1') {
-            circle(image, Point(multiplier * (*stredove_body)[i].first, multiplier * (*stredove_body)[i].second), 10, Scalar(0, 0, 0), -1);
+            circle(image, Point(localMap->map2guiXFULL((*stredove_body)[i].first), localMap->map2guiYFULL((*stredove_body)[i].second)), 5, Scalar(0, 0, 255), -1);
         }
         if (param[5] == '1') {
-            circle(image, a+Point(multiplier * (*stredove_body)[i].first, -multiplier * (*stredove_body)[i].second), nearest * multiplier, Scalar(255, 0, 0), 1);
+            circle(image, Point(localMap->map2guiXFULL((*stredove_body)[i].first), localMap->map2guiYFULL((*stredove_body)[i].second)), nearest , Scalar(0, 0, 255), 1);
         }
     }
     int bodA[2];
@@ -367,14 +367,14 @@ void Planner::sprav_diagnostiku(bool diagnostika, const char *param, int dvojice
     int bodB[2];
     bodB[0] = start[0];
     bodB[1] = start[1];
-
-    for (int i = 0; i < localMap->slimak_trajectory.size(); i++) {
-        if (param[6] == '1') {
+    if (param[6] == '1') {
+        for (int i = 0; i < localMap->slimak_trajectory.size(); i++) {
             bodA[0] = localMap->slimak_trajectory[i].first;
             bodA[1] = localMap->slimak_trajectory[i].second;
-            line(image, a+Point(multiplier * bodB[0], -multiplier * bodB[1]), a+Point(multiplier * bodA[0], -multiplier * bodA[1]), Scalar(255, 0, 0), 10);
+            line(image, Point(localMap->map2guiXFULL(bodB[0]), localMap->map2guiYFULL(bodB[1])), Point(localMap->map2guiXFULL(bodA[0]), localMap->map2guiYFULL(bodA[1])), Scalar(255, 255, 255), 5);
             bodB[0] = bodA[0];
             bodB[1] = bodA[1];
+            printf("slimak_trajectory_size: %lu",localMap->slimak_trajectory.size());
         }
     }
 
@@ -383,7 +383,8 @@ void Planner::sprav_diagnostiku(bool diagnostika, const char *param, int dvojice
     waitKey(1);
 }
 
-void Planner::find_border_point_for_angle(double wished_heading, double goal_position[], double map_width)
+
+void Planner::find_border_point_for_angle(double wished_heading, int goal_position[])
 {
         double target_x, target_y;
         double epsilon_tan = 0.0001;
@@ -393,38 +394,38 @@ void Planner::find_border_point_for_angle(double wished_heading, double goal_pos
         {
                 if (wished_heading > M_PI)   // +90
                 {
-                  target_x = map_width;
-                  target_y = int(map_width/2);
+                  target_x = localMap->posX+mapWidth/2;
+                  target_y = localMap->posY;
             }
             else   // -90
             {
-                  target_x = 0;
-                  target_y = int(map_width/2);
+                  target_x = localMap->posX-mapWidth/2;
+                  target_y = localMap->posY;
             }
         }
         else if (angleDiffAbs(wished_heading, 0) <= M_PI_4)  // horny kvandrant (+- 45 stupnov)
         {
-                target_x = map_width / 2 + map_width * tan(wished_heading) / 2;
-                target_y = map_width;
+                target_x = localMap->posX + mapWidth * tan(wished_heading) / 2;
+                target_y = localMap->posY + mapHeight/2;//************************
         }
         else if (fabs(wished_heading - M_PI_2) <= M_PI_4)   // pravy kvadrant (45..135)
         {
-                target_x = map_width;
-                target_y = map_width / 2 + map_width * tan(wished_heading - M_PI_2) / 2;
+                target_x = localMap->posX + mapWidth/2;
+                target_y = localMap->posY + mapWidth * tan(wished_heading - M_PI_2) / 2;
         }
         else if (fabs(wished_heading - M_PI) <= M_PI_4)   // dolny kvadrant (135..225)
         {
-                target_x = map_width / 2 + map_width * tan(wished_heading - M_PI) / 2;
-                target_y = map_width;
+                target_x = localMap->posX - mapWidth * tan(wished_heading - M_PI) / 2;
+                target_y = localMap->posY - mapHeight/2;
         }
         else if (fabs(wished_heading - M_PI_2 - M_PI_4) <= M_PI_4)   // lavy kvadrant (225..315)
         {
-                target_x = 0;
-                target_y = map_width / 2 + map_width * tan(wished_heading - M_PI_2 - M_PI) / 2;
+                target_x = localMap->posX - mapWidth/2;
+                target_y = localMap->posY - mapWidth * tan(wished_heading - M_PI_2 - M_PI) / 2;
         }
 
-        goal_position[0] = target_x;
-        goal_position[1] = target_y;
+        goal_position[0] = (int)(target_x + 0.5);
+        goal_position[1] = (int)(target_y + 0.5);
 
 }
 
@@ -432,13 +433,13 @@ void Planner::find_border_point_for_angle(double wished_heading, double goal_pos
 void Planner::findBestHeading_graph() {
 
 
-    double start[2] = {gridWidth / 2.0, gridWidth / 2.0};
-    double ciel[2] = {800, 150};
+    int start[2] = {(int)(localMap->posX + 0.5), (int)(localMap->posY + 0.5)};
+    int ciel[2] = {800, 150};
     double cielovapozicia_x, cielovapozicia_y;
     double wished_heading = localMap->angle - localMap->compassHeading + localMap->currWayHeading;
 
     printf("chkpt1\n");
-    find_border_point_for_angle(wished_heading, ciel, gridWidth); 
+    find_border_point_for_angle(wished_heading, ciel);
     //funkcia najde bod na hrane lokalnej mapy najblizsie k aktualnemu cielu
 
     int dvojice_nahodnych_bodov_na_okraji_mapy[pocet_priamok][2][2];
@@ -507,10 +508,24 @@ void Planner::findBestHeading_graph() {
   
       // v tejto casti dijkstrovym algoritmom hladam v dvojrozmernom poli mapa[n][n] najkratsiu cestu k najblizsiemu bodu k cielu co moze byt okraj lokalnej mapy robota
   
-      printf("dijkstra() bdefor\n");
-      printf("startNode=%d, endNode=%d\n", startNode, endNode);
-  
+      
       localMap->visualizedGraph = graph;
+      int najblizsi_k_cielu;
+	  double najblizsi=1000000;
+	  double l;
+	  int pocetStredovychBodov=(int)size_stredove_body;
+	  for (int i=0;i<size_stredove_body-1;i++){
+		l=sqrt((stredove_body[i].first - stredove_body[pocetStredovychBodov-1].first) * (stredove_body[i].first - stredove_body[pocetStredovychBodov-1].first) + (stredove_body[i].second - stredove_body[pocetStredovychBodov-1].second) * (stredove_body[i].second - stredove_body[pocetStredovychBodov-1].second));
+        if (l < najblizsi)
+        {
+			najblizsi_k_cielu=i;
+			najblizsi=l;
+		}
+	  }
+	  endNode=najblizsi_k_cielu;
+	  
+	  printf("dijkstra() bdefor\n");
+      printf("startNode=%d, endNode=%d, number of nodes=%d\n", startNode, endNode, pocetStredovychBodov);
   
       pair<int, vector<int>> result = graph.dijkstra(startNode, endNode);
       //do premennej result vkladam pocet a vektor zoradenych bodov grafu ktory reprezentuje najkratsiu cestu v grafe
@@ -523,7 +538,7 @@ void Planner::findBestHeading_graph() {
       for (vector<int>::iterator i = result.second.begin(); i < result.second.end(); i++)
           localMap->slimak_trajectory.push_back(make_pair(stredove_body[*i].first, stredove_body[*i].second));
       pthread_mutex_unlock(&localMap->trajectory_lock);
-  
+	  printf("----------------> slimak trajectory length=%lu",localMap->slimak_trajectory.size());
       double x_prvy = localMap->slimak_trajectory[0].first;
       double y_prvy = localMap->slimak_trajectory[0].second;
       double x_druhy = localMap->slimak_trajectory[1].first;

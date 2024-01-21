@@ -26,6 +26,8 @@ double angleDiffAbs(double a, double b);
 extern const int gridSize;
 extern const int gridWidth;
 extern const int gridHeight;
+extern const int mapWidth;
+extern const int mapHeight;
 
 using namespace std;
 
@@ -156,6 +158,9 @@ private:
 
     int map2guiX(double x);
     int map2guiY(double y);
+
+    int map2guiXFULL(double x);
+    int map2guiYFULL(double y);
 
     ros::Publisher publisher;
 
