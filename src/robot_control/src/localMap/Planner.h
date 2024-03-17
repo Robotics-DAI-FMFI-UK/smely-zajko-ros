@@ -22,7 +22,7 @@ private:
 
   int dlzka_useku = 1;  // 5
   int saferange = 1;  // 3
-  int nearest = 20; //16
+  int nearest = 100; //16
   int multiplier = 5;
 
   static const int pocet_priamok = 100; 

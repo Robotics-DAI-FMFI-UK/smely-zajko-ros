@@ -22,33 +22,33 @@ void Planner::generuj_nahodne(int dvojice_nahodnych_bodov_na_okraji_mapy[pocet_p
         int druha_strana = (strana + ((rand() % 3) + 1)) % 4;
         if (strana == 0) {
             dvojice_nahodnych_bodov_na_okraji_mapy[i][0][0] = (int)(localMap->posX + rand() % mapWidth - mapWidth / 2 - 1);
-            dvojice_nahodnych_bodov_na_okraji_mapy[i][0][1] = (int)(localMap->posY - mapHeight / 2 + 1);
+            dvojice_nahodnych_bodov_na_okraji_mapy[i][0][1] = (int)(localMap->posY - mapHeight / 2 + 5);
         } else if (strana == 2) {
             dvojice_nahodnych_bodov_na_okraji_mapy[i][0][0] = (int)(localMap->posX + rand() % mapWidth - mapWidth / 2 - 1);
-            dvojice_nahodnych_bodov_na_okraji_mapy[i][0][1] = (int)(localMap->posY + mapHeight / 2 - 1);
+            dvojice_nahodnych_bodov_na_okraji_mapy[i][0][1] = (int)(localMap->posY + mapHeight / 2 - 5);
         } else if (strana == 1) {
-            dvojice_nahodnych_bodov_na_okraji_mapy[i][0][0] = (int)(localMap->posX + mapWidth / 2 - 1);
+            dvojice_nahodnych_bodov_na_okraji_mapy[i][0][0] = (int)(localMap->posX + mapWidth / 2 - 5);
             dvojice_nahodnych_bodov_na_okraji_mapy[i][0][1] = (int)(localMap->posY + rand() % mapHeight - mapHeight / 2 - 1);
         } else if (strana == 3) {
-            dvojice_nahodnych_bodov_na_okraji_mapy[i][0][0] = (int)(localMap->posX - mapWidth / 2 + 1);
+            dvojice_nahodnych_bodov_na_okraji_mapy[i][0][0] = (int)(localMap->posX - mapWidth / 2 + 5);
             dvojice_nahodnych_bodov_na_okraji_mapy[i][0][1] = (int)(localMap->posY + rand() % mapHeight - mapHeight / 2 - 1);
         }
 
         if (druha_strana == 0) {
             dvojice_nahodnych_bodov_na_okraji_mapy[i][1][0] = (int)(localMap->posX + rand() % mapWidth - mapWidth / 2 - 1);
-            dvojice_nahodnych_bodov_na_okraji_mapy[i][1][1] = (int)(localMap->posY - mapHeight / 2 + 1);
+            dvojice_nahodnych_bodov_na_okraji_mapy[i][1][1] = (int)(localMap->posY - mapHeight / 2 + 5);
         } else if (druha_strana == 2) {
             dvojice_nahodnych_bodov_na_okraji_mapy[i][1][0] = (int)(localMap->posX + rand() % mapWidth - mapWidth / 2 - 1);
-            dvojice_nahodnych_bodov_na_okraji_mapy[i][1][1] = (int)(localMap->posY + mapHeight / 2 - 1);
+            dvojice_nahodnych_bodov_na_okraji_mapy[i][1][1] = (int)(localMap->posY + mapHeight / 2 - 5);
         } else if (druha_strana == 1) {
-            dvojice_nahodnych_bodov_na_okraji_mapy[i][1][0] = (int)(localMap->posX + mapWidth / 2 - 1);
+            dvojice_nahodnych_bodov_na_okraji_mapy[i][1][0] = (int)(localMap->posX + mapWidth / 2 - 5);
             dvojice_nahodnych_bodov_na_okraji_mapy[i][1][1] = (int)(localMap->posY + rand() % mapHeight - mapHeight / 2 - 1);
         } else if (druha_strana == 3) {
-            dvojice_nahodnych_bodov_na_okraji_mapy[i][1][0] = (int)(localMap->posX - mapWidth / 2 + 1);
+            dvojice_nahodnych_bodov_na_okraji_mapy[i][1][0] = (int)(localMap->posX - mapWidth / 2 + 5);
             dvojice_nahodnych_bodov_na_okraji_mapy[i][1][1] = (int)(localMap->posY + rand() % mapHeight - mapHeight / 2 - 1);
         }
-        printf("d: %d,%d - %d,%d\n", dvojice_nahodnych_bodov_na_okraji_mapy[i][0][0], dvojice_nahodnych_bodov_na_okraji_mapy[i][0][1], 
-                                     dvojice_nahodnych_bodov_na_okraji_mapy[i][1][0], dvojice_nahodnych_bodov_na_okraji_mapy[i][1][1] );
+        //printf("d: %d,%d - %d,%d\n", dvojice_nahodnych_bodov_na_okraji_mapy[i][0][0], dvojice_nahodnych_bodov_na_okraji_mapy[i][0][1], 
+        //                             dvojice_nahodnych_bodov_na_okraji_mapy[i][1][0], dvojice_nahodnych_bodov_na_okraji_mapy[i][1][1] );
     }
 }
 
@@ -134,7 +134,7 @@ void Planner::kontroluj_zjazdnost(int dvojice_nahodnych_bodov_na_okraji_mapy[poc
     bool prvy = false;
     int druhy_bod[2];
     bool druhy = false;
-    printf("kz1\n");
+    //printf("kz1\n");
     for (int i = 0; i < n; i++) {
         //printf("kz(%d)\n", i);
         zjazdnost = false;
@@ -182,11 +182,10 @@ void Planner::kontroluj_zjazdnost(int dvojice_nahodnych_bodov_na_okraji_mapy[poc
             }
         }
     }
-    printf("dvojic=%lu\n", dvojice->size());
-    for (int i = 0; i < dvojice->size(); ++i) {
-        printf("dvojica cislo %d:   x1:%d, y1:%d     x2:%d, y2:%d\n",i,(*dvojice)[i].first.first,(*dvojice)[i].first.second,(*dvojice)[i].second.first,(*dvojice)[i].second.second);
-
-    }
+    //printf("dvojic=%lu\n", dvojice->size());
+    //for (int i = 0; i < dvojice->size(); ++i) {
+    //    printf("dvojica cislo %d:   x1:%d, y1:%d     x2:%d, y2:%d\n",i,(*dvojice)[i].first.first,(*dvojice)[i].first.second,(*dvojice)[i].second.first,(*dvojice)[i].second.second);
+    //}
 }
 
 void Planner::najdi_stredove_body_a_ceny(vector<pair<int, int>> *stredove_body, double **cena_cesty,
@@ -196,7 +195,7 @@ void Planner::najdi_stredove_body_a_ceny(vector<pair<int, int>> *stredove_body, 
     int ciel[2] = {800, 150};
     double wished_heading = localMap->angle - localMap->compassHeading + localMap->currWayHeading;
     find_border_point_for_angle(wished_heading, ciel);
-    printf("okraje size=%lu\n", pretnute_okraje_zjazdnej_casti->size());
+    //printf("okraje size=%lu\n", pretnute_okraje_zjazdnej_casti->size());
     int bod_a[2];
     int bod_b[2];
     int stred[2];
@@ -219,7 +218,7 @@ void Planner::najdi_stredove_body_a_ceny(vector<pair<int, int>> *stredove_body, 
 			//najblizsi=l;
 		//}
         stredove_body->push_back(make_pair(stred[0], stred[1]));
-        printf("prvy_bod=%d,%d     stredovy_bod=%d,%d     druhy_bod=%d,%d\n", bod_a[0],bod_a[1],stred[0],stred[1],bod_b[0],bod_b[1]);
+        //printf("prvy_bod=%d,%d     stredovy_bod=%d,%d     druhy_bod=%d,%d\n", bod_a[0],bod_a[1],stred[0],stred[1],bod_b[0],bod_b[1]);
 
     }
     //stredove_body->push_back(make_pair(najblizsi_k_cielu[0], najblizsi_k_cielu[1]));
@@ -253,7 +252,7 @@ void Planner::napln_graf(Graph &graph, vector<pair<int, int>> *stredove_body, in
 	
 	
     generuj_kostru_grafu(graph, stredove_body, size_stredove_body, cena_cesty);
-	if(false)
+	if(true)
     for (int i = 0; i < size_stredove_body; i++) {
         for (int j = i + 1; j < size_stredove_body; j++) {
             if (cena_cesty[i][j] < nearest)
@@ -374,7 +373,7 @@ void Planner::sprav_diagnostiku(bool diagnostika, const char *param, int dvojice
             line(image, Point(localMap->map2guiXFULL(bodB[0]), localMap->map2guiYFULL(bodB[1])), Point(localMap->map2guiXFULL(bodA[0]), localMap->map2guiYFULL(bodA[1])), Scalar(255, 255, 255), 5);
             bodB[0] = bodA[0];
             bodB[1] = bodA[1];
-            printf("slimak_trajectory_size: %lu",localMap->slimak_trajectory.size());
+            //printf("slimak_trajectory_size: %lu",localMap->slimak_trajectory.size());
         }
     }
 
@@ -438,7 +437,7 @@ void Planner::findBestHeading_graph() {
     double cielovapozicia_x, cielovapozicia_y;
     double wished_heading = localMap->angle - localMap->compassHeading + localMap->currWayHeading;
 
-    printf("chkpt1\n");
+    //printf("chkpt1\n");
     find_border_point_for_angle(wished_heading, ciel);
     //funkcia najde bod na hrane lokalnej mapy najblizsie k aktualnemu cielu
 
@@ -449,13 +448,13 @@ void Planner::findBestHeading_graph() {
     bool nahodne=true;
     if (nahodne)
     {
-        printf("chkpt2\n");
+        //printf("chkpt2\n");
         generuj_nahodne(dvojice_nahodnych_bodov_na_okraji_mapy, pocet_dvojice_nahodnych_bodov_na_okraji_mapy);
         //funkcia generuje do pola dvojice_nahodnych_bodov_na_okraji_mapy dvojice nahodnych bodov na hranach lokalnej mapy
     }
     else
     {
-        printf("chkpt2b\n");
+        //printf("chkpt2b\n");
         generuj_pravidelne(dvojice_nahodnych_bodov_na_okraji_mapy,pocet_dvojice_nahodnych_bodov_na_okraji_mapy);
         //funkcia generuje do pola dvojice_nahodnych_bodov_na_okraji_mapy dvojice pravidelnych bodov na hranach lokalnej mapy pod 45 stupnovim uhlom
     }
@@ -464,7 +463,7 @@ void Planner::findBestHeading_graph() {
     //pole pretnute_okraje_zjazdnej_casti obsahuje dvojice bodov ktore reprezentuju priesecniky priamky vytvorenej pomocou bodov predchadzajucej
     //  funkcie generuj_nahodne/generuj_pravidelne
 
-    printf("chkpt3, pocet pretnutych okrajov: %lu\n",pretnute_okraje_zjazdnej_casti.size());
+    //printf("chkpt3, pocet pretnutych okrajov: %lu\n",pretnute_okraje_zjazdnej_casti.size());
     kontroluj_zjazdnost(dvojice_nahodnych_bodov_na_okraji_mapy, pocet_dvojice_nahodnych_bodov_na_okraji_mapy,
                         &pretnute_okraje_zjazdnej_casti);
     //Funkcia kontroluj_zjazdnost vytvori priamky zo vztupneho pola bodov. vytvori rovnicu priamky pre kazdu dvojicu bodov a nasledne cez ne iteruje
@@ -478,30 +477,30 @@ void Planner::findBestHeading_graph() {
     vector<pair<int, int>> stredove_body;
     //pole stredove_body obsahuje vsetky body ktore su v strede zjazdnej casti
 
-    printf("chkpt4\n");
+    //printf("chkpt4\n");
     int cena_cesty_size = pretnute_okraje_zjazdnej_casti.size() + 2;
     double *cena_cesty[cena_cesty_size];
-    printf("chkpt5\n");
+    //printf("chkpt5\n");
     for (int i = 0; i < cena_cesty_size; i++)
       cena_cesty[i] = new double[pretnute_okraje_zjazdnej_casti.size() + 2];
-    printf("chkpt6\n");
+    //printf("chkpt6\n");
 
     //pole cena_cesty obsahuje 2 rozmerne pole a je to matica cier z bodu i do bodu j. pocet vsetkych stredovych bodov +1 za pociatocny startovaci bod a +1 za cielovy bod kam sa chcem dostat
-    printf("pocet_dvojic_pred_stredom: %lu\n", pretnute_okraje_zjazdnej_casti.size());
+    //printf("pocet_dvojic_pred_stredom: %lu\n", pretnute_okraje_zjazdnej_casti.size());
     najdi_stredove_body_a_ceny(&stredove_body, cena_cesty, &pretnute_okraje_zjazdnej_casti);
 
     //funkcia dosadi do pola stredove body vsetky stredove body a nasledne spocita vsetky ceny z bodu i do bodu j aby som neskor nemusel pocitat znova tieto vzdialenosti
 
-    printf("chkpt7, pocet stredovych bodov: %lu\n",stredove_body.size());
+    //printf("chkpt7, pocet stredovych bodov: %lu\n",stredove_body.size());
     int size_stredove_body = stredove_body.size();
     int startNode = 0;
     int endNode = size_stredove_body - 1;
 
     if (size_stredove_body > 1)
     {
-      printf("chkpt8\n");
+      //printf("chkpt8\n");
       Graph graph(size_stredove_body);
-      printf("chkpt9\n");
+      //printf("chkpt9\n");
       napln_graf(graph, &stredove_body, size_stredove_body, cena_cesty);
       //funkcia do premennej graf vlozi vsetky hrany ktore su medzi bodmi a ich dlzka je mensia ako parameter nearest
   
@@ -525,13 +524,13 @@ void Planner::findBestHeading_graph() {
 	  }
 	  endNode=najblizsi_k_cielu;
 	  
-	  printf("dijkstra() bdefor\n");
-      printf("startNode=%d, endNode=%d, number of nodes=%d\n", startNode, endNode, pocetStredovychBodov);
+	  //printf("dijkstra() bdefor\n");
+      //printf("startNode=%d, endNode=%d, number of nodes=%d\n", startNode, endNode, pocetStredovychBodov);
   
       pair<int, vector<int>> result = graph.dijkstra(startNode, endNode);
       //do premennej result vkladam pocet a vektor zoradenych bodov grafu ktory reprezentuje najkratsiu cestu v grafe
   
-      printf("dijkstra() aftr cost=%d, vecsize=%lu\n", result.first, result.second.size());
+      //printf("dijkstra() aftr cost=%d, vecsize=%lu\n", result.first, result.second.size());
       // v premennej result by mala byt cesta do ciela
       localMap->slimak_trajectory.clear();
   
@@ -539,14 +538,15 @@ void Planner::findBestHeading_graph() {
       for (vector<int>::iterator i = result.second.begin(); i < result.second.end(); i++)
           localMap->slimak_trajectory.push_back(make_pair(stredove_body[*i].first, stredove_body[*i].second));
       pthread_mutex_unlock(&localMap->trajectory_lock);
-	  printf("----------------> slimak trajectory length=%lu",localMap->slimak_trajectory.size());
+	  //printf("----------------> slimak trajectory length=%lu",localMap->slimak_trajectory.size());
       double x_prvy = localMap->slimak_trajectory[0].first;
       double y_prvy = localMap->slimak_trajectory[0].second;
       double x_druhy = localMap->slimak_trajectory[1].first;
       double y_druhy = localMap->slimak_trajectory[1].second;
   
-      localMap->bestSlimakHeading = atan2((y_druhy - y_prvy), (x_druhy - x_prvy));
-      printf("leaving findbestS\n");
+      localMap->bestSlimakHeading = M_PI_2 - atan2((y_druhy - y_prvy), (x_druhy - x_prvy));
+      if (localMap->bestSlimakHeading > M_PI) localMap->bestSlimakHeading -= 2 * M_PI;
+      //printf("leaving findbestS\n");
   
     }
     sprav_diagnostiku(true, "11111111", dvojice_nahodnych_bodov_na_okraji_mapy,
@@ -557,8 +557,8 @@ void Planner::findBestHeading_graph() {
       //  znazornujuce hranice vzdialenosti ku ktorim vedia spravit hranu grafu nakoniec aj vsetky cesty ktore
       //  su zjazdne
 
-    printf("chkpt10\n");
+    //printf("chkpt10\n");
     for (int i = 0; i < cena_cesty_size; i++)
        delete [] cena_cesty[i];
-    printf("chkpt11\n");
+    //printf("chkpt11\n");
 }

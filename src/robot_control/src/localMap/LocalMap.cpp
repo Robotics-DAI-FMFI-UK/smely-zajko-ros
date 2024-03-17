@@ -147,7 +147,7 @@ void LocalMap::eraseAustralia()
           auer++;
         }
       }
-    printf("australia erased %d points\n", auer); 
+    //printf("australia erased %d points\n", auer); 
 }
 
 void LocalMap::updateRobotPosition_(long L, long R, bool force) {
@@ -296,7 +296,7 @@ cv::Mat LocalMap::getGui() {
 
 void LocalMap::addArrows(cv::Mat &result)
 {
-        printf("entering arrows\n");
+        //printf("entering arrows\n");
     // draw robot (black 100)
     cv::Point a(clampGuiX(map2guiX(posX) + guiShiftX), clampGuiY(map2guiY(posY) + guiShiftY));
     cv::Point b = a + cv::Point(100 * sin(angle), -100 * cos(angle));
@@ -338,8 +338,8 @@ void LocalMap::addArrows(cv::Mat &result)
       for (vector<pair<int, int>>::iterator p = slimak_trajectory.begin(); p < slimak_trajectory.end(); p++)
       {
 	        cv::Point c(map2guiXFULL(p->first), map2guiYFULL(p->second));
-         printf("slim heading (%d, %d)\n", p->first, p->second);
-         printf("slim heading (%d, %d)\n", c.x, c.y);
+         //printf("slim heading (%d, %d)\n", p->first, p->second);
+         //printf("slim heading (%d, %d)\n", c.x, c.y);
                 if (first) 
                 { 
                    first = 0; 
@@ -349,12 +349,12 @@ void LocalMap::addArrows(cv::Mat &result)
                 cv::Point a = b;
                 b = c;
 
-                printf("cv::line()...\n");
+                //printf("cv::line()...\n");
 		cv::line(result, a, b, cv::Scalar(30, 200, 30), 3);
                 cv::arrowedLine(result, a, b, cv::Scalar(10, 100, 10), 1, CV_AA, 0, 0.2);
-                printf("...cv::line().\n");
+                //printf("...cv::line().\n");
 	}	
-        printf("leaving arrows\n");
+        //printf("leaving arrows\n");
 	pthread_mutex_unlock(&trajectory_lock);
 
         for (int i = 0; i < visualizedGraph.vertices; i++)
@@ -788,6 +788,7 @@ void LocalMap::findBestHeading() {
 
     if (use_slimak_heading)
     {
+                //TODO running mean
 		bestHeading = bestSlimakHeading;
     }
     else bestHeading = ((double) best) * (M_PI / 180);

@@ -7,7 +7,7 @@ const int INF = INT_MAX;
 void Graph::addEdge(int src, int dest, int weight) {
         adjacencyMatrix[src][dest] = weight;
         adjacencyMatrix[dest][src] = weight;  // Assuming an undirected graph
-        printf("pridava sa hrana %d->%d, cena: %d\n",src,dest,weight);
+        //printf("pridava sa hrana %d->%d, cena: %d\n",src,dest,weight);
         
 }
 
@@ -26,7 +26,7 @@ pair<int, vector<int>> Graph::dijkstra(int start, int end) {
 		distance[start] = 0;
 		pq.push({0, start});
 		
-		if(true)
+		if(false)
 			for(int i=0;i<adjacencyMatrix.size();i++)
 				for(int j=0;j<adjacencyMatrix[i].size();j++)
 					printf("hrana z: %d do: %d, ma cenu=%d\n",i,j,adjacencyMatrix[i][j]);
@@ -59,7 +59,7 @@ pair<int, vector<int>> Graph::dijkstra(int start, int end) {
 			current = parent[current];			
 		}
 		reverse(path.begin(), path.end());
-		printf("dijkstra lenght=%lu",path.size());
+		//printf("dijkstra lenght=%lu",path.size());
 
 		return make_pair(distance[end], path);
 }
