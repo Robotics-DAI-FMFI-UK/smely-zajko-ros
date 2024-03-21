@@ -15,7 +15,8 @@ Planner::Planner(LocalMap *localMap_reference)
   localMap = localMap_reference;
 }
 
-void Planner::generuj_nahodne(int dvojice_nahodnych_bodov_na_okraji_mapy[pocet_priamok][2][2], int pocet_dvojic) {
+void Planner::generuj_nahodne(int dvojice_nahodnych_bodov_na_okraji_mapy[pocet_priamok][2][2], int pocet_dvojic) 
+{
     for (int i = 0; i < pocet_dvojic; i++) {
         //prvy bod A1 leziaci na hrane mapy
         int strana = rand() % 4;
@@ -53,41 +54,68 @@ void Planner::generuj_nahodne(int dvojice_nahodnych_bodov_na_okraji_mapy[pocet_p
 }
 
 void Planner::generuj_pravidelne(int dvojice_nahodnych_bodov_na_okraji_mapy[pocet_priamok][2][2], int pocet_dvojic) {
-    int pocet_na_stranu = pocet_dvojic / 4;
-    int krok = (gridWidth - 40) / pocet_na_stranu;
-    //generujem priamky v 45 stupnovom uhle do oboch smerov
+    int pocet_na_stranu = pocet_dvojic / 6;
+    int krok = mapWidth / (pocet_na_stranu + 1);
+    int j=0;
+    //generujem priamky vo vertikalnom smere
     for (int i = 0; i < pocet_na_stranu; i++) {
-        dvojice_nahodnych_bodov_na_okraji_mapy[i][0][0] = 20 + i * krok;
-        dvojice_nahodnych_bodov_na_okraji_mapy[i][0][1] = 0;
-        dvojice_nahodnych_bodov_na_okraji_mapy[i][1][0] = 0;
-        dvojice_nahodnych_bodov_na_okraji_mapy[i][1][1] = 20 + i * krok;
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][0][0] = (int)(localMap->posX - mapWidth / 2 + (i + 1) * krok);
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][0][1] = (int)(localMap->posY - mapHeight / 2 + 5);
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][1][0] = (int)(localMap->posX - mapWidth / 2 + (i + 1) * krok);
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][1][1] = (int)(localMap->posY + mapHeight / 2 - 5);
+        j++;
     }
+    //generujem priamky v horizontalnom smere
     for (int i = 0; i < pocet_na_stranu; i++) {
-        dvojice_nahodnych_bodov_na_okraji_mapy[i][0][0] = 20 + i * krok;
-        dvojice_nahodnych_bodov_na_okraji_mapy[i][0][1] = gridWidth;
-        dvojice_nahodnych_bodov_na_okraji_mapy[i][1][0] = gridWidth;
-        dvojice_nahodnych_bodov_na_okraji_mapy[i][1][1] = 20 + i * krok;
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][0][0] = (int)(localMap->posX - mapWidth / 2 + 5);
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][0][1] = (int)(localMap->posY - mapWidth / 2 + (i + 1) * krok);
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][1][0] = (int)(localMap->posX + mapWidth / 2 - 5);
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][1][1] = (int)(localMap->posY - mapWidth / 2 + (i + 1) * krok);
+        j++;
     }
+    //generuj 45 stupnov smerom v pravo, dolna strana
     for (int i = 0; i < pocet_na_stranu; i++) {
-        dvojice_nahodnych_bodov_na_okraji_mapy[i][0][0] = 0;
-        dvojice_nahodnych_bodov_na_okraji_mapy[i][0][1] = 20 + i * krok;
-        dvojice_nahodnych_bodov_na_okraji_mapy[i][1][0] = 20 + i * krok;
-        dvojice_nahodnych_bodov_na_okraji_mapy[i][1][1] = 0;
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][0][0] = (int)(localMap->posX - mapWidth / 2 + (i + 1) * krok);
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][0][1] = (int)(localMap->posY - mapHeight / 2 + 5);
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][1][0] = (int)(localMap->posX + mapWidth / 2 - 5);
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][1][1] = (int)(localMap->posY + mapHeight / 2 - (i + 1) * krok);
+        j++;
     }
+    //generuj 45 stupnov smerom v pravo, horna strana
     for (int i = 0; i < pocet_na_stranu; i++) {
-        dvojice_nahodnych_bodov_na_okraji_mapy[i][0][0] = gridWidth;
-        dvojice_nahodnych_bodov_na_okraji_mapy[i][0][1] = 20 + i * krok;
-        dvojice_nahodnych_bodov_na_okraji_mapy[i][1][0] = 20 + i * krok;
-        dvojice_nahodnych_bodov_na_okraji_mapy[i][1][1] = gridWidth;
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][0][0] = (int)(localMap->posX - mapWidth / 2 + 5);
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][0][1] = (int)(localMap->posY - mapHeight / 2 + (i + 1) * krok);
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][1][0] = (int)(localMap->posX + mapWidth / 2 - (i + 1) * krok);
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][1][1] = (int)(localMap->posY + mapHeight / 2 - 5);
+        j++;
     }
-    for (int i = 4 * pocet_na_stranu; i < pocet_dvojic; i++) {// doplnenie priamok nech ich mam celkovo n
-        dvojice_nahodnych_bodov_na_okraji_mapy[i][0][0] = 0;
-        dvojice_nahodnych_bodov_na_okraji_mapy[i][0][1] = gridWidth;
+    //generuj 45 stupnov smerom v lavo, dolna strana
+    for (int i = 0; i < pocet_na_stranu; i++) {
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][0][0] = (int)(localMap->posX - mapWidth / 2 + (i + 1) * krok);
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][0][1] = (int)(localMap->posY - mapHeight / 2 + 5);
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][1][0] = (int)(localMap->posX - mapWidth / 2 + 5);
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][1][1] = (int)(localMap->posY - mapWidth / 2 + (i + 1) * krok);
+        j++;
+    }
+    //generuj 45 stupnov smerom v lavo, horna strana
+    for (int i = 0; i < pocet_na_stranu; i++) {
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][0][0] = (int)(localMap->posX + mapWidth / 2 - 5);
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][0][1] = (int)(localMap->posY - mapHeight / 2 + (i + 1) * krok);
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][1][0] = (int)(localMap->posX - mapWidth / 2 + (i + 1) * krok);
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][1][1] = (int)(localMap->posY + mapHeight / 2 - 5);
+        j++;
+    }
+    // doplnenie priamok nech ich mam celkovo n
+    for (int i = j; i < pocet_dvojic; i++) {
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][0][0] = (int)(localMap->posX - mapWidth / 2 + (i % 5) * 2 + 5);
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][0][1] = (int)(localMap->posY - mapHeight / 2 + (i % 5) * 2 + 5);;
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][1][0] = (int)(localMap->posX + mapWidth / 2 - (i % 5) * 2 - 5);
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][1][1] = (int)(localMap->posY + mapHeight / 2 - (i % 5) * 2 - 5);
+        j++;
     }
 }
 
-void
-Planner::generuj_kostru_grafu(Graph &graph, vector<pair<int, int>> *stredove_body, int pocet_bodov_grafu, double **cena_cesty) {
+void Planner::generuj_kostru_grafu(Graph &graph, vector<pair<int, int>> *stredove_body, int pocet_bodov_grafu, double **cena_cesty) {
     int navstivene[pocet_bodov_grafu];
     int pocet_kostra = 0;
     vector<int> kostra;
@@ -429,7 +457,7 @@ void Planner::find_border_point_for_angle(double wished_heading, int goal_positi
 }
 
 
-void Planner::findBestHeading_graph() {
+void Planner::findBestHeading_graph(int random) {
 
 
     int start[2] = {(int)(localMap->posX + 0.5), (int)(localMap->posY + 0.5)};
@@ -445,8 +473,7 @@ void Planner::findBestHeading_graph() {
     int pocet_dvojice_nahodnych_bodov_na_okraji_mapy = pocet_priamok;
     //pole obsahuje 2 body so suradnicami x a y
 
-    bool nahodne=true;
-    if (nahodne)
+    if (random)
     {
         //printf("chkpt2\n");
         generuj_nahodne(dvojice_nahodnych_bodov_na_okraji_mapy, pocet_dvojice_nahodnych_bodov_na_okraji_mapy);

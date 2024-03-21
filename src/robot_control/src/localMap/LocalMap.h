@@ -78,6 +78,7 @@ private:
     
     //toggle between Fikar algorithm and Slimak algorithm of local map
     int use_slimak_heading = 1;
+    int use_random_intersection_lines = 0;
     
     volatile double bestSlimakHeading;
 
