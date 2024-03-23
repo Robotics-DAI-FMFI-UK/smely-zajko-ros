@@ -18,6 +18,8 @@ class Planner;
 #define EVALUATED_IMAGE_LISTENER_PORT 9771
 #define POSITION_AND_DEPTH_MAP_PORT 9772
 
+#define LOCALMAP_LOG_IMAGE_PATH "/home/zajko/logs/"
+
 void log_msg(const char *msg);
 void log_msg(const char *msg, double val);
 void log_msg(const char *msg, double val1, double val2);

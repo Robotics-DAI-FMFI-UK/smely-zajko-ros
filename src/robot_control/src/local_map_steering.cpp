@@ -21,13 +21,13 @@
 
 #define RAD2DEG 57.295779513
 
-#define LOCALMAP_LOG_IMAGE_PATH "/home/zajko/logs/"
-
 #define SOCKET_BUFFER_SIZE  65535
 static uint8_t buffer[SOCKET_BUFFER_SIZE];
 static uint8_t depth_buffer[SOCKET_BUFFER_SIZE];
 
-static char localmap_log_filename[150];
+int log_file_counter = 0;
+
+char localmap_log_filename[150];
 
 ros::Publisher steeringPublisher;
 
@@ -196,7 +196,6 @@ void drawMap(const ros::TimerEvent&) {
     c++;
 
     static char filename[200];
-    static int log_file_counter = 0;
     
     cv::Mat img = localMap->getGui();
     

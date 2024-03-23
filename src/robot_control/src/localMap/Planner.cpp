@@ -10,6 +10,9 @@
 
 using namespace cv;
 
+extern char localmap_log_filename[150];
+extern int log_file_counter;
+
 Planner::Planner(LocalMap *localMap_reference)
 {
   localMap = localMap_reference;
@@ -312,9 +315,9 @@ void Planner::sprav_diagnostiku(bool diagnostika, const char *param, int dvojice
 
     if (!diagnostika) return;
     int start[2] = {(int)(localMap->posX + 0.5), (int)(localMap->posY + 0.5)};
-    int ciel[2] = {800, 150};
-    double wished_heading = localMap->angle - localMap->compassHeading + localMap->currWayHeading;
-    find_border_point_for_angle(wished_heading, ciel);
+    int ciel[2] = { (*stredove_body)[stredove_body->size()].first, (*stredove_body)[stredove_body->size()].second };
+ //   double wished_heading = localMap->angle - localMap->compassHeading + localMap->currWayHeading;
+ //   find_border_point_for_angle(wished_heading, ciel);
 
     Mat image(gridWidth * multiplier, gridWidth * multiplier, CV_8UC3);
     /*
@@ -407,6 +410,12 @@ void Planner::sprav_diagnostiku(bool diagnostika, const char *param, int dvojice
 
 
     imshow("Obrazok", image);
+
+    char filename[200];
+
+    snprintf(filename, 200, "%s%s/%dS.png", LOCALMAP_LOG_IMAGE_PATH, localmap_log_filename, log_file_counter);
+    cv::imwrite(filename, image);
+
     waitKey(1);
 }
 
@@ -417,38 +426,38 @@ void Planner::find_border_point_for_angle(double wished_heading, int goal_positi
         double epsilon_tan = 0.0001;
 
     // ciel je pred nami pod uhlom +- 90 stupov
-        if (fabs(wished_heading - M_PI_2) < epsilon_tan)
+        if (fabs(fabs(wished_heading) - M_PI_2) < epsilon_tan)
         {
                 if (wished_heading > M_PI)   // +90
                 {
-                  target_x = localMap->posX+mapWidth/2;
+                  target_x = localMap->posX+mapWidth/2 - 5;
                   target_y = localMap->posY;
             }
             else   // -90
             {
-                  target_x = localMap->posX-mapWidth/2;
+                  target_x = localMap->posX-mapWidth/2 + 5;
                   target_y = localMap->posY;
             }
         }
         else if (angleDiffAbs(wished_heading, 0) <= M_PI_4)  // horny kvandrant (+- 45 stupnov)
         {
-                target_x = localMap->posX + mapWidth * tan(wished_heading) / 2;
-                target_y = localMap->posY + mapHeight/2;//************************
+                target_x = localMap->posX + (mapWidth / 2 - 5) * tan(wished_heading);
+                target_y = localMap->posY + mapHeight/2 - 5;//************************
         }
         else if (fabs(wished_heading - M_PI_2) <= M_PI_4)   // pravy kvadrant (45..135)
         {
-                target_x = localMap->posX + mapWidth/2;
-                target_y = localMap->posY + mapWidth * tan(wished_heading - M_PI_2) / 2;
+                target_x = localMap->posX + mapWidth/2 - 5;
+                target_y = localMap->posY + (mapWidth/2 - 5) * tan(wished_heading - M_PI_2);
         }
         else if (fabs(wished_heading - M_PI) <= M_PI_4)   // dolny kvadrant (135..225)
         {
-                target_x = localMap->posX - mapWidth * tan(wished_heading - M_PI) / 2;
-                target_y = localMap->posY - mapHeight/2;
+                target_x = localMap->posX - (mapWidth/2 - 5) * tan(wished_heading - M_PI);
+                target_y = localMap->posY - mapHeight/2 - 5;
         }
         else if (fabs(wished_heading - M_PI_2 - M_PI_4) <= M_PI_4)   // lavy kvadrant (225..315)
         {
-                target_x = localMap->posX - mapWidth/2;
-                target_y = localMap->posY - mapWidth * tan(wished_heading - M_PI_2 - M_PI) / 2;
+                target_x = localMap->posX - mapWidth/2 - 5;
+                target_y = localMap->posY - (mapWidth/2 - 5) * tan(wished_heading - M_PI_2 - M_PI);
         }
 
         goal_position[0] = (int)(target_x + 0.5);
@@ -466,7 +475,7 @@ void Planner::findBestHeading_graph(int random) {
     double wished_heading = localMap->angle - localMap->compassHeading + localMap->currWayHeading;
 
     //printf("chkpt1\n");
-    find_border_point_for_angle(wished_heading, ciel);
+    //find_border_point_for_angle(wished_heading, ciel);
     //funkcia najde bod na hrane lokalnej mapy najblizsie k aktualnemu cielu
 
     int dvojice_nahodnych_bodov_na_okraji_mapy[pocet_priamok][2][2];
