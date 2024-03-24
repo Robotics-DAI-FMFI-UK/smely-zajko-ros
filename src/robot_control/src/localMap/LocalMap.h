@@ -20,6 +20,14 @@ class Planner;
 
 #define LOCALMAP_LOG_IMAGE_PATH "/home/zajko/logs/"
 
+#define HEADING_AVG_COUNT 4
+
+#define NUM_LEVELS      100
+#define DRIVABLE_RATIO  0.7     // 70% of "yellow" pixels should be considered as drivable
+
+#define NUMBER_COMPASS_SEGMENTS        24
+#define CYCLIC_FRONT_MAP_AZIMUTHS_SIZE 20
+
 void log_msg(const char *msg);
 void log_msg(const char *msg, double val);
 void log_msg(const char *msg, double val1, double val2);
@@ -80,17 +88,22 @@ private:
     
     //toggle between Fikar algorithm and Slimak algorithm of local map
     int use_slimak_heading = 1;
+
+    // option of Slimak algorithm
     int use_random_intersection_lines = 0;
+
+    // use weighted average for compass based on odometry measurements
+    int compensating_compass = 1;
     
     volatile double bestSlimakHeading;
 
     // sensor data
     int hokuyo[1081];
-    double compassHeading;
-    double compassHeading_;
-    double currWayHeading;
-    double nextWayHeading;
-    double wayEndDistance;
+    volatile double compassHeading;
+    volatile double compassHeading_;
+    volatile double currWayHeading;
+    volatile double nextWayHeading;
+    volatile double wayEndDistance;
     unsigned char cameraData[60][60];
     unsigned char depthMap[60][60];
     int rpRays;
@@ -136,6 +149,9 @@ private:
     
     // last trajectory that has been found
     vector<pair<int, int>> slimak_trajectory;
+
+    // dynamic minimum drivable camera value 0-1 (0 means all except green, 1.0 is never used)
+    volatile double min_drivable_level;
     
     pthread_mutex_t trajectory_lock;
 
@@ -172,7 +188,7 @@ private:
     // internal methods
     void eraseAustralia();
 
-    void decayMap();
+    void decayMapAndCalculateMinimumDrivable();
 
     void applyRay_clear_and_mark(double sensorX, double sensorY, double rayAngle, double rayLen);
     

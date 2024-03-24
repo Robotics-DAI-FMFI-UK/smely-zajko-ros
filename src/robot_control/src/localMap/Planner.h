@@ -20,8 +20,8 @@ private:
 
     LocalMap *localMap;
 
-    int dlzka_useku = 2;//1  // 5
-    int saferange = 1;//1  // 3
+    int dlzka_useku = 10;//1  // 5
+    int saferange = 10;//1  // 3
     int nearest = 60;//100 //16
     int multiplier = 5;
 

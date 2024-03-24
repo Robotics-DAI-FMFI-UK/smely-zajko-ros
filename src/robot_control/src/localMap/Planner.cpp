@@ -78,26 +78,26 @@ void Planner::generuj_pravidelne(int dvojice_nahodnych_bodov_na_okraji_mapy[poce
     }
     //generuj 45 stupnov smerom v pravo, dolna strana
     for (int i = 0; i < pocet_na_stranu; i++) {
-        dvojice_nahodnych_bodov_na_okraji_mapy[j][0][0] = (int)(localMap->posX - mapWidth / 2 + (i + 1) * krok);
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][0][0] = (int)(localMap->posX - mapWidth / 2 + i * krok);
         dvojice_nahodnych_bodov_na_okraji_mapy[j][0][1] = (int)(localMap->posY - mapHeight / 2 + 5);
         dvojice_nahodnych_bodov_na_okraji_mapy[j][1][0] = (int)(localMap->posX + mapWidth / 2 - 5);
-        dvojice_nahodnych_bodov_na_okraji_mapy[j][1][1] = (int)(localMap->posY + mapHeight / 2 - (i + 1) * krok);
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][1][1] = (int)(localMap->posY + mapHeight / 2 - i * krok);
         j++;
     }
     //generuj 45 stupnov smerom v pravo, horna strana
     for (int i = 0; i < pocet_na_stranu; i++) {
         dvojice_nahodnych_bodov_na_okraji_mapy[j][0][0] = (int)(localMap->posX - mapWidth / 2 + 5);
-        dvojice_nahodnych_bodov_na_okraji_mapy[j][0][1] = (int)(localMap->posY - mapHeight / 2 + (i + 1) * krok);
-        dvojice_nahodnych_bodov_na_okraji_mapy[j][1][0] = (int)(localMap->posX + mapWidth / 2 - (i + 1) * krok);
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][0][1] = (int)(localMap->posY - mapHeight / 2 + i * krok);
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][1][0] = (int)(localMap->posX + mapWidth / 2 - i * krok);
         dvojice_nahodnych_bodov_na_okraji_mapy[j][1][1] = (int)(localMap->posY + mapHeight / 2 - 5);
         j++;
     }
     //generuj 45 stupnov smerom v lavo, dolna strana
     for (int i = 0; i < pocet_na_stranu; i++) {
-        dvojice_nahodnych_bodov_na_okraji_mapy[j][0][0] = (int)(localMap->posX - mapWidth / 2 + (i + 1) * krok);
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][0][0] = (int)(localMap->posX - mapWidth / 2 + i * krok);
         dvojice_nahodnych_bodov_na_okraji_mapy[j][0][1] = (int)(localMap->posY - mapHeight / 2 + 5);
         dvojice_nahodnych_bodov_na_okraji_mapy[j][1][0] = (int)(localMap->posX - mapWidth / 2 + 5);
-        dvojice_nahodnych_bodov_na_okraji_mapy[j][1][1] = (int)(localMap->posY - mapWidth / 2 + (i + 1) * krok);
+        dvojice_nahodnych_bodov_na_okraji_mapy[j][1][1] = (int)(localMap->posY - mapWidth / 2 + i * krok);
         j++;
     }
     //generuj 45 stupnov smerom v lavo, horna strana
@@ -181,7 +181,8 @@ void Planner::kontroluj_zjazdnost(int dvojice_nahodnych_bodov_na_okraji_mapy[poc
             //printf("x1=%d, y1=%d\n", x1, y1);
             if (x1 >= localMap->posX-mapWidth/2 && x1 < localMap->posX+mapWidth/2 && y1 >= localMap->posY-mapHeight/2 && y1 < localMap->posY+mapHeight/2) {
                 //printf("ojojooo\n");
-                if ((localMap->matrix[localMap->map2gridX(x1)][localMap->map2gridY(y1)] == 0 && localMap->matrix_cam[localMap->map2gridX(x1)][localMap->map2gridY(y1)] > 0 && zjazdnost == false)) {
+                if ((localMap->matrix[localMap->map2gridX(x1)][localMap->map2gridY(y1)] == 0 && 
+                     localMap->matrix_cam[localMap->map2gridX(x1)][localMap->map2gridY(y1)] > localMap->min_drivable_level && zjazdnost == false)) {
                     zjazdnost = true;
                     if (prvy == false) {
                         prvy_bod[0] = x1;
@@ -189,7 +190,8 @@ void Planner::kontroluj_zjazdnost(int dvojice_nahodnych_bodov_na_okraji_mapy[poc
                         prvy = true;
                     }
                 }
-                if (((localMap->matrix[localMap->map2gridX(x1)][localMap->map2gridY(y1)] != 0 || localMap->matrix_cam[localMap->map2gridX(x1)][localMap->map2gridY(y1)] == 0) && zjazdnost == true)) {
+                if (((localMap->matrix[localMap->map2gridX(x1)][localMap->map2gridY(y1)] != 0 || 
+                      localMap->matrix_cam[localMap->map2gridX(x1)][localMap->map2gridY(y1)] <= localMap->min_drivable_level) && zjazdnost == true)) {
                     zjazdnost = false;
                     if (druhy == false) {
                         druhy_bod[0] = x1;
@@ -315,7 +317,7 @@ void Planner::sprav_diagnostiku(bool diagnostika, const char *param, int dvojice
 
     if (!diagnostika) return;
     int start[2] = {(int)(localMap->posX + 0.5), (int)(localMap->posY + 0.5)};
-    int ciel[2] = { (*stredove_body)[stredove_body->size()].first, (*stredove_body)[stredove_body->size()].second };
+    int ciel[2] = { (*stredove_body)[stredove_body->size() - 1].first, (*stredove_body)[stredove_body->size() - 1].second };
  //   double wished_heading = localMap->angle - localMap->compassHeading + localMap->currWayHeading;
  //   find_border_point_for_angle(wished_heading, ciel);
 
@@ -388,7 +390,7 @@ void Planner::sprav_diagnostiku(bool diagnostika, const char *param, int dvojice
             circle(image, Point(localMap->map2guiXFULL((*stredove_body)[i].first), localMap->map2guiYFULL((*stredove_body)[i].second)), 5, Scalar(0, 0, 255), -1);
         }
         if (param[5] == '1') {
-            circle(image, Point(localMap->map2guiXFULL((*stredove_body)[i].first), localMap->map2guiYFULL((*stredove_body)[i].second)), nearest , Scalar(0, 0, 255), 1);
+            circle(image, Point(localMap->map2guiXFULL((*stredove_body)[i].first), localMap->map2guiYFULL((*stredove_body)[i].second)), nearest/2 , Scalar(0, 0, 255), 1);
         }
     }
     int bodA[2];
@@ -428,7 +430,7 @@ void Planner::find_border_point_for_angle(double wished_heading, int goal_positi
     // ciel je pred nami pod uhlom +- 90 stupov
         if (fabs(fabs(wished_heading) - M_PI_2) < epsilon_tan)
         {
-                if (wished_heading > M_PI)   // +90
+                if (wished_heading > 0)   // +90
                 {
                   target_x = localMap->posX+mapWidth/2 - 5;
                   target_y = localMap->posY;
@@ -447,7 +449,7 @@ void Planner::find_border_point_for_angle(double wished_heading, int goal_positi
         else if (fabs(wished_heading - M_PI_2) <= M_PI_4)   // pravy kvadrant (45..135)
         {
                 target_x = localMap->posX + mapWidth/2 - 5;
-                target_y = localMap->posY + (mapWidth/2 - 5) * tan(wished_heading - M_PI_2);
+                target_y = localMap->posY - (mapWidth/2 - 5) * tan(wished_heading - M_PI_2);
         }
         else if (fabs(wished_heading - M_PI) <= M_PI_4)   // dolny kvadrant (135..225)
         {
@@ -457,7 +459,7 @@ void Planner::find_border_point_for_angle(double wished_heading, int goal_positi
         else if (fabs(wished_heading - M_PI_2 - M_PI_4) <= M_PI_4)   // lavy kvadrant (225..315)
         {
                 target_x = localMap->posX - mapWidth/2 - 5;
-                target_y = localMap->posY - (mapWidth/2 - 5) * tan(wished_heading - M_PI_2 - M_PI);
+                target_y = localMap->posY + (mapWidth/2 - 5) * tan(wished_heading - M_PI_2 - M_PI);
         }
 
         goal_position[0] = (int)(target_x + 0.5);
@@ -577,8 +579,8 @@ void Planner::findBestHeading_graph(int random) {
 	  //printf("----------------> slimak trajectory length=%lu",localMap->slimak_trajectory.size());
       double x_prvy = localMap->slimak_trajectory[0].first;
       double y_prvy = localMap->slimak_trajectory[0].second;
-      double x_druhy = localMap->slimak_trajectory[1].first;
-      double y_druhy = localMap->slimak_trajectory[1].second;
+      double x_druhy = localMap->slimak_trajectory[2].first;
+      double y_druhy = localMap->slimak_trajectory[2].second;
   
       localMap->bestSlimakHeading = M_PI_2 - atan2((y_druhy - y_prvy), (x_druhy - x_prvy));
       if (localMap->bestSlimakHeading > M_PI) localMap->bestSlimakHeading -= 2 * M_PI;

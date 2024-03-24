@@ -162,7 +162,11 @@ void LocalMap::updateRobotPosition_(long L, long R, bool force) {
     double dL = wheelCircumference * (prevTicksL - L) / ticksPerRotation;
     double dR = wheelCircumference * (prevTicksR - R) / ticksPerRotation;
 
-    if (!force && (fabs(dL) + fabs(dR) < minUpdateDist)) return; // don't update on small changes
+    if (!force && (fabs(dL) + fabs(dR) < minUpdateDist)) 
+    {
+      log_msg("minUpd");
+      return; // don't update on small changes
+    }
 
     log_msg("updateRobotPosition", (double)L, (double)R);
 
@@ -215,16 +219,17 @@ void LocalMap::updateRobotPosition_(long L, long R, bool force) {
     while (newAngle < 0) newAngle += 2 * M_PI;
     angle = newAngle;
 
-    log_msg("newX,newY", newX, newY);
-    log_msg("newAngle", newAngle);
-
     eraseAustralia();
-    decayMap();
+    decayMapAndCalculateMinimumDrivable();
     applyHokuyoData();
     applyRpLidarData();
     applyDepthMap();
     applyImage();
     applyCompassHeading();
+
+    log_msg("newX,newY", newX, newY);
+    log_msg("newAngle,compcompass", newAngle, compassHeading);
+
     if (use_slimak_heading)
         planner->findBestHeading_graph(use_random_intersection_lines);
     findBestHeading();
@@ -254,7 +259,7 @@ void LocalMap::setPose(double x, double y, double a) {
     log_msg("newAngle", newAngle);
 
     eraseAustralia();
-    decayMap();
+    decayMapAndCalculateMinimumDrivable();
     applyHokuyoData();
     applyRpLidarData();
     applyDepthMap();
@@ -396,14 +401,28 @@ void LocalMap::setRpLidarData(int rays, double *distances, double *angles) {
 //    }
 }
 
-void LocalMap::decayMap() {
+void LocalMap::decayMapAndCalculateMinimumDrivable() {
+    long level_frequencies[NUM_LEVELS + 1];
+    for (int i = 0; i <= NUM_LEVELS; i++) level_frequencies[i] = 0;
+
     for (int i = 0; i < gridWidth; i++) {
         for (int j = 0; j < gridHeight; j++) {
             //matrix[i][j] *= 0.99; //0.85;
             matrix[i][j] *= 0.6;  // 0.85; // 0.99;
-            matrix_cam[i][j] *= 1.0;
+            matrix_cam[i][j] *= 0.99;
+            level_frequencies[(int)(matrix_cam[i][j] * NUM_LEVELS)]++;
         }
     }
+
+    int wished_level = (int)(0.5 + DRIVABLE_RATIO * (gridWidth * gridHeight - level_frequencies[0]));
+    int i;
+    for (i = NUM_LEVELS; i >= 0; i--)
+    {
+      if (wished_level < 0) break;
+      wished_level -= level_frequencies[i];
+    }
+    min_drivable_level = i / (double)NUM_LEVELS;
+    log_msg("min_drive", min_drivable_level);
 }
 
 double doublemin(double a, double b) { if (a < b) return a; else return b; }
@@ -501,9 +520,15 @@ void LocalMap::applyRpLidarData() {
 }
 
 void LocalMap::setGlobalMapData(double currHeading, double nextHeading, double distance) {
+    static double previousCurrHeading = 0;
     currWayHeading = currHeading;
     nextWayHeading = nextHeading;
     wayEndDistance = distance * 100000;
+    if (previousCurrHeading != currWayHeading)
+    {
+      log_msg("new currHeading", currWayHeading);
+      previousCurrHeading = currWayHeading;
+    }
 }
 
 void LocalMap::setCompassHeading(double heading) {
@@ -511,7 +536,97 @@ void LocalMap::setCompassHeading(double heading) {
 }
 
 void LocalMap::applyCompassHeading() {
-    compassHeading = compassHeading_;
+
+    static double previous_compass_heading = 0;
+
+    if (previous_compass_heading == compassHeading_) return;
+    previous_compass_heading = compassHeading_;
+
+    if (!compensating_compass) 
+    {
+      compassHeading = compassHeading_;
+      return;
+    }
+    log_msg("rawcomp", compassHeading);
+    //printf("rawcomp %lf", compassHeading);
+
+
+    static double lastLocalMapAzimuths[CYCLIC_FRONT_MAP_AZIMUTHS_SIZE];
+    static int mapAzimuths_next_overwrite = -2; 
+
+    double normalized = angle - compassHeading;
+    while (normalized < 0) normalized += 2 * M_PI;
+    while (normalized >= 2 * M_PI) normalized -= 2 * M_PI;
+
+    if (mapAzimuths_next_overwrite < 0)
+    {
+      for (int i = 0; i < CYCLIC_FRONT_MAP_AZIMUTHS_SIZE; i++)
+      {
+         lastLocalMapAzimuths[i] = normalized;
+      }
+      compassHeading = compassHeading_;
+      mapAzimuths_next_overwrite++; 
+      return;
+    }
+
+    lastLocalMapAzimuths[mapAzimuths_next_overwrite++] = normalized;
+    if (mapAzimuths_next_overwrite == CYCLIC_FRONT_MAP_AZIMUTHS_SIZE) mapAzimuths_next_overwrite = 0; 
+
+    int segment_frequencies[NUMBER_COMPASS_SEGMENTS + 1];
+    int taken_segment_frequencies[NUMBER_COMPASS_SEGMENTS + 1];
+    for (int i = 0; i < NUMBER_COMPASS_SEGMENTS; i++)
+      taken_segment_frequencies[i] = segment_frequencies[i] = 0;
+ 
+    double segment_size = 2 * M_PI / NUMBER_COMPASS_SEGMENTS;
+
+    for (int i = 0; i < CYCLIC_FRONT_MAP_AZIMUTHS_SIZE; i++)
+      segment_frequencies[(int)(lastLocalMapAzimuths[i] / segment_size)]++;
+
+    // find the most frequent map azimuth from within the last recorded instances
+    int max_index = 0;
+    for (int i = 1; i < NUMBER_COMPASS_SEGMENTS; i++)
+      if (segment_frequencies[i] > segment_frequencies[max_index]) max_index = i;
+    
+    // we will only consider the most likely one (and its left and right neighbors with frequency at least half of the maximum)
+    taken_segment_frequencies[max_index] = segment_frequencies[max_index];
+    int taken_weight = segment_frequencies[max_index];
+ 
+    int i = max_index;
+    int one_loop = NUMBER_COMPASS_SEGMENTS;
+    do {
+      // move left
+      i = (i - 1 + NUMBER_COMPASS_SEGMENTS) % NUMBER_COMPASS_SEGMENTS;
+      if (segment_frequencies[i] < segment_frequencies[max_index] / 2) break;
+      taken_segment_frequencies[i] = segment_frequencies[i];
+      taken_weight += segment_frequencies[i];
+    } while (one_loop--);
+      
+    i = max_index;
+    one_loop = NUMBER_COMPASS_SEGMENTS;
+    do {
+      // move right
+      i = (i + 1) % NUMBER_COMPASS_SEGMENTS;
+      if (segment_frequencies[i] < segment_frequencies[max_index] / 2) break;
+      taken_segment_frequencies[i] = segment_frequencies[i];
+      taken_weight += segment_frequencies[i];
+    } while (one_loop--);
+
+    double compensated_azimuth = 0;
+
+/*
+    for (int i = 0; i < NUMBER_COMPASS_SEGMENTS; i++)
+      printf("tf[%d]=%d\n", i, taken_segment_frequencies[i]);
+*/
+
+    for (int i = 0; i < CYCLIC_FRONT_MAP_AZIMUTHS_SIZE; i++)
+    {
+      if (taken_segment_frequencies[(int)(lastLocalMapAzimuths[i] / segment_size)])
+        compensated_azimuth += lastLocalMapAzimuths[i];
+    }
+    
+    compassHeading = angle - compensated_azimuth / taken_weight;
+    while (compassHeading < 0) compassHeading += 2 * M_PI;
+    while (compassHeading >= 2 * M_PI) compassHeading -= 2 * M_PI;
 }
 
 void LocalMap::setImageData(unsigned char* data) {
@@ -797,14 +912,14 @@ void LocalMap::findBestHeading() {
         double averaging_alpha=0.9;
         if (first_averaging){
             first_averaging = 0;
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < HEADING_AVG_COUNT; i++) {
                 averaging[i] = bestSlimakHeading;
             }
         }
         else {
             if (fabs(bestSlimakHeading - averaging[0]) < (90 / 180.0 * M_PI) || change_direction) {
                 change_direction = 0;
-                for (int i = 9; i > 0; i--) {
+                for (int i = HEADING_AVG_COUNT - 1; i > 0; i--) {
                     averaging[i] = averaging[i - 1]; 
                 }
                 averaging[0] = bestSlimakHeading;
@@ -817,7 +932,7 @@ void LocalMap::findBestHeading() {
         double averaging_result=0;
         double averaging_beta = 1.0;
         double averaging_gamma = 1.0;
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < HEADING_AVG_COUNT; i++) {
             averaging_result += averaging[i] * averaging_beta;
             averaging_gamma += averaging_beta;
             averaging_beta *= averaging_alpha; 
@@ -826,7 +941,8 @@ void LocalMap::findBestHeading() {
     }
     else bestHeading = ((double) best) * (M_PI / 180);
 
-    if (angleDiffAbs(bestHeading, currWayHeading) > 150 / 180.0 * M_PI)
+    //if (angleDiffAbs(bestHeading, currWayHeading) > 150 / 180.0 * M_PI)
+    if (angleDiffAbs(angle + bestHeading, currWayHeading) > 150 / 180.0 * M_PI)
     {
         going_wrong++;
         //if (going_wrong > 100) transmitting_going_wrong = 1;
@@ -835,7 +951,7 @@ void LocalMap::findBestHeading() {
     }
     else if (going_wrong) going_wrong--;
 
-    if (angleDiffAbs(bestHeading, currWayHeading) < 60 / 180.0 * M_PI)
+    if (angleDiffAbs(angle + bestHeading, currWayHeading) < 60 / 180.0 * M_PI)
         if (transmitting_going_wrong)
         {
             transmitting_going_wrong = 0;
