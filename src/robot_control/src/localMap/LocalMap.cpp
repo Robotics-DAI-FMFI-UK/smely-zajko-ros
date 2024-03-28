@@ -73,12 +73,15 @@ LocalMap::LocalMap(int guiWidth, int guiHeight, ros::Publisher publisher) {
     this->guiHeight = guiHeight;
     matrix = new double* [gridWidth];
     matrix_cam = new double* [gridWidth];
+    matrix_depth = new double* [gridWidth];
     for (int i = 0; i < gridWidth; i++) {
         matrix[i] = new double[gridHeight];
         matrix_cam[i] = new double[gridHeight];
+        matrix_depth[i] = new double[gridHeight];
         for (int j = 0; j < gridHeight; j++) {
             matrix[i][j] = 0.0;//((double) i + j) / (gridHeight + gridWidth);
             matrix_cam[i][j] = 0.0;
+            matrix_depth[i][j] = 0.0;
         }
     }
 
@@ -409,7 +412,7 @@ void LocalMap::decayMapAndCalculateMinimumDrivable() {
         for (int j = 0; j < gridHeight; j++) {
             //matrix[i][j] *= 0.99; //0.85;
             matrix[i][j] *= 0.6;  // 0.85; // 0.99;
-            matrix_cam[i][j] *= 0.99;
+            matrix_cam[i][j] *= 0.995;
             level_frequencies[(int)(matrix_cam[i][j] * NUM_LEVELS)]++;
         }
     }

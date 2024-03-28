@@ -152,7 +152,6 @@ void Planner::generuj_kostru_grafu(Graph &graph, vector<pair<int, int>> *stredov
     }
 }
 
-
 double Planner::vzdialenost_bodov(int *A, int *B) {
     return sqrt((A[0] - B[0]) * (A[0] - B[0]) + (A[1] - B[1]) * (A[1] - B[1]));
 }
@@ -254,6 +253,11 @@ void Planner::najdi_stredove_body_a_ceny(vector<pair<int, int>> *stredove_body, 
         //printf("prvy_bod=%d,%d     stredovy_bod=%d,%d     druhy_bod=%d,%d\n", bod_a[0],bod_a[1],stred[0],stred[1],bod_b[0],bod_b[1]);
 
     }
+    if(old && pocet_stredove_body_old>0){
+        for (int i = 0; i < stredove_body_old.size(); i++) {
+            stredove_body->push_back(make_pair(stredove_body_old[i].first,stredove_body_old[i].second));
+        }
+    }
     //stredove_body->push_back(make_pair(najblizsi_k_cielu[0], najblizsi_k_cielu[1]));
 	stredove_body->push_back(make_pair(ciel[0], ciel[1]));
 
@@ -265,7 +269,28 @@ void Planner::najdi_stredove_body_a_ceny(vector<pair<int, int>> *stredove_body, 
                                ((*stredove_body)[i].first - (*stredove_body)[j].first) +
                                ((*stredove_body)[i].second - (*stredove_body)[j].second) *
                                ((*stredove_body)[i].second - (*stredove_body)[j].second));
-            cena_cesty[i][j] = cena;
+            if(!cena_advanced)
+                cena_cesty[i][j] = cena;
+            else {
+                double x1 = 0;
+                double y1 = 0;
+                double c = cena;
+                for (int j = 0; j <= c; j++) {
+                    x1 = (*stredove_body)[i].first +
+                             ((*stredove_body)[j].first - (*stredove_body)[i].first) * (j / c);
+                    y1 = (*stredove_body)[i].second +
+                             ((*stredove_body)[j].second - (*stredove_body)[i].second) * (j / c);
+                    if (x1 >= localMap->posX - mapWidth / 2 && x1 < localMap->posX + mapWidth / 2 &&
+                        y1 >= localMap->posY - mapHeight / 2 && y1 < localMap->posY + mapHeight / 2) {
+                        //printf("ojojooo\n");
+                        if (localMap->matrix[localMap->map2gridX(x1)][localMap->map2gridY(y1)] > 0)
+                            cena += 1 * lidar_penalizacia;
+                        cena += (1 - localMap->matrix_cam[localMap->map2gridX(x1)][localMap->map2gridY(y1)]) * camera_penalizacia;
+                    }
+                }
+                cena_cesty[i][j] = cena;
+            }
+
         }
     }
 }
@@ -294,9 +319,36 @@ void Planner::napln_graf(Graph &graph, vector<pair<int, int>> *stredove_body, in
     }
 }
 
+void Planner::bezier(vector<pair<int, int>> *trajektoria, vector<pair<int, int>> *bezier_body) {
+    int size=trajektoria->size();
+    if (size<3) return;
+
+    int pocet = size * 4; //(1 << size);
+
+    double body[size*2];
+
+    int l = 0;
+    for (int i = 0; i < pocet; i++) {
+        l = 0;
+        for (int j = 0; j < size * 2; j++){
+            if(j%2==0){
+                body[j] = (*trajektoria)[l].first;
+            }
+            else{
+                body[j] = (*trajektoria)[l].second;
+                l++;
+            }
+        }
+        for (int j = (size - 1) * 2 - 1; j > 0; j -= 2)
+            for (int k = 0; k <= j; k++)
+                body[k] = body[k] + ((body[k+2] - body[k]) * i) / (double)pocet;
+        bezier_body->push_back(make_pair((int)body[0], (int)body[1]));
+    }
+}
+
 void Planner::sprav_diagnostiku(bool diagnostika, const char *param, int dvojice_nahodnych_bodov_na_okraji_mapy[pocet_priamok][2][2],
                                 int pocet_dvojice_nahodnych_bodov_na_okraji_mapy,
-                                vector<pair<Bod, Bod>> *pretnute_okraje_zjazdnej_casti, vector<pair<int, int>> *stredove_body) {
+                                vector<pair<Bod, Bod>> *pretnute_okraje_zjazdnej_casti, vector<pair<int, int>> *stredove_body, vector<pair<int, int>> *bezier_body) {
     //bool diagnostika=true;
     //char param[9]="11111111";
 
@@ -408,6 +460,16 @@ void Planner::sprav_diagnostiku(bool diagnostika, const char *param, int dvojice
             bodB[1] = bodA[1];
             //printf("slimak_trajectory_size: %lu",localMap->slimak_trajectory.size());
         }
+        if (bezier_switch && bezier_body->size()>2)
+            for (int i = 0; i < bezier_body->size(); i++) {
+                bodA[0] = (*bezier_body)[i].first;
+                bodA[1] = (*bezier_body)[i].second;
+                line(image, Point(localMap->map2guiXFULL(bodB[0]), localMap->map2guiYFULL(bodB[1])), Point(localMap->map2guiXFULL(bodA[0]), localMap->map2guiYFULL(bodA[1])), Scalar(255, 0, 255), 5);
+                bodB[0] = bodA[0];
+                bodB[1] = bodA[1];
+                //printf("slimak_trajectory_size: %lu",localMap->slimak_trajectory.size());
+            }
+
     }
 
 
@@ -513,6 +575,8 @@ void Planner::findBestHeading_graph(int random) {
     //Zatial nefunguje
 
     vector<pair<int, int>> stredove_body;
+    vector<pair<int, int>> bezier_body;
+
     //pole stredove_body obsahuje vsetky body ktore su v strede zjazdnej casti
 
     //printf("chkpt4\n");
@@ -576,6 +640,29 @@ void Planner::findBestHeading_graph(int random) {
       for (vector<int>::iterator i = result.second.begin(); i < result.second.end(); i++)
           localMap->slimak_trajectory.push_back(make_pair(stredove_body[*i].first, stredove_body[*i].second));
       pthread_mutex_unlock(&localMap->trajectory_lock);
+
+      if(old) {
+          for (vector<int>::iterator i = result.second.begin(); i < result.second.end(); i++) {
+              if (pocet_stredove_body_old < max_pocet_stredove_body_old) {
+                  printf("access stredove_body of size %ld at index %d\n", stredove_body.size(), *i);
+                  printf("first %d, second %d\n", stredove_body[*i].first, stredove_body[*i].second);
+                  stredove_body_old.push_back(make_pair(stredove_body[*i].first, stredove_body[*i].second));
+                  pocet_stredove_body_old++;
+              } else {
+                  stredove_body_old.erase(stredove_body_old.begin());
+                  printf("access stredove_body of size %ld at index %d\n", stredove_body.size(), *i);
+                  printf("first %d, second %d\n", stredove_body[*i].first, stredove_body[*i].second);
+                  stredove_body_old.push_back(make_pair(stredove_body[*i].first, stredove_body[*i].second));
+              }
+          }
+      }
+      if (bezier_switch) {
+          vector<pair<int, int>> trajektoria;
+
+          for (vector<int>::iterator i = result.second.begin(); i < result.second.end(); i++)
+              trajektoria.push_back(make_pair(stredove_body[*i].first, stredove_body[*i].second));
+          bezier(&trajektoria, &bezier_body);
+      }
 	  //printf("----------------> slimak trajectory length=%lu",localMap->slimak_trajectory.size());
       double x_prvy = localMap->slimak_trajectory[0].first;
       double y_prvy = localMap->slimak_trajectory[0].second;
@@ -588,7 +675,7 @@ void Planner::findBestHeading_graph(int random) {
   
     }
     sprav_diagnostiku(true, "11111111", dvojice_nahodnych_bodov_na_okraji_mapy,
-                        pocet_dvojice_nahodnych_bodov_na_okraji_mapy, &pretnute_okraje_zjazdnej_casti, &stredove_body);
+                        pocet_dvojice_nahodnych_bodov_na_okraji_mapy, &pretnute_okraje_zjazdnej_casti, &stredove_body, &bezier_body);
       //Funkcia sprav_diagnostiku je nastroj na debugovanie v ktorom vidime graficky znazornene jednotlive kroky algoritmu.
       //  vykresluje najprv nahodne/pravidelne body na hranach mapy, priamky ktore preseknu lokalnu mapu,priesecniky zjaznej casti
       //  nasledne usecky ktore su tvorene priesecnikmi zjazdnej a nezjazdnej casti. stredove body, kruznice zo stredovych bodov

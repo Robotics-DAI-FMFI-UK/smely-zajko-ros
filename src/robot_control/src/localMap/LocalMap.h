@@ -130,6 +130,7 @@ private:
     // matrix to store all data
     double** matrix;
     double** matrix_cam;
+    double** matrix_depth;
     
     // robot position
     volatile double posX;
