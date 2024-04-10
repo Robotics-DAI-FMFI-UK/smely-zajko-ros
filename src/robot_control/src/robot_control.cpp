@@ -335,7 +335,7 @@ int move() {
                         }
 			heading = local_map_heading * (180 / M_PI);
 			// 0.4444 comes from 180 deg => turning rate 80              
-			sdir = 0.5 + heading * 0.4444;
+			sdir = 0.5 + heading * 0.222;  ///  bolo 7.apr.2024:  0.4444;
 
 			// we try to amplify turning for small angles		
 			if (fabs(heading) < 45)
@@ -366,10 +366,10 @@ int move() {
         if (autonomy) {
             // printf("%.10f %.10f\n", angles.dstToHeadingPoint, speed_down_dst);
             if (gps_msg.dstToHeadingPoint <= speed_down_dst) {
-                setSteering(predicted_dir, 7);
+                setSteering(predicted_dir, 3);  // last fast value 7
                 // printf("setSpeed: 3\n");
             } else {
-                setSteering(predicted_dir, 8);
+                setSteering(predicted_dir, 5);  // last fast value 8
                 // printf("setSpeed: 5\n");
             }
         }

@@ -188,6 +188,8 @@ void LocalMap::updateRobotPosition_(long L, long R, bool force) {
         newAngle = angle;
     } else if ((dL * dR < 0) && (fabs(fabs(dL) - fabs(dR)) < 0.3)) { // rotate along center
         newAngle = angle + dL / (2.0 * wheelDistance);
+        newX = posX;
+        newY = posY;
     } else if (dL != dR) { // circular trajectory
         int centerRight = 1;
         double r1;
@@ -425,6 +427,7 @@ void LocalMap::decayMapAndCalculateMinimumDrivable() {
       wished_level -= level_frequencies[i];
     }
     min_drivable_level = i / (double)NUM_LEVELS;
+    if (min_drivable_level <= 0) min_drivable_level = 1 / (double)NUM_LEVELS;
     log_msg("min_drive", min_drivable_level);
 }
 
@@ -911,7 +914,7 @@ void LocalMap::findBestHeading() {
     }
 
     if (use_slimak_heading)
-    {
+    { /*
         double averaging_alpha=0.9;
         if (first_averaging){
             first_averaging = 0;
@@ -934,13 +937,13 @@ void LocalMap::findBestHeading() {
         }
         double averaging_result=0;
         double averaging_beta = 1.0;
-        double averaging_gamma = 1.0;
+        double averaging_gamma = 0.0;
         for (int i = 0; i < HEADING_AVG_COUNT; i++) {
             averaging_result += averaging[i] * averaging_beta;
             averaging_gamma += averaging_beta;
             averaging_beta *= averaging_alpha; 
-        }
-        bestHeading = averaging_result / averaging_gamma;
+        } */
+        bestHeading = bestSlimakHeading; //averaging_result / averaging_gamma;
     }
     else bestHeading = ((double) best) * (M_PI / 180);
 

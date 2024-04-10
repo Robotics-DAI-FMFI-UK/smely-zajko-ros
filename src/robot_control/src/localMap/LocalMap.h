@@ -23,7 +23,7 @@ class Planner;
 #define HEADING_AVG_COUNT 4
 
 #define NUM_LEVELS      100
-#define DRIVABLE_RATIO  0.7     // 70% of "yellow" pixels should be considered as drivable
+#define DRIVABLE_RATIO  0.93     // 70% of "yellow" pixels should be considered as drivable
 
 #define NUMBER_COMPASS_SEGMENTS        24
 #define CYCLIC_FRONT_MAP_AZIMUTHS_SIZE 20
