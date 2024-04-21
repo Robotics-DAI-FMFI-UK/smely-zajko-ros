@@ -1,13 +1,14 @@
 #include <stdlib.h>
+#include <string.h>
 #include "ros/ros.h"
 #include "localizationAndPlanning/LocalizationAndPlanning.h"
 #include "message_types/GpsAngles.h"
 #include "message_types/SbotMsg.h"
 #include <std_msgs/UInt8.h>
 #include <std_msgs/UInt8.h>
-#include "string.h"
   
 #include "netutil.h" 
+#include "util.h"
 
 #define QR_PORT 9770
 
@@ -45,13 +46,6 @@ int debug_payload = 0;
 //---------------------------------------
 #define LOG_FILE_DIR "/home/zajko/logs/"
 static char log_file_name[100];
-
-long long msec()
-{
-  struct timeval tv;
-  gettimeofday(&tv, 0);
-  return 1000L * tv.tv_sec + tv.tv_usec / 1000L;
-}
 
 void log_msg(const char *msg)
 {
