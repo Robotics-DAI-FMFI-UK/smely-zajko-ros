@@ -682,10 +682,12 @@ void LocalMap::applyDepthMap()
                 depth_mask_val[gX][gY] ++;
                 depth_mask_count[gX][gY] ++;
             }
+            /* why was this here??
             else if (depthMap[30 - x][y] == 2)
             {
                 depth_mask_count[gX][gY] ++;
             }
+            */
         }
         fprintf(f, "\n");
     }
