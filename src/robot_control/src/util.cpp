@@ -1,3 +1,7 @@
+#include <sys/time.h>
+#include <time.h>
+
+
 long long msec()
 {
   struct timeval tv;
