@@ -644,12 +644,10 @@ void LocalMap::setImageData(unsigned char* data) {
 
 void LocalMap::setDepthMap(unsigned char *data)
 {
-    return;
-/*
     for (int i = 0; i < 3600; i++) {
         depthMap[i%60][i/60] = data[i];
     }
-    validDepthMap = true; */
+    validDepthMap = true; 
 }
 
 void LocalMap::applyDepthMap()
