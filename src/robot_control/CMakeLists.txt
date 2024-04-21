@@ -141,15 +141,15 @@ include_directories(
 
 ## Declare a C++ executable
 add_executable(robot_control src/robot_control.cpp
-        src/robot/Robot.cpp src/robot/Robot.h
+        src/robot/Robot.cpp src/robot/Robot.h src/util.cpp src/util.h
         ../robot_shared_libs/src/sbot/Sbot.cpp ../robot_shared_libs/src/sbot/Sbot.h
         )
 
 add_executable(localization_and_planning src/localization_and_planning.cpp 
-        src/netutil.cpp src/netutil.h src/localizationAndPlanning/LocalizationAndPlanning.cpp src/localizationAndPlanning/LocalizationAndPlanning.h
+        src/util.cpp src/util.h src/netutil.cpp src/netutil.h src/localizationAndPlanning/LocalizationAndPlanning.cpp src/localizationAndPlanning/LocalizationAndPlanning.h
         )
 
-add_executable(local_map src/local_map_steering.cpp src/netutil.cpp src/netutil.h
+add_executable(local_map src/local_map_steering.cpp src/netutil.cpp src/netutil.h src/util.cpp src/util.h
         src/localMap/LocalMap.cpp src/localMap/LocalMap.h src/localMap/Graph.cpp src/localMap/Planner.h src/localMap/Planner.cpp)
 
 add_executable(hokuyo_algo src/hokuyo_algo.cpp
