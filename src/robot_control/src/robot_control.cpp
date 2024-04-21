@@ -14,6 +14,8 @@
 #include "message_types/HokuyoObstacle.h"
 #include "message_types/SteeringMsg.h"
 
+#include "util.h"
+
 #define USE_LOCAL_MAP 1
 
 message_types::GpsAngles gps_msg;
@@ -52,13 +54,6 @@ int said_wrong = 0;
 //---------------------------------------
 #define LOG_FILE_DIR "/home/zajko/logs/"
 static char log_file_name[100];
-
-long long msec()
-{
-  struct timeval tv;
-  gettimeofday(&tv, 0);
-  return 1000L * tv.tv_sec + tv.tv_usec / 1000L;
-}
 
 void log_msg(const char *msg)
 {

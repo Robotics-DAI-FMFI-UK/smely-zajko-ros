@@ -18,6 +18,7 @@
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2/LinearMath/Matrix3x3.h"
 #include "netutil.h"
+#include "util.h"
 
 #define RAD2DEG 57.295779513
 
@@ -39,13 +40,6 @@ int this_module_running;
 
 //---------------------------------------
 static char log_file_name[100];
-
-long long msec()
-{
-  struct timeval tv;
-  gettimeofday(&tv, 0);
-  return 1000L * tv.tv_sec + tv.tv_usec / 1000L;
-}
 
 void log_msg(const char *msg)
 {
