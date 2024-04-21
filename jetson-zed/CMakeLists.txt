@@ -41,7 +41,7 @@ link_directories(${CUDA_LIBRARY_DIRS})
 
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib)
 
-FILE(GLOB_RECURSE SRC_FILES src/*.cpp)
+FILE(GLOB_RECURSE SRC_FILES src/*.cpp ../src/robot_control/src/netutil.cpp ../src/robot_control/src/util.cpp)
 FILE(GLOB_RECURSE HDR_FILES include/*.hpp)
 
 ADD_EXECUTABLE(${PROJECT_NAME} ${HDR_FILES} ${SRC_FILES})
