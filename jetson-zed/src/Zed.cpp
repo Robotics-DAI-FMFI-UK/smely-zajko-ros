@@ -274,17 +274,19 @@ int main(int argc, char **argv) {
             
             if (tm - last_msec_depth_reported >= DEPTH_REPORT_PERIOD)
             {
-				last_msec_depth_reported = tm;
-				memset(data, 0, 3600);
-				
-				for (int x = 0; x < 60; x++)   //gridWidth / 2 - 30; x < gridWidth / 2 + 30; x++) {
-					for (int y = 0; y < gridHeight / 2; y++)     
-				{
-					data[y * 60 + x] = matrix_depth[x + gridWidth / 2 - 30][59 - y];
-				}
-				
-				send_data(data);
-			}
+                last_msec_depth_reported = tm;
+                memset(data, 0, 3600);
+                
+                for (int x = 0; x < 60; x++)   //gridWidth / 2 - 30; x < gridWidth / 2 + 30; x++) {
+                    for (int y = 0; y < gridHeight / 2; y++)     
+                {
+		    double situation_on_the_spot = matrix_depth[x + gridWidth / 2 - 30][59 - y];
+                    if ((situation_on_the_spot != -10000) && (situation_on_the_spot != 0))
+                      data[y * 60 + x] = 1;
+                }
+                
+                send_data(data);
+            }
             
             for (int x = 0; x < gridWidth; x++) {
                 for (int y = 0; y < gridHeight / 2; y++) {
