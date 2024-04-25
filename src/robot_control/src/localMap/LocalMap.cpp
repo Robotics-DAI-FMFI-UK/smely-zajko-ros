@@ -232,7 +232,7 @@ void LocalMap::updateRobotPosition_(long L, long R, bool force) {
     applyDepthMap();
     applyImage();
     applyCompassHeading();
-
+    eraseAustralia();
     log_msg("newX,newY", newX, newY);
     log_msg("newAngle,compcompass", newAngle, compassHeading);
 
@@ -271,6 +271,7 @@ void LocalMap::setPose(double x, double y, double a) {
     applyDepthMap();
     applyImage();
     applyCompassHeading();
+    eraseAustralia();
     if (use_slimak_heading)
         planner->findBestHeading_graph(use_random_intersection_lines);
     findBestHeading();
@@ -643,8 +644,20 @@ void LocalMap::setImageData(unsigned char* data) {
     validImage = true;
 }
 
-void LocalMap::setDepthMap(unsigned char *data)
+void LocalMap::setDepthMap(uint8_t *data)
 {
+    FILE *f = fopen("depth.log", "a+");
+
+        for (int i = 0; i < 60; i++)
+                {
+                        for (int j = 0; j < 60; j++)
+                                fprintf(f, "%c", data[i*60 + j]?'#':'.');
+                        fprintf(f, "\n");
+                }
+        fprintf(f, "===\n");
+    fclose(f);
+
+
     for (int i = 0; i < 3600; i++) {
         depthMap[i%60][i/60] = data[i];
     }
@@ -659,7 +672,7 @@ void LocalMap::applyDepthMap()
     double r21 = sin(angle);
     double r22 = cos(angle);
 
-    FILE *f = fopen("depth.log", "w+");
+    FILE *f = fopen("depth.log", "a+");
 
     for (int i = 0; i < gridWidth; i++) {
         for (int j = 0; j < gridHeight; j++) {
@@ -671,13 +684,13 @@ void LocalMap::applyDepthMap()
     for (int x = -30; x < 30; x++) {
         for (int y = 0; y < 60; y++) {
             // rotate
-            fprintf(f, "%d", depthMap[30 - x][y]);
+            fprintf(f, "%c", depthMap[30 - x][59 - y]?'#':'.');
             double rX = -((double) x*10) * r11 - ((double) y*10) * r12;
             double rY = ((double) x*10) * r21 + ((double) y*10) * r22;
             // move to robot
             int gX = map2gridX(rX + posX);
             int gY = map2gridY(rY + posY);
-            if (depthMap[30 - x][y] == 1)
+            if (depthMap[30 - x][59 - y] == 1)
             {
                 depth_mask_val[gX][gY] ++;
                 depth_mask_count[gX][gY] ++;
@@ -691,6 +704,7 @@ void LocalMap::applyDepthMap()
         }
         fprintf(f, "\n");
     }
+    fprintf(f, "---\n");
     fclose(f);
 
     for (int x = -30; x < 30; x++) {

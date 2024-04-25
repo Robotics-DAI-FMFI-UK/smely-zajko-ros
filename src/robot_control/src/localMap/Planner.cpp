@@ -189,9 +189,10 @@ void Planner::kontroluj_zjazdnost(int dvojice_nahodnych_bodov_na_okraji_mapy[poc
             if (x1 >= localMap->posX - mapWidth / 2 && x1 < localMap->posX + mapWidth / 2 &&
                 y1 >= localMap->posY - mapHeight / 2 && y1 < localMap->posY + mapHeight / 2) {
                 //printf("ojojooo\n");
-                if ((localMap->matrix[localMap->map2gridX(x1)][localMap->map2gridY(y1)] == 0 &&
+                if ((localMap->matrix[localMap->map2gridX(x1)][localMap->map2gridY(y1)] < 0.1 &&
                      localMap->matrix_cam[localMap->map2gridX(x1)][localMap->map2gridY(y1)] >
-                     localMap->min_drivable_level && zjazdnost == false)) {
+                     0.1 && zjazdnost == false)) {
+                     //localMap->min_drivable_level && zjazdnost == false)) {
                     zjazdnost = true;
                     if (prvy == false) {
                         prvy_bod[0] = x1;
@@ -199,9 +200,10 @@ void Planner::kontroluj_zjazdnost(int dvojice_nahodnych_bodov_na_okraji_mapy[poc
                         prvy = true;
                     }
                 }
-                if (((localMap->matrix[localMap->map2gridX(x1)][localMap->map2gridY(y1)] != 0 ||
+                if (((localMap->matrix[localMap->map2gridX(x1)][localMap->map2gridY(y1)] >= 0.1 ||
                       localMap->matrix_cam[localMap->map2gridX(x1)][localMap->map2gridY(y1)] <=
-                      localMap->min_drivable_level) && zjazdnost == true)) {
+                      0.1) && zjazdnost == true)) {
+                      //localMap->min_drivable_level) && zjazdnost == true)) {
                     zjazdnost = false;
                     if (druhy == false) {
                         druhy_bod[0] = x1;
