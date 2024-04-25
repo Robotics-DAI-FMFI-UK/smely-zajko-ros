@@ -8,6 +8,7 @@
 #include <utility>
 #include <std_msgs/Float64.h>
 #include <pthread.h>
+#include <inttypes.h>
 #include "Graph.h"
 
 class Planner;
@@ -23,7 +24,7 @@ class Planner;
 #define HEADING_AVG_COUNT 4
 
 #define NUM_LEVELS      100
-#define DRIVABLE_RATIO  0.93     // 70% of "yellow" pixels should be considered as drivable
+#define DRIVABLE_RATIO  0.99     // 70% of "yellow" pixels should be considered as drivable
 
 #define NUMBER_COMPASS_SEGMENTS        24
 #define CYCLIC_FRONT_MAP_AZIMUTHS_SIZE 20
@@ -69,7 +70,7 @@ public:
 
     void setImageData(unsigned char data[3600]);
 
-    void setDepthMap(unsigned char *data);
+    void setDepthMap(uint8_t *data);
 
     void doUpdate();
 
@@ -90,7 +91,7 @@ private:
     int use_slimak_heading = 1;
 
     // option of Slimak algorithm
-    int use_random_intersection_lines = 0;
+    int use_random_intersection_lines = 1;
 
     // use weighted average for compass based on odometry measurements
     int compensating_compass = 1;
