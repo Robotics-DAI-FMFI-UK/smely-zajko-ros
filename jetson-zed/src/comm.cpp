@@ -59,16 +59,19 @@ int send_data(uint8_t *data)
       try_reconnecting();
       if (!connected) sleep(1);
 	}
-	
-	uint8_t depth_packet[4];
-    depth_packet[0] = DEPTH_PACKET_TYPE;
-    if (!send_packet(depth_socket, depth_packet, 3604))
-    {
-      close(depth_socket);
-      connected = 0;
-      printf("could not sent dpth. will try reconnecting next time...\n");
-    }
-    else if (!send_packet(depth_socket, data, 3600))
+
+/* //semigraphic printout of sending packet	
+ 
+	for (int i = 0; i < 60; i++)
+		{
+			for (int j = 0; j < 60; j++)
+				printf("%c", data[i*60 + j]?'#':'.');
+                        printf("\n");
+		}
+		*/
+
+    data[0] = DEPTH_PACKET_TYPE;
+    if (!send_packet(depth_socket, data, 3604))
     {
       close(depth_socket);
       connected = 0;
