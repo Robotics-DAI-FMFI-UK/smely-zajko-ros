@@ -743,7 +743,7 @@ void Planner::findBestHeading_graph(int random) {
             printf("leaving findbestS\n");
 
     }
-    sprav_diagnostiku(true, "11111111", dvojice_nahodnych_bodov_na_okraji_mapy,
+    sprav_diagnostiku(true, "11111011", dvojice_nahodnych_bodov_na_okraji_mapy,
                       pocet_dvojice_nahodnych_bodov_na_okraji_mapy, &pretnute_okraje_zjazdnej_casti, &stredove_body,
                       &bezier_body);
     //Funkcia sprav_diagnostiku je nastroj na debugovanie v ktorom vidime graficky znazornene jednotlive kroky algoritmu.

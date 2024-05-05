@@ -91,7 +91,7 @@ private:
     int use_slimak_heading = 1;
 
     // option of Slimak algorithm
-    int use_random_intersection_lines = 1;
+    int use_random_intersection_lines = 0;
 
     // use weighted average for compass based on odometry measurements
     int compensating_compass = 1;
