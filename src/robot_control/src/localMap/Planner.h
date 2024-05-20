@@ -23,15 +23,16 @@ private:
 
     LocalMap *localMap;
 
-    int dlzka_useku = 20;//1  // 5
-    int saferange = 10;//1  // 3
-    int nearest = 100; //16
+    int dlzka_useku = 60; //20; //1;  // 5;
+    int saferange = 10; //1; //3;
+    int nearest = 200; //100; //16;
     int multiplier = 5;
+    int stredove_body_max = 50; // maximalny pocet novych stredovych bodov
 
     //stredove_body_old v sebe obsahuju body zo slimak_trajektory a pametam si poslednych X bodov kde X je hodnota v premennej max_pocet_stredove_body_old
     vector<pair<int, int>> stredove_body_old; // vektor obsahuje vysledne body trajektorie konkretne X poslednych kde X je v hodnote max_pocet_stredove_body_old
     int pocet_stredove_body_old = 0;//pomocna premenna
-    int max_pocet_stredove_body_old = 20;
+    int max_pocet_stredove_body_old = 10;
     int old = 1; // prepinac ci si chceme pamatat stare trajektorie s dlzkou pamate max_pocet_stredove_body_old poslednych hodnot
 
     int cena_advanced = 1; // prepinac ci chceme pouzivat vylepsenu cenu cesty

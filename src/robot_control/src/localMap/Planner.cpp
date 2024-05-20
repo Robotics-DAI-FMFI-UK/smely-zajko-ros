@@ -262,7 +262,8 @@ void Planner::najdi_stredove_body_a_ceny(vector<pair<int, int>> *stredove_body, 
         //najblizsi_k_cielu[1]=stred[1];
         //najblizsi=l;
         //}
-        stredove_body->push_back(make_pair(stred[0], stred[1]));
+        if (stredove_body->size() < stredove_body_max)
+            stredove_body->push_back(make_pair(stred[0], stred[1]));
         if (vocal > 1)
             printf("prvy_bod=%d,%d     stredovy_bod=%d,%d     druhy_bod=%d,%d\n", bod_a[0],bod_a[1],stred[0],stred[1],bod_b[0],bod_b[1]);
 
