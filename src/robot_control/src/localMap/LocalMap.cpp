@@ -5,6 +5,7 @@
 #include "LocalMap.h"
 #include "Planner.h"
 
+
 #define IGNORE_TOO_LONG_RAY 3000
 
 #define GOING_WRONG 10000
@@ -38,6 +39,9 @@ const double straightMovementThreshold = 0.07;
 
 
 static int transmitting_going_wrong = 0;
+
+
+static vector<pair<int, int>> globalnaCesta;
 
 // calculation utilities
 int LocalMap::clamp(int val, int max) {
@@ -224,6 +228,10 @@ void LocalMap::updateRobotPosition_(long L, long R, bool force) {
     while (newAngle > 2 * M_PI) newAngle -= 2 * M_PI;
     while (newAngle < 0) newAngle += 2 * M_PI;
     angle = newAngle;
+    
+    
+    globalnaCesta.push_back(make_pair(posX, posY));
+    drawPosition();
 
     eraseAustralia();
     decayMapAndCalculateMinimumDrivable();
@@ -244,6 +252,23 @@ void LocalMap::updateRobotPosition_(long L, long R, bool force) {
     msg.data = getHeading();
     publisher.publish(msg);
 }
+void LocalMap::drawPosition() {
+
+    cv::Mat image(mapWidth/2, mapWidth/2, CV_8UC3);
+    
+    cv::Point a(0,0), b(mapWidth/2 - 1, mapWidth/2 - 1);
+    cv::rectangle(image, a, b, CV_RGB(255, 255, 255), -1);
+    
+    for (int i = 0; i < globalnaCesta.size() - 1; i++) {
+		cv::line(image, cv::Point(gridWidth / 2 + globalnaCesta[i].first/5, gridHeight / 2 + globalnaCesta[i].second/5),
+		                cv::Point(gridWidth / 2 + globalnaCesta[i+1].first/5, gridHeight / 2 + globalnaCesta[i+1].second/5), CV_RGB(0, 0, 0), 2);
+    }
+    
+    cv::imshow("Cesta", image);
+
+}
+    
+
 
 void LocalMap::setPose(double x, double y, double a) {
     double newX = x, newY = y, newAngle = a;
@@ -544,15 +569,19 @@ void LocalMap::setCompassHeading(double heading) {
 }
 
 void LocalMap::applyCompassHeading() {
+    compassHeading = compassHeading_ + 20.0/180 * M_PI;;
+    while (compassHeading < 0) compassHeading += 2 * M_PI;
+    while (compassHeading >= 2 * M_PI) compassHeading -= 2 * M_PI;
+    return;
 
     static double previous_compass_heading = 0;
 
     if (previous_compass_heading == compassHeading_) return;
     previous_compass_heading = compassHeading_;
 
+    compassHeading = compassHeading_ + 20.0/180 * M_PI;;
     if (!compensating_compass) 
     {
-      compassHeading = compassHeading_;
       return;
     }
     log_msg("rawcomp", compassHeading);
@@ -597,7 +626,6 @@ void LocalMap::applyCompassHeading() {
     
     // we will only consider the most likely one (and its left and right neighbors with frequency at least half of the maximum)
     taken_segment_frequencies[max_index] = segment_frequencies[max_index];
-    int taken_weight = segment_frequencies[max_index];
  
     int i = max_index;
     int one_loop = NUMBER_COMPASS_SEGMENTS;
@@ -606,7 +634,6 @@ void LocalMap::applyCompassHeading() {
       i = (i - 1 + NUMBER_COMPASS_SEGMENTS) % NUMBER_COMPASS_SEGMENTS;
       if (segment_frequencies[i] < segment_frequencies[max_index] / 2) break;
       taken_segment_frequencies[i] = segment_frequencies[i];
-      taken_weight += segment_frequencies[i];
     } while (one_loop--);
       
     i = max_index;
@@ -616,7 +643,6 @@ void LocalMap::applyCompassHeading() {
       i = (i + 1) % NUMBER_COMPASS_SEGMENTS;
       if (segment_frequencies[i] < segment_frequencies[max_index] / 2) break;
       taken_segment_frequencies[i] = segment_frequencies[i];
-      taken_weight += segment_frequencies[i];
     } while (one_loop--);
 
     double compensated_azimuth = 0;
@@ -625,14 +651,21 @@ void LocalMap::applyCompassHeading() {
     for (int i = 0; i < NUMBER_COMPASS_SEGMENTS; i++)
       printf("tf[%d]=%d\n", i, taken_segment_frequencies[i]);
 */
+ 
+    double vx = 0;
+    double vy = 0;
 
     for (int i = 0; i < CYCLIC_FRONT_MAP_AZIMUTHS_SIZE; i++)
     {
-      if (taken_segment_frequencies[(int)(lastLocalMapAzimuths[i] / segment_size)])
-        compensated_azimuth += lastLocalMapAzimuths[i];
+       int w = taken_segment_frequencies[(int)(lastLocalMapAzimuths[i] / segment_size)];
+       if (w) {		   
+          vx += sin(lastLocalMapAzimuths[i]);
+          vy += cos(lastLocalMapAzimuths[i]);       
+	   }        
     }
-    
-    compassHeading = angle - compensated_azimuth / taken_weight;
+
+    compensated_azimuth = M_PI / 2 - atan2(vy, vx);
+    compassHeading = angle - compensated_azimuth;
     while (compassHeading < 0) compassHeading += 2 * M_PI;
     while (compassHeading >= 2 * M_PI) compassHeading -= 2 * M_PI;
 }

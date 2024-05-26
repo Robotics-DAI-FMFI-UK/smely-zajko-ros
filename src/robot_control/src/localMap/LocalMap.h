@@ -10,6 +10,8 @@
 #include <pthread.h>
 #include <inttypes.h>
 #include "Graph.h"
+#include <vector>
+
 
 class Planner;
 
@@ -81,6 +83,9 @@ public:
     void addArrows(cv::Mat &result);
 
     RobotPos* getPos();
+    
+    void drawPosition();
+
         
 private:
     // best heading

@@ -186,6 +186,7 @@ void Planner::kontroluj_zjazdnost(int dvojice_nahodnych_bodov_na_okraji_mapy[poc
                      (dvojice_nahodnych_bodov_na_okraji_mapy[i][1][1] -
                       dvojice_nahodnych_bodov_na_okraji_mapy[i][0][1]) * (j / (double) gridWidth));
             //printf("x1=%d, y1=%d\n", x1, y1);
+            
             if (x1 >= localMap->posX - mapWidth / 2 && x1 < localMap->posX + mapWidth / 2 &&
                 y1 >= localMap->posY - mapHeight / 2 && y1 < localMap->posY + mapHeight / 2) {
                 //printf("ojojooo\n");
@@ -535,30 +536,30 @@ void Planner::find_border_point_for_angle(double wished_heading, int goal_positi
     // ciel je pred nami pod uhlom +- 90 stupov
     if (fabs(wished_heading - M_PI_2) < epsilon_tan)  // +90
     {
-            target_x = localMap->posX + mapWidth / 2 - 5;
+            target_x = localMap->posX + mapWidth / 2 - 15;
             target_y = localMap->posY;
     } 
     else if (fabs(wished_heading - 3 * M_PI_2) < epsilon_tan)  // -90
     {
-            target_x = localMap->posX - mapWidth / 2 + 5;
+            target_x = localMap->posX - (mapWidth / 2 - 15);
             target_y = localMap->posY;
     }
     else if (angleDiffAbs(wished_heading, 0) <= M_PI_4)  // horny kvandrant (+- 45 stupnov)
     {
-        target_x = localMap->posX + (mapWidth / 2 - 5) * tan(wished_heading);
-        target_y = localMap->posY + mapHeight / 2 - 5;//************************
+        target_x = localMap->posX + (mapWidth / 2 - 15) * tan(wished_heading);
+        target_y = localMap->posY + mapHeight / 2 - 15;//************************
     } else if (fabs(wished_heading - M_PI_2) <= M_PI_4)   // pravy kvadrant (45..135)
     {
-        target_x = localMap->posX + mapWidth / 2 - 5;
-        target_y = localMap->posY - (mapWidth / 2 - 5) * tan(wished_heading - M_PI_2);
+        target_x = localMap->posX + mapWidth / 2 - 15;
+        target_y = localMap->posY - (mapWidth / 2 - 15) * tan(wished_heading - M_PI_2);
     } else if (fabs(wished_heading - M_PI) <= M_PI_4)   // dolny kvadrant (135..225)
     {
-        target_x = localMap->posX - (mapWidth / 2 - 5) * tan(wished_heading - M_PI);
-        target_y = localMap->posY - mapHeight / 2 - 5;
+        target_x = localMap->posX - (mapWidth / 2 - 15) * tan(wished_heading - M_PI);
+        target_y = localMap->posY - (mapHeight / 2 - 15);
     } else if (fabs(wished_heading - 3 * M_PI_2) <= M_PI_4)   // lavy kvadrant (225..315)
     {
-        target_x = localMap->posX - mapWidth / 2 - 5;
-        target_y = localMap->posY + (mapWidth / 2 - 5) * tan(wished_heading - M_PI_2 - M_PI);
+        target_x = localMap->posX - (mapWidth / 2 - 15);
+        target_y = localMap->posY + (mapWidth / 2 - 15) * tan(wished_heading - M_PI_2 - M_PI);
     }
 
     goal_position[0] = (int) (target_x + 0.5);
