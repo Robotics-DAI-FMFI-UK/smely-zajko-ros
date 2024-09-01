@@ -5,11 +5,11 @@
 
 // pose of the camera relative to the vertical axis; cm, radians
 #define CAMERA_POSITION_ABOVE_GROUND 58.0
-#define CAMERA_INCLINATION (25 / 180.0 * M_PI)  
+#define CAMERA_INCLINATION (23.7 / 180.0 * M_PI)  // 25
 
 // when a perpendicular surface is placed 1m in front of the camera, the view field of the camera has the following dimensions on that surface:
-#define CALIBRATED_HEIGHT 98.0
-#define CALIBRATED_WIDTH 132.0
+#define CALIBRATED_HEIGHT 94.3  // 98.0  
+#define CALIBRATED_WIDTH 124.2  // 132.0  
 
 // how many cells the output grid contains
 #define OUTPUT_SIZE 60 
