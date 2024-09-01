@@ -6,6 +6,7 @@
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/Float64MultiArray.h>
 #include <std_msgs/Float64.h>
+#include <std_msgs/Byte.h>
 #include "robot/AbstractRobot.h"
 #include "robot/Robot.h"
 #include "message_types/SbotMsg.h"
@@ -30,6 +31,7 @@ std::vector<double> camera_prediction_msg;
 message_types::SbotMsg sbot_msg;
 
 ros::Publisher directionPublisher;
+ros::Publisher obstacleGonePublisher;
 
 //ros::Publisher steeringPublisher;
 
@@ -361,10 +363,10 @@ int move() {
         if (autonomy) {
             // printf("%.10f %.10f\n", angles.dstToHeadingPoint, speed_down_dst);
             if (gps_msg.dstToHeadingPoint <= speed_down_dst) {
-                setSteering(predicted_dir, 3);  // last fast value 7
+                setSteering(predicted_dir, 7);  // last fast value 7
                 // printf("setSpeed: 3\n");
             } else {
-                setSteering(predicted_dir, 5);  // last fast value 8
+                setSteering(predicted_dir, 8);  // last fast value 8
                 // printf("setSpeed: 5\n");
             }
         }
@@ -402,6 +404,9 @@ void avoid_obstacle(ros::Rate *loop_rate)
          if (not_see_counter > 20)
          {
            say("thanks");
+           std_msgs::Byte obstacleGoneMsg;
+           obstacleGoneMsg.data = 1;
+           obstacleGonePublisher.publish(obstacleGoneMsg);
            return;
          }
       }
@@ -458,6 +463,8 @@ int main(int argc, char **argv) {
 //    image_transport::Subscriber sub = it.subscribe("/sensors/camera/image", 1, imageCallback);
 
     directionPublisher = nh.advertise<std_msgs::Float64>("directionPublisher", 10);
+    
+    obstacleGonePublisher = nh.advertise<std_msgs::Byte>("/control/obstacle_gone", 3);
 
     ros::Publisher base_publisher = nh.advertise<message_types::SbotMsg>("/control/base_data", 3);
 

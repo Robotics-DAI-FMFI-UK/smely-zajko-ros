@@ -9,6 +9,7 @@
 #include "std_msgs/Int32MultiArray.h"
 #include "std_msgs/UInt8MultiArray.h"
 #include <std_msgs/Float64.h>
+#include <std_msgs/Byte.h>
 #include "message_types/GpsAngles.h"
 #include "sensor_msgs/Imu.h"
 #include <geometry_msgs/PoseStamped.h>
@@ -178,6 +179,10 @@ void poseCallback(double x, double y, double heading) {
 		localMap->setPose(-y*100, x*100, -heading);	
 	
 	last_heading = heading;
+}
+
+void obstacleGoneCallback(const std_msgs::Byte &msg) {
+    localMap->clearAfterObstacleIsGone();
 }
 
 int c = 0;
@@ -360,6 +365,8 @@ int main(int argc, char **argv) {
     ros::Subscriber rplidar_subscriber = nh.subscribe("/sensors/rplidar_publisher", 2, rplidarCallback);
     ros::Subscriber global_map_subscriber = nh.subscribe("/control/localization_and_planning", 2, globalMapCallback);
     ros::Subscriber imu_subscriber = nh.subscribe("/sensors/imu_publisher", 2, imuCallback);
+    ros::Subscriber obstacle_gone_subscriber = nh.subscribe("/control/obstacle_gone", 2, obstacleGoneCallback);
+    
 //    ros::Subscriber camera_subscriber = nh.subscribe("/sensors/camera/evaluated_image", 2, cameraCallback);
     start_evaluated_image_subscriber();
     start_position_and_depth_map_thread();

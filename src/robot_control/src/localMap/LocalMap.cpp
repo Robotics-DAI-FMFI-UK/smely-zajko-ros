@@ -433,6 +433,16 @@ void LocalMap::setRpLidarData(int rays, double *distances, double *angles) {
 //    }
 }
 
+void LocalMap::clearAfterObstacleIsGone()
+{
+	for (int i = 0; i < gridWidth; i++) {
+        for (int j = 0; j < gridHeight; j++) {
+            matrix[i][j] = 0;
+            matrix_cam[i][j] = 0;
+        }
+    }
+}
+
 void LocalMap::decayMapAndCalculateMinimumDrivable() {
     long level_frequencies[NUM_LEVELS + 1];
     for (int i = 0; i <= NUM_LEVELS; i++) level_frequencies[i] = 0;
@@ -569,11 +579,12 @@ void LocalMap::setCompassHeading(double heading) {
 }
 
 void LocalMap::applyCompassHeading() {
-    compassHeading = compassHeading_ + 20.0/180 * M_PI;;
+/*    compassHeading = compassHeading_ + 20.0/180 * M_PI;
+    log_msg("rawcomp", compassHeading);
     while (compassHeading < 0) compassHeading += 2 * M_PI;
     while (compassHeading >= 2 * M_PI) compassHeading -= 2 * M_PI;
     return;
-
+*/
     static double previous_compass_heading = 0;
 
     if (previous_compass_heading == compassHeading_) return;
@@ -584,14 +595,15 @@ void LocalMap::applyCompassHeading() {
     {
       return;
     }
-    log_msg("rawcomp", compassHeading);
+    log_msg("angle", angle);
     //printf("rawcomp %lf", compassHeading);
 
 
     static double lastLocalMapAzimuths[CYCLIC_FRONT_MAP_AZIMUTHS_SIZE];
     static int mapAzimuths_next_overwrite = -2; 
-
+		
     double normalized = angle - compassHeading;
+    log_msg("normalized", normalized);
     while (normalized < 0) normalized += 2 * M_PI;
     while (normalized >= 2 * M_PI) normalized -= 2 * M_PI;
 
@@ -634,17 +646,10 @@ void LocalMap::applyCompassHeading() {
       i = (i - 1 + NUMBER_COMPASS_SEGMENTS) % NUMBER_COMPASS_SEGMENTS;
       if (segment_frequencies[i] < segment_frequencies[max_index] / 2) break;
       taken_segment_frequencies[i] = segment_frequencies[i];
-    } while (one_loop--);
-      
-    i = max_index;
-    one_loop = NUMBER_COMPASS_SEGMENTS;
-    do {
-      // move right
-      i = (i + 1) % NUMBER_COMPASS_SEGMENTS;
-      if (segment_frequencies[i] < segment_frequencies[max_index] / 2) break;
-      taken_segment_frequencies[i] = segment_frequencies[i];
-    } while (one_loop--);
+    } while (--one_loop);
 
+    log_msg("max segment weight ", segment_frequencies[max_index]);
+    
     double compensated_azimuth = 0;
 
 /*
@@ -654,6 +659,7 @@ void LocalMap::applyCompassHeading() {
  
     double vx = 0;
     double vy = 0;
+    int num_vectors = 0;
 
     for (int i = 0; i < CYCLIC_FRONT_MAP_AZIMUTHS_SIZE; i++)
     {
@@ -661,13 +667,19 @@ void LocalMap::applyCompassHeading() {
        if (w) {		   
           vx += sin(lastLocalMapAzimuths[i]);
           vy += cos(lastLocalMapAzimuths[i]);       
+          num_vectors++;
 	   }        
     }
+    log_msg("statistical washing machine ", compensated_azimuth);
+    
 
-    compensated_azimuth = M_PI / 2 - atan2(vy, vx);
-    compassHeading = angle - compensated_azimuth;
+    compensated_azimuth = - (atan2(vy, vx) - M_PI / 2);   // WAS - (atan2(vy, vx) - M_PI / 2);
+    log_msg("statistical washing machine ", compensated_azimuth);
+    compassHeading = angle - compensated_azimuth;    
     while (compassHeading < 0) compassHeading += 2 * M_PI;
     while (compassHeading >= 2 * M_PI) compassHeading -= 2 * M_PI;
+    log_msg("conclusion ", compassHeading);
+    
 }
 
 void LocalMap::setImageData(unsigned char* data) {

@@ -85,6 +85,8 @@ public:
     RobotPos* getPos();
     
     void drawPosition();
+    
+    void clearAfterObstacleIsGone();
 
         
 private:
