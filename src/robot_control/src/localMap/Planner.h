@@ -29,11 +29,16 @@ private:
     int multiplier = 5;
     int stredove_body_max = 50; // maximalny pocet novych stredovych bodov
 
+    double zjazdny_teren=30.0;   // maximum number of problems found on a corridor from robot to some chosen point on planned trajectory that will be taken as the first to go to
+    double maximalna_vzdialenost=15.0;  // how far in dm can the first chosen point on trajectory be from current robot position
+
     //stredove_body_old v sebe obsahuju body zo slimak_trajektory a pametam si poslednych X bodov kde X je hodnota v premennej max_pocet_stredove_body_old
     vector<pair<int, int>> stredove_body_old; // vektor obsahuje vysledne body trajektorie konkretne X poslednych kde X je v hodnote max_pocet_stredove_body_old
     int pocet_stredove_body_old = 0;//pomocna premenna
     int max_pocet_stredove_body_old = 10;
     int old = 1; // prepinac ci si chceme pamatat stare trajektorie s dlzkou pamate max_pocet_stredove_body_old poslednych hodnot
+
+    int res_short = 1;  // shortening the planned trajectory to avoid too steep turning and the resulting slalom
 
     int cena_advanced = 1; // prepinac ci chceme pouzivat vylepsenu cenu cesty
     int lidar_penalizacia = 10; // kazdy pixel na ceste ktory obsahuje prekazku z liradu je 10x drahsi na prejazd
@@ -75,6 +80,11 @@ private:
                            vector<pair<int, int>> *stredove_body, vector<pair<int, int>> *bezier_body);
 
     void find_border_point_for_angle(double wished_heading, int goal_position[]);
+
+    double trasa_je_cista(int start[2], int end[2], int x);
+    double trasa_je_cista_box(int start[2], int end[2], int half_robot_width);
+
+    void skratenie_cesty(pair<int, vector<int>> *result, pair<int, vector<int>> *result_short, vector<pair<int, int>> *stredove_body);
 
 };
 

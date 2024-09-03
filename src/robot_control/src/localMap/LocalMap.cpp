@@ -670,8 +670,6 @@ void LocalMap::applyCompassHeading() {
           num_vectors++;
 	   }        
     }
-    log_msg("statistical washing machine ", compensated_azimuth);
-    
 
     compensated_azimuth = - (atan2(vy, vx) - M_PI / 2);   // WAS - (atan2(vy, vx) - M_PI / 2);
     log_msg("statistical washing machine ", compensated_azimuth);

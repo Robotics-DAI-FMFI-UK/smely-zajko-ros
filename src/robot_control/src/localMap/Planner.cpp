@@ -567,6 +567,125 @@ void Planner::find_border_point_for_angle(double wished_heading, int goal_positi
 
 }
 
+// Function to calculate the distance of point C from the line defined by points A and B
+double distanceFromLine(long ax, long ay, long bx, long by, long cx, long cy) {
+    // Calculate the numerator and the denominator of the distance formula
+    double numerator = fabs((by - ay) * cx - (bx - ax) * cy + bx * ay - by * ax);
+    double denominator = sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay));
+    
+    // Return the calculated distance
+    return numerator / denominator;
+}
+
+double Planner::trasa_je_cista_box(int start[2], int end[2], int half_robot_width)
+{
+   double suma = 0;
+
+   double minx = (start[0] < end[0]) ? start[0] : end[0];
+   double maxx = (start[0] > end[0]) ? start[0] : end[0];
+   double miny = (start[0] < end[1]) ? start[1] : end[1];
+   double maxy = (start[0] > end[1]) ? start[1] : end[1];
+
+   double box_width = maxx - minx;
+   double box_height = maxy - miny;
+
+   if (box_width < 2 * half_robot_width)
+   {
+     minx -= (2 * half_robot_width - box_width) / 2;
+     maxx += (2 * half_robot_width - box_width) / 2;
+   }
+
+   if (box_height < 2 * half_robot_width)
+   {
+     miny -= (2 * half_robot_width - box_height) / 2;
+     maxy += (2 * half_robot_width - box_height) / 2;
+   }
+
+
+   for (double x = minx; x <= maxx; x += 1.0)
+     for (double y = miny; y <= maxy; y += 1.0)
+     {
+       double d = distanceFromLine(start[0], start[1], end[0], end[1], x, y);
+       if (d < half_robot_width)
+       {
+                    suma += 1.0 - ((1.0 - localMap->matrix[localMap->map2gridX(x + 0.5)][localMap->map2gridY(y + 0.5)]) *
+                                   localMap->matrix_cam[localMap->map2gridX(x + 0.5)][localMap->map2gridY(y + 0.5)]);
+       }
+     }
+
+   int total_points = (maxx - minx + 1) * (maxy - miny + 1) + 0.5;
+   return suma / total_points;
+}
+
+
+double Planner::trasa_je_cista(int start[2], int end[2], int x) {
+    int dx = end[0] - start[0];
+    int dy = end[1] - start[1];
+    double suma = 0;
+    for (double t = 0; t <= 1; t += 0.1) {
+        int px = start[0] + dx * t;
+        int py = start[1] + dy * t;
+
+        for (int i = -x; i <= x; ++i) {
+            for (int j = -x; j <= x; ++j) {
+                int nx = px + i;
+                int ny = py + j;
+
+                // Osetrenie okrajov mapy
+                if (nx >= 0 && nx < gridWidth && ny >= 0 && ny < gridHeight) {
+                    suma += localMap->matrix[localMap->map2gridX(nx)][localMap->map2gridY(ny)];
+                    suma += 1.0 - localMap->matrix_cam[localMap->map2gridX(nx)][localMap->map2gridY(ny)];
+                }
+            }
+        }
+    }
+
+    return suma;
+}
+
+void Planner::skratenie_cesty(pair<int, vector<int>> *result, pair<int, vector<int>> *result_short, vector<pair<int, int>> *stredove_body){
+
+    int robot[2];
+    int bod_a[3];
+    int last_driveable_point_index = -1;
+    int number=0;
+    int done=0;
+    double vzdialenost=0;
+    double minimalna_vzdialenost=1.0;
+
+    for (vector<int>::iterator i = result->second.begin(); i < result->second.end(); i++) {
+        if (number == 0) {
+            robot[0] = (*stredove_body)[*i].first;
+            robot[1] = (*stredove_body)[*i].second;
+        }
+        bod_a[0] = (*stredove_body)[*i].first;
+        bod_a[1] = (*stredove_body)[*i].second;
+        bod_a[2] = *i;
+        vzdialenost = vzdialenost_bodov(robot, bod_a);
+        if (vzdialenost > minimalna_vzdialenost && vzdialenost <= maximalna_vzdialenost && done == 0) {
+            if(trasa_je_cista_box(robot, bod_a, 3) < zjazdny_teren) 
+            {
+                last_driveable_point_index = *i;
+            }
+            else {
+                done = 1;
+                if (last_driveable_point_index >= 0)
+                {
+                  result_short->second.push_back(last_driveable_point_index);
+                  number++;
+                }
+                number ++;
+                result_short->second.push_back(*i);
+            }
+        } else {
+            number++;
+            result_short->second.push_back(*i);
+        }
+    }
+    result_short->first = number;
+}
+
+
 
 void Planner::findBestHeading_graph(int random) {
 
@@ -689,10 +808,41 @@ void Planner::findBestHeading_graph(int random) {
         // v premennej result by mala byt cesta do ciela
         localMap->slimak_trajectory.clear();
 
+/*
         pthread_mutex_lock(&localMap->trajectory_lock);
         for (vector<int>::iterator i = result.second.begin(); i < result.second.end(); i++)
             localMap->slimak_trajectory.push_back(make_pair(stredove_body[*i].first, stredove_body[*i].second));
         pthread_mutex_unlock(&localMap->trajectory_lock);
+*/
+
+        // TODO
+        pair<int, vector<int>> result_short;
+        skratenie_cesty(&result, &result_short, &stredove_body);
+
+        if (res_short){
+            pthread_mutex_lock(&localMap->trajectory_lock);
+            for (vector<int>::iterator i = result_short.second.begin(); i < result_short.second.end(); i++)
+                localMap->slimak_trajectory.push_back(make_pair(stredove_body[*i].first, stredove_body[*i].second));
+            pthread_mutex_unlock(&localMap->trajectory_lock);
+            int prvy_bod[2];
+            int druhy_bod[2];
+            prvy_bod[0]=localMap->slimak_trajectory[0].first;
+            prvy_bod[1]=localMap->slimak_trajectory[0].second;
+            druhy_bod[0]=localMap->slimak_trajectory[localMap->slimak_trajectory.size()].first;
+            druhy_bod[1]=localMap->slimak_trajectory[localMap->slimak_trajectory.size()].second;
+            if (vzdialenost_bodov(prvy_bod,druhy_bod)<5) // or (robot sa nachadza na kraji chodnika a smerom pred robotom je viac ako 70% nezjazdny teren teda smer robota a pred robota spravit nejaky obdlznik akoby naraznik)
+                printf("robot ide do travy a treba s tym nieco spravit");
+
+        } else {
+            pthread_mutex_lock(&localMap->trajectory_lock);
+            for (vector<int>::iterator i = result.second.begin(); i < result.second.end(); i++)
+                localMap->slimak_trajectory.push_back(make_pair(stredove_body[*i].first, stredove_body[*i].second));
+            pthread_mutex_unlock(&localMap->trajectory_lock);
+        }
+
+
+
+
 
         if (old) {
             if (vocal > 0)

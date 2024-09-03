@@ -277,7 +277,7 @@ void LocalizationAndPlanning::readDestination(char *filename) {
 void LocalizationAndPlanning::setDestination(sensor_msgs::NavSatFix point) {
 
     FindOnWay fw;
-    fw = find_on_way(point);
+    fw = find_on_way(point, 0);
     destinationPoint = fw.pointFound;
     forceRecalc = true;
 
@@ -743,26 +743,58 @@ LocalizationAndPlanning::dist_point_linesegment(sensor_msgs::NavSatFix point, se
     return pair<double, sensor_msgs::NavSatFix>(distance(closest, point), closest);
 }
 
-FindOnWay LocalizationAndPlanning::find_on_way(sensor_msgs::NavSatFix point) {
-    FindOnWay result = FindOnWay();
-    long double dist = DBL_MAX;
-    pair<double, sensor_msgs::NavSatFix> p;
-    for (unsigned long i = 0; i < paths.size(); i++) {
-        for (int j = 1; j < paths.at(i).points.size(); j++) {
-            double id1 = paths.at(i).points[j];
-            double id2 = paths.at(i).points[j - 1];
-            p = dist_point_linesegment(point, points.at(id1), points.at(id2));
-            if (p.first < dist) {
-                dist = p.first;
-                result.pointFound = p.second;
-                result.pathId = i;
-                result.pointId1 = id1;
-                result.pointId2 = id2;
-                result.pathPosition = j;
+FindOnWay LocalizationAndPlanning::find_on_way(sensor_msgs::NavSatFix point, uint8_t deliveringQuery) {
+    static sensor_msgs::NavSatFix last_point;
+    static int local_counter = 0;
+    int forbidden_paths[MAX_RETRIES_GPS_LOCALIZATION];
+    FindOnWay result;
+
+    for (int retry = 0; retry < MAX_RETRIES_GPS_LOCALIZATION; retry++)
+    {
+        result = FindOnWay();
+        long double dist = DBL_MAX;
+        pair<double, sensor_msgs::NavSatFix> p;
+        for (unsigned long i = 0; i < paths.size(); i++) {
+            for (int j = 1; j < paths.at(i).points.size(); j++) {
+                double id1 = paths.at(i).points[j];
+                double id2 = paths.at(i).points[j - 1];
+                p = dist_point_linesegment(point, points.at(id1), points.at(id2));
+
+                uint8_t is_forbidden = 0;
+                for (int k = 0; k < retry; k++)
+                  if (forbidden_paths[k] == i) is_forbidden = 1;
+
+                if ((p.first < dist) && (!is_forbidden || (retry == MAX_RETRIES_GPS_LOCALIZATION - 1))) {
+                    dist = p.first;
+                    result.pointFound = p.second;
+                    result.pathId = i;
+                    result.pointId1 = id1;
+                    result.pointId2 = id2;
+                    result.pathPosition = j;
+                }
             }
         }
+    
+        if (!deliveringQuery) return result;
+
+        if (local_counter < 10)
+        {
+           local_counter ++;
+           last_point = result.pointFound; 
+           return result;
+        }
+
+        dist = distance(last_point, result.pointFound);
+        if (dist <= MAX_ALLOWED_PROJECTED_POINT_JUMP_DISTANCE)
+        {
+            last_point = result.pointFound; 
+            return result;
+        }
+
+        forbidden_paths[retry] = result.pathId;
     }
 
+    last_point = result.pointFound; 
     return result;
 }
 
@@ -866,7 +898,7 @@ message_types::GpsAngles LocalizationAndPlanning::update(sensor_msgs::NavSatFix 
 
     FindOnWay fw;
     // najdime sa na nejakej ceste
-    fw = find_on_way(gps);
+    fw = find_on_way(gps, 1);
     curPoint = fw.pointFound;
 
     // ak sme uz na druhom segmente odstranime ten prvy
@@ -890,7 +922,7 @@ message_types::GpsAngles LocalizationAndPlanning::update(sensor_msgs::NavSatFix 
                     fw.pointId2 != bestWay[bestWay.size() - 1] &&
                     fw.pointId1 != bestWay[bestWay.size() - 2] &&
                     fw.pointId2 != bestWay[bestWay.size() - 2])) {
-        FindOnWay fwDest = find_on_way(destinationPoint);
+        FindOnWay fwDest = find_on_way(destinationPoint, 0);
         calcPath(fw.pointId1, fw.pointId2, fwDest.pointId1, fwDest.pointId2);
         forceRecalc = false;
         printf("new bestWay calculated\n");

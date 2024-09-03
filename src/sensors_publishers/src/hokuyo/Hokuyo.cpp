@@ -144,8 +144,9 @@ void Hokuyo::readData() {
     {
         lastLogTime = msec();
         FILE *f = fopen(hokuyo_log_filename, "a+");
+        fprintf(f, "%.2lf ", msec() / 1000.0);
         for (int i = 0; i < RANGE_DATA_COUNT - 1; i++)
-          fprintf(f, "%.2lf %d ", msec() / 1000.0, data[i]);
+          fprintf(f, "%d ", data[i]);
         fprintf(f, "%d\n", data[RANGE_DATA_COUNT - 1]);
         fclose(f);
     }

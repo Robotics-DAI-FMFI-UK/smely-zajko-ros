@@ -136,6 +136,10 @@ private:
     // sphere radius
     double EarthRadius;
 
+    const int MAX_RETRIES_GPS_LOCALIZATION = 5;
+
+    const double MAX_ALLOWED_PROJECTED_POINT_JUMP_DISTANCE = 0.004;    // [km]
+
     // km radius of ellipse for heading point calculation
     double heading_search_radius;
 
@@ -156,7 +160,7 @@ private:
     ellipseLineIntersection(sensor_msgs::NavSatFix p0, sensor_msgs::NavSatFix p1);
 
     // najde bod segmentu a segmente najblizsie k bodu point
-    FindOnWay find_on_way(sensor_msgs::NavSatFix point);
+    FindOnWay find_on_way(sensor_msgs::NavSatFix point, uint8_t deliveringQuery);
 
     // lon,lat to map x,y
     geometry_msgs::Point convert(sensor_msgs::NavSatFix point);
