@@ -138,7 +138,7 @@ private:
 
     const int MAX_RETRIES_GPS_LOCALIZATION = 5;
 
-    const double MAX_ALLOWED_PROJECTED_POINT_JUMP_DISTANCE = 0.004;    // [km]
+    const double MAX_ALLOWED_PROJECTED_POINT_JUMP_DISTANCE = 0.005;    // [km]
 
     // km radius of ellipse for heading point calculation
     double heading_search_radius;

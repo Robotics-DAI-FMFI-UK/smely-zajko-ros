@@ -13,6 +13,8 @@ using namespace cv;
 extern char localmap_log_filename[150];
 extern int log_file_counter;
 
+double angleInterpolate(double a, double b, double p);
+
 Planner::Planner(LocalMap *localMap_reference) {
     localMap = localMap_reference;
 }
@@ -239,7 +241,13 @@ void Planner::najdi_stredove_body_a_ceny(vector<pair<int, int>> *stredove_body, 
 
     int start[2] = {(int) (localMap->posX + 0.5), (int) (localMap->posY + 0.5)};
     int ciel[2] = {800, 150};
-    double wished_heading = localMap->angle - localMap->compassHeading + localMap->currWayHeading;
+
+    double wayHeading = localMap->currWayHeading;
+    if (localMap->wayEndDistance < DISTANCE_TO_SMOOTH_CROSSING_CM)
+        wayHeading = angleInterpolate(localMap->currWayHeading, localMap->nextWayHeading, 1 - localMap->wayEndDistance / (double)DISTANCE_TO_SMOOTH_CROSSING_CM);
+
+    double wished_heading = localMap->angle - localMap->compassHeading + wayHeading;
+
     find_border_point_for_angle(wished_heading, ciel);
     //printf("okraje size=%lu\n", pretnute_okraje_zjazdnej_casti->size());
     int bod_a[2];
@@ -583,11 +591,13 @@ double Planner::trasa_je_cista_box(int start[2], int end[2], int half_robot_widt
 
    double minx = (start[0] < end[0]) ? start[0] : end[0];
    double maxx = (start[0] > end[0]) ? start[0] : end[0];
-   double miny = (start[0] < end[1]) ? start[1] : end[1];
-   double maxy = (start[0] > end[1]) ? start[1] : end[1];
+   double miny = (start[1] < end[1]) ? start[1] : end[1];
+   double maxy = (start[1] > end[1]) ? start[1] : end[1];
 
    double box_width = maxx - minx;
    double box_height = maxy - miny;
+
+   int total_points = 0;
 
    if (box_width < 2 * half_robot_width)
    {
@@ -608,12 +618,15 @@ double Planner::trasa_je_cista_box(int start[2], int end[2], int half_robot_widt
        double d = distanceFromLine(start[0], start[1], end[0], end[1], x, y);
        if (d < half_robot_width)
        {
+                    total_points++;
+                    // product -> 0 => problems;   product -> 1 => ok
+                    // added to suma (1-product):   -> 0 => ok ;   -> 1 => problems
                     suma += 1.0 - ((1.0 - localMap->matrix[localMap->map2gridX(x + 0.5)][localMap->map2gridY(y + 0.5)]) *
                                    localMap->matrix_cam[localMap->map2gridX(x + 0.5)][localMap->map2gridY(y + 0.5)]);
        }
      }
 
-   int total_points = (maxx - minx + 1) * (maxy - miny + 1) + 0.5;
+   // result -> 1 =>  bad road;   result -> 0  => good road
    return suma / total_points;
 }
 
@@ -663,12 +676,17 @@ void Planner::skratenie_cesty(pair<int, vector<int>> *result, pair<int, vector<i
         bod_a[2] = *i;
         vzdialenost = vzdialenost_bodov(robot, bod_a);
         if (vzdialenost > minimalna_vzdialenost && vzdialenost <= maximalna_vzdialenost && done == 0) {
-            if(trasa_je_cista_box(robot, bod_a, 3) < zjazdny_teren) 
+            double cista = trasa_je_cista_box(robot, bod_a, 3);
+            if(cista < zjazdny_teren) 
             {
+                // still good to drive on, remember it, but do not add this part of plan to the path
                 last_driveable_point_index = *i;
+                log_msg("preskakujem", cista, vzdialenost);
             }
             else {
+                // not good to drive anymore, use the last good to drive, and then add the rest of the original plan as well
                 done = 1;
+                log_msg("prvy nevhovujuci", cista, vzdialenost);
                 if (last_driveable_point_index >= 0)
                 {
                   result_short->second.push_back(last_driveable_point_index);
@@ -678,6 +696,7 @@ void Planner::skratenie_cesty(pair<int, vector<int>> *result, pair<int, vector<i
                 result_short->second.push_back(*i);
             }
         } else {
+            log_msg("mimo vzdialenost", vzdialenost);
             number++;
             result_short->second.push_back(*i);
         }
@@ -693,7 +712,12 @@ void Planner::findBestHeading_graph(int random) {
     int start[2] = {(int) (localMap->posX + 0.5), (int) (localMap->posY + 0.5)};
     int ciel[2] = {800, 150};
     double cielovapozicia_x, cielovapozicia_y;
-    double wished_heading = localMap->angle - localMap->compassHeading + localMap->currWayHeading;
+
+    double wayHeading = localMap->currWayHeading;
+    if (localMap->wayEndDistance < DISTANCE_TO_SMOOTH_CROSSING_CM)
+        wayHeading = angleInterpolate(localMap->currWayHeading, localMap->nextWayHeading, 1 - localMap->wayEndDistance / (double)DISTANCE_TO_SMOOTH_CROSSING_CM);
+
+    double wished_heading = localMap->angle - localMap->compassHeading + wayHeading;
 
 
     //find_border_point_for_angle(wished_heading, ciel);
@@ -820,6 +844,7 @@ void Planner::findBestHeading_graph(int random) {
         skratenie_cesty(&result, &result_short, &stredove_body);
 
         if (res_short){
+            log_msg("aplikuje skratku");
             pthread_mutex_lock(&localMap->trajectory_lock);
             for (vector<int>::iterator i = result_short.second.begin(); i < result_short.second.end(); i++)
                 localMap->slimak_trajectory.push_back(make_pair(stredove_body[*i].first, stredove_body[*i].second));

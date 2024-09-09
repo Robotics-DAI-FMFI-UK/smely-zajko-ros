@@ -29,8 +29,10 @@ private:
     int multiplier = 5;
     int stredove_body_max = 50; // maximalny pocet novych stredovych bodov
 
-    double zjazdny_teren=30.0;   // maximum number of problems found on a corridor from robot to some chosen point on planned trajectory that will be taken as the first to go to
-    double maximalna_vzdialenost=15.0;  // how far in dm can the first chosen point on trajectory be from current robot position
+    int DISTANCE_TO_SMOOTH_CROSSING_CM = 500;
+
+    double zjazdny_teren=0.9;   // maximum number of problems found on a corridor from robot to some chosen point on planned trajectory that will be taken as the first to go to
+    double maximalna_vzdialenost=300.0;  // how far in dm can the first chosen point on trajectory be from current robot position
 
     //stredove_body_old v sebe obsahuju body zo slimak_trajektory a pametam si poslednych X bodov kde X je hodnota v premennej max_pocet_stredove_body_old
     vector<pair<int, int>> stredove_body_old; // vektor obsahuje vysledne body trajektorie konkretne X poslednych kde X je v hodnote max_pocet_stredove_body_old

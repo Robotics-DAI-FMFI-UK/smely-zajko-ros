@@ -20,6 +20,7 @@
 #include "tf2/LinearMath/Matrix3x3.h"
 #include "netutil.h"
 #include "util.h"
+#include "localMap/local_map.h"
 
 #define RAD2DEG 57.295779513
 
@@ -32,6 +33,8 @@ int log_file_counter = 0;
 char localmap_log_filename[150];
 
 ros::Publisher steeringPublisher;
+
+ros::Publisher grass_publisher;
 
 bool sbot = false, hokuyo = false;
 
@@ -120,6 +123,88 @@ void imuCallback(const sensor_msgs::Imu &msg) {
     localMap->setCompassHeading(d2r(msg.orientation.x / 10));
 }
 
+void checkGrassBreak(unsigned char *data)
+{
+	static int saw_grass_last_time = 0;
+	static int grass_change_pending = 0;
+	static int grass_change_counter = 0;
+	static unsigned long time_change_started;
+	
+	int count_grass = 0;
+	int total_checked = 0;
+	for (int y = 0; y < GRASS_Y_DISTANCE_TO_CHECK; y++)
+	  for (int x = 0; x < GRASS_X_DISTANCE_TO_CHECK; x++)
+	  {
+		  int xind = 30 + x;
+		  uint8_t val = data[y * 60 + xind];
+		  if (val < 50) count_grass++;
+		  total_checked++;
+		  
+		  if (x > 0)
+		  {
+		     xind = 30 - x;
+		     val = data[y * 60 + xind];
+		     if (val < 50) count_grass++;		     
+		     total_checked++;
+		  }
+	  }
+	double amount_of_grass_in_front_of_robot = count_grass / (double)total_checked;
+	int see_grass_now = amount_of_grass_in_front_of_robot > GRASS_BREAK_THRESHOLD;
+	if (see_grass_now)
+	{
+		if (!saw_grass_last_time)
+		{
+			grass_change_pending = 1;
+			grass_change_counter = 1;
+			time_change_started = msec();
+		}
+	}
+	else if (saw_grass_last_time)
+    {
+		if (!saw_grass_last_time)
+		{
+			grass_change_pending = 1;
+			grass_change_counter = 1;
+			time_change_started = msec();
+		}
+    }
+    
+    if (grass_change_pending && ((msec() - time_change_started) > GRASS_NOTICE_DELAY))
+    {
+		if ((!saw_grass_last_time) && (grass_change_counter > 0))
+        {
+			saw_grass_last_time = 1;
+			std_msgs::Byte msg;
+            msg.data = 1;
+		    grass_publisher.publish(msg);		    
+		}
+		
+		if (saw_grass_last_time && (grass_change_counter > 0))
+        {		
+			saw_grass_last_time = 0;
+  	        std_msgs::Byte msg;
+            msg.data = 0;
+		    grass_publisher.publish(msg);
+		}		
+		
+		grass_change_pending = 0;
+	}
+            
+    if (grass_change_pending)
+    {
+		if (!saw_grass_last_time)
+		{
+			if (see_grass_now) grass_change_counter++;
+			else grass_change_counter--;
+		}
+		else
+		{
+			if (!see_grass_now) grass_change_counter++;
+			else grass_change_counter--;
+		}
+	}
+}
+
 void cameraCallback(const std_msgs::UInt8MultiArray::ConstPtr &array) {
     unsigned char data[3600];
     int i = 0;
@@ -127,6 +212,7 @@ void cameraCallback(const std_msgs::UInt8MultiArray::ConstPtr &array) {
         data[i] = *it;
         i++;
     }
+    checkGrassBreak(data);
     localMap->setImageData(data);
 }
 
@@ -360,18 +446,19 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "ros_control");
     ros::NodeHandle nh;
 
-    ros::Subscriber sbot_subscriber = nh.subscribe("/control/base_data", 2, sbotCallback);
-    ros::Subscriber hokuyo_subscriber = nh.subscribe("/sensors/hokuyo_publisher", 2, hokuyoCallback);
+    ros::Subscriber sbot_subscriber = nh.subscribe("/control/base_data", 1, sbotCallback);  // 2
+    ros::Subscriber hokuyo_subscriber = nh.subscribe("/sensors/hokuyo_publisher", 1, hokuyoCallback);  //2
     ros::Subscriber rplidar_subscriber = nh.subscribe("/sensors/rplidar_publisher", 2, rplidarCallback);
-    ros::Subscriber global_map_subscriber = nh.subscribe("/control/localization_and_planning", 2, globalMapCallback);
-    ros::Subscriber imu_subscriber = nh.subscribe("/sensors/imu_publisher", 2, imuCallback);
+    ros::Subscriber global_map_subscriber = nh.subscribe("/control/localization_and_planning", 1, globalMapCallback);  // 2
+    ros::Subscriber imu_subscriber = nh.subscribe("/sensors/imu_publisher", 1, imuCallback);  // 2
     ros::Subscriber obstacle_gone_subscriber = nh.subscribe("/control/obstacle_gone", 2, obstacleGoneCallback);
     
 //    ros::Subscriber camera_subscriber = nh.subscribe("/sensors/camera/evaluated_image", 2, cameraCallback);
     start_evaluated_image_subscriber();
     start_position_and_depth_map_thread();
 
-    ros::Publisher heading_publisher = nh.advertise<std_msgs::Float64>("/control/local_map", 10);
+    ros::Publisher heading_publisher = nh.advertise<std_msgs::Float64>("/control/local_map", 1);  // 10
+    ros::Publisher grass_publisher = nh.advertise<std_msgs::Byte>("grass", 1);
 
     localMap = new LocalMap(600, 600, heading_publisher);
 

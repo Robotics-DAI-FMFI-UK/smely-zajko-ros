@@ -51,6 +51,8 @@ Robot *robot;
 
 static volatile int8_t hokuyo_sees_obstacle;
 
+static volatile uint8_t grassObstacle;
+
 int said_wrong = 0;
 
 //---------------------------------------
@@ -105,6 +107,10 @@ void localizationAndPlanningCallback(const message_types::GpsAngles &msg) {
 
 void imuCallback(const sensor_msgs::Imu &msg) {
     imu_msg = msg;
+}
+
+void grassCallback(const std_msgs::Byte &msg) {
+	grassObstacle = msg.data;
 }
 
 void setSteering(int direction, int speed) {
@@ -381,6 +387,52 @@ int move() {
     return display_direction;
 }
 
+void avoid_grass(ros::Rate *loop_rate)
+{
+    setSteering(0, 0); // TODO: check if we need this
+    stopNowAbruptly();
+
+    say("I am not a sheep, watch your feet behind");
+    // wait for the obstacle to go away
+    int waiting = 0;
+    while (waiting < 20)
+    {
+      if (ros::ok())
+      {
+        ros::spinOnce();
+        loop_rate->sleep();
+      } 
+      waiting++;
+    } 
+
+    setSteering(0, -5);
+    waiting = 0;
+    
+    // just a couple of seconds of backing up
+    while (waiting < 90)
+    {
+      if (ros::ok())
+      {
+        ros::spinOnce();
+        loop_rate->sleep();
+      } 
+      waiting++;
+    } 
+    int rnd = rand() % 2 * 2 - 1;
+    setSteering(80, rnd * 5);
+    waiting = 0;
+    while (waiting < 70)
+    {
+      if (ros::ok())
+      {
+        ros::spinOnce();
+        loop_rate->sleep();
+      } 
+      waiting++;
+    } 
+    // now try to resume... or end up in this function again if obstacle still seen (todo: try to turn)	
+}
+
 void avoid_obstacle(ros::Rate *loop_rate)
 {
     setSteering(0, 0); // TODO: check if we need this
@@ -440,6 +492,7 @@ void avoid_obstacle(ros::Rate *loop_rate)
       } 
       waiting++;
     } 
+    grassObstacle = 0;
     // now try to resume... or end up in this function again if obstacle still seen (todo: try to turn)
 }
 
@@ -455,7 +508,9 @@ int main(int argc, char **argv) {
     ros::Subscriber camera_prediction_traingle_subscriber = nh.subscribe("/control/camera_triangles_prediction", 10,
                                                                          cameraPredictionCallback);
 
-    ros::Subscriber local_map_subscriber = nh.subscribe("/control/local_map", 10, localMapCallback);
+    ros::Subscriber local_map_subscriber = nh.subscribe("/control/local_map", 1, localMapCallback); // 10
+    
+    ros::Subscriber grass_subscriber = nh.subscribe("grass", 1, grassCallback);
 
 //    steeringPublisher = nh.advertise<message_types::SteeringMsg>("/control/steering", 3);
 
@@ -489,6 +544,8 @@ int main(int argc, char **argv) {
         } else {
             if (hokuyo_sees_obstacle)
                avoid_obstacle(&loop_rate);
+            else if (grassObstacle)
+               avoid_grass(&loop_rate);
             else
                move();
         }
