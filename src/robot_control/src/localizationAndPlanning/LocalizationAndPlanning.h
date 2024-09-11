@@ -136,7 +136,7 @@ private:
     // sphere radius
     double EarthRadius;
 
-    const int MAX_RETRIES_GPS_LOCALIZATION = 5;
+    const int MAX_RETRIES_GPS_LOCALIZATION = 1; //5;
 
     const double MAX_ALLOWED_PROJECTED_POINT_JUMP_DISTANCE = 0.005;    // [km]
 

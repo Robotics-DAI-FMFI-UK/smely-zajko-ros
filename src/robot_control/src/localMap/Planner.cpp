@@ -236,9 +236,11 @@ void Planner::kontroluj_zjazdnost(int dvojice_nahodnych_bodov_na_okraji_mapy[poc
     //}
 }
 
-void Planner::najdi_stredove_body_a_ceny(vector<pair<int, int>> *stredove_body, double **cena_cesty,
+void Planner::najdi_stredove_body_a_ceny(vector<pair<int, int>> *stredove_body, double ***s_cena_cesty,
                                          vector<pair<Bod, Bod>> *pretnute_okraje_zjazdnej_casti) {
 
+    double **cena_cesty = *s_cena_cesty;
+    
     int start[2] = {(int) (localMap->posX + 0.5), (int) (localMap->posY + 0.5)};
     int ciel[2] = {800, 150};
 
@@ -289,10 +291,12 @@ void Planner::najdi_stredove_body_a_ceny(vector<pair<int, int>> *stredove_body, 
     stredove_body->push_back(make_pair(ciel[0], ciel[1]));
 
     int size_stredove_body = stredove_body->size();
+    int how_many_paths_pruned = 0;
 
     for (int i = 0; i < size_stredove_body; i++) {
         for (int j = 0; j < size_stredove_body; j++) {
-            double cena = sqrt(((*stredove_body)[i].first - (*stredove_body)[j].first) *
+            double hola_cena, cena;
+            hola_cena = cena = sqrt(((*stredove_body)[i].first - (*stredove_body)[j].first) *
                                ((*stredove_body)[i].first - (*stredove_body)[j].first) +
                                ((*stredove_body)[i].second - (*stredove_body)[j].second) *
                                ((*stredove_body)[i].second - (*stredove_body)[j].second));
@@ -302,11 +306,11 @@ void Planner::najdi_stredove_body_a_ceny(vector<pair<int, int>> *stredove_body, 
                 double x1 = 0;
                 double y1 = 0;
                 double c = cena;
-                for (int j = 0; j <= c; j++) {
+                for (int step = 0; step <= c; step++) {
                     x1 = (*stredove_body)[i].first +
-                         ((*stredove_body)[j].first - (*stredove_body)[i].first) * (j / c);
+                         ((*stredove_body)[j].first - (*stredove_body)[i].first) * (step / c);
                     y1 = (*stredove_body)[i].second +
-                         ((*stredove_body)[j].second - (*stredove_body)[i].second) * (j / c);
+                         ((*stredove_body)[j].second - (*stredove_body)[i].second) * (step / c);
                     if (x1 >= localMap->posX - mapWidth / 2 && x1 < localMap->posX + mapWidth / 2 &&
                         y1 >= localMap->posY - mapHeight / 2 && y1 < localMap->posY + mapHeight / 2) {
                         //printf("ojojooo\n");
@@ -317,14 +321,122 @@ void Planner::najdi_stredove_body_a_ceny(vector<pair<int, int>> *stredove_body, 
                     }
                 }
                 cena_cesty[i][j] = cena;
+                if (cena / hola_cena > UNACCEPTABLE_PATH_QUALITY_RATIO)
+                {
+                  cena_cesty[i][j] = UNACCEPTABLE_PATH_COST;
+                  how_many_paths_pruned++;
+			    }
             }
 
         }
+    }
+
+    log_msg("***stredove body");
+    for (int i = 0; i < size_stredove_body; i++)
+       log_msg("b", i, localMap->map2gridX((*stredove_body)[i].first), localMap->map2gridY((*stredove_body)[i].second));
+    log_msg("***ceny ciest");
+    for (int i = 0; i < size_stredove_body; i++)
+    {
+       char msg[10000];
+       sprintf(msg, "%d: ", i);
+       for (int j = 0; j < size_stredove_body; j++)
+       {
+         double c = cena_cesty[i][j];
+         if (c > UNACCEPTABLE_PATH_COST) 
+           sprintf(msg + strlen(msg) - 1, " (%d:x)", j);
+         else if (c == UNACCEPTABLE_PATH_COST)
+           sprintf(msg + strlen(msg) - 1, " (%d:-)", j);
+         else 
+         sprintf(msg + strlen(msg) - 1, " (%d:%.2lf)", j, c);
+       }
+       log_msg(msg);
+    }
+
+    log_msg("pruned paths", how_many_paths_pruned);
+    
+    int n = stredove_body->size();
+    int visited[n];
+    int front[n];
+    for (int i = 0; i < n; i++) visited[i] = 0;
+    
+    front[0] = 0;
+    visited[0] = 1;
+    int front_wp = 1;
+    int front_rp = 0;
+    
+    while (front_rp < front_wp)
+    {
+		int selected = front[front_rp++];
+		for (int j = 0; j < n; j++)
+		  if (!visited[j] && (cena_cesty[selected][j] < UNACCEPTABLE_PATH_COST))
+		  {
+			  visited[j] = 1;
+			  front[front_wp++] = j;
+		  }
+	}	  
+
+    // destination vertex always survives
+    visited[n - 1] = 1;
+	
+	int old_index[n];
+	int shift = 0;
+	
+	for (int i = 0; i < n; i++) 
+	  if (!visited[i]) shift++;
+	  else old_index[i - shift] = i;
+	
+	int m = n - shift;
+	
+    double **nova_cena_cesty = (double **) malloc(sizeof (double *) * m);
+    if (vocal > 0)
+        printf("chkpt5\n");
+    for (int i = 0; i < m; i++)
+        nova_cena_cesty[i] = (double *) malloc(sizeof(double) * m);
+	  
+	for (int i = 0; i < m; i++)
+	  for (int j = 0; j < m; j++)
+	    nova_cena_cesty[i][j] = cena_cesty[old_index[i]][old_index[j]];
+    
+    for (int i = 0; i < n; i++)
+      free(cena_cesty[i]);
+    free(cena_cesty);
+        
+    *s_cena_cesty = nova_cena_cesty;
+    
+    // remove stredove body that are not in the same component as start, i.e point with index 0
+   
+    for (int i = n - 1; i >= 0; i--)
+      if (!visited[i])
+        stredove_body->erase(stredove_body->begin() + i);
+        
+    log_msg("graph points remained, erased", m, n - m);    
+
+    size_stredove_body = stredove_body->size();
+    log_msg("***nove stredove body");
+    for (int i = 0; i < size_stredove_body; i++)
+       log_msg("b", i, localMap->map2gridX((*stredove_body)[i].first), localMap->map2gridY((*stredove_body)[i].second));
+    log_msg("***ceny ciest");
+    for (int i = 0; i < size_stredove_body; i++)
+    {
+       char msg[10000];
+       sprintf(msg, "%d: ", i);
+       for (int j = 0; j < size_stredove_body; j++)
+       {
+         double c = nova_cena_cesty[i][j];
+         if (c > UNACCEPTABLE_PATH_COST) 
+           sprintf(msg + strlen(msg) - 1, " (%d:x)", j);
+         else if (c == UNACCEPTABLE_PATH_COST)
+           sprintf(msg + strlen(msg) - 1, " (%d:-)", j);
+         else 
+         sprintf(msg + strlen(msg) - 1, " (%d:%.2lf)", j, c);
+         log_msg(msg);
+       }
     }
 }
 
 void
 Planner::napln_graf(Graph &graph, vector<pair<int, int>> *stredove_body, int size_stredove_body, double **cena_cesty) {
+    
     //int startNode = 0;
     //int endNode = size_stredove_body - 1;
     for (int i = 0; i < size_stredove_body; i++) {
@@ -767,18 +879,23 @@ void Planner::findBestHeading_graph(int random) {
     if (vocal > 0)
         printf("chkpt4\n");
     int cena_cesty_size = pretnute_okraje_zjazdnej_casti.size() + 2 + pocet_stredove_body_old;
-    double *cena_cesty[cena_cesty_size];
+    double **cena_cesty = (double **) malloc( sizeof(double*) * cena_cesty_size);
     if (vocal > 0)
         printf("chkpt5\n");
     for (int i = 0; i < cena_cesty_size; i++)
-        cena_cesty[i] = new double[cena_cesty_size];
+        cena_cesty[i] = (double *) malloc (sizeof(double) * cena_cesty_size );
     if (vocal > 0) {
         printf("chkpt6\n");
         printf("pocet_dvojic_pred_stredom: %lu\n", pretnute_okraje_zjazdnej_casti.size());
     }
+    
+    for (int i = 0; i < cena_cesty_size; i++)
+      for (int j = 0; j < cena_cesty_size; j++)
+        cena_cesty[i][j] = 2 * UNACCEPTABLE_PATH_COST;
+        
     //pole cena_cesty obsahuje 2 rozmerne pole a je to matica cier z bodu i do bodu j. pocet vsetkych stredovych bodov +1 za pociatocny startovaci bod a +1 za cielovy bod kam sa chcem dostat
 
-    najdi_stredove_body_a_ceny(&stredove_body, cena_cesty, &pretnute_okraje_zjazdnej_casti);
+    najdi_stredove_body_a_ceny(&stredove_body, &cena_cesty, &pretnute_okraje_zjazdnej_casti);
 
     //funkcia dosadi do pola stredove body vsetky stredove body a nasledne spocita vsetky ceny z bodu i do bodu j aby som neskor nemusel pocitat znova tieto vzdialenosti
 
@@ -855,8 +972,9 @@ void Planner::findBestHeading_graph(int random) {
             prvy_bod[1]=localMap->slimak_trajectory[0].second;
             druhy_bod[0]=localMap->slimak_trajectory[localMap->slimak_trajectory.size()].first;
             druhy_bod[1]=localMap->slimak_trajectory[localMap->slimak_trajectory.size()].second;
-            if (vzdialenost_bodov(prvy_bod,druhy_bod)<5) // or (robot sa nachadza na kraji chodnika a smerom pred robotom je viac ako 70% nezjazdny teren teda smer robota a pred robota spravit nejaky obdlznik akoby naraznik)
-                printf("robot ide do travy a treba s tym nieco spravit");
+            double vzd = vzdialenost_bodov(prvy_bod,druhy_bod);
+            if (vzd < TARGET_DISTANCE_TOO_CLOSE_THUS_REJECTED) // or (robot sa nachadza na kraji chodnika a smerom pred robotom je viac ako 70% nezjazdny teren teda smer robota a pred robota spravit nejaky obdlznik akoby naraznik)
+                log_msg("robot ide do travy a treba s tym nieco spravit", vzd);
 
         } else {
             pthread_mutex_lock(&localMap->trajectory_lock);
@@ -931,8 +1049,9 @@ void Planner::findBestHeading_graph(int random) {
 
     if (vocal > 0)
         printf("chkpt10\n");
-    for (int i = 0; i < cena_cesty_size; i++)
-        delete[] cena_cesty[i];
+    for (int i = 0; i < size_stredove_body ; i++)
+        free(cena_cesty[i]);
+    free(cena_cesty);
     if (vocal > 0)
         printf("chkpt11\n");
 }

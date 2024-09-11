@@ -111,6 +111,7 @@ void imuCallback(const sensor_msgs::Imu &msg) {
 
 void grassCallback(const std_msgs::Byte &msg) {
 	grassObstacle = msg.data;
+	log_msg("grass ", grassObstacle);
 }
 
 void setSteering(int direction, int speed) {

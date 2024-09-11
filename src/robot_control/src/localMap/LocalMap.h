@@ -31,9 +31,12 @@ class Planner;
 #define NUMBER_COMPASS_SEGMENTS        24
 #define CYCLIC_FRONT_MAP_AZIMUTHS_SIZE 20
 
+#define TARGET_DISTANCE_TOO_CLOSE_THUS_REJECTED  170
+
 void log_msg(const char *msg);
 void log_msg(const char *msg, double val);
 void log_msg(const char *msg, double val1, double val2);
+void log_msg(const char *msg, double val1, double val2, double val3);
 double angleDiffAbs(double a, double b);
 
 extern const int gridSize;

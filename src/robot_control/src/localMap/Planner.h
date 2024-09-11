@@ -30,9 +30,13 @@ private:
     int stredove_body_max = 50; // maximalny pocet novych stredovych bodov
 
     int DISTANCE_TO_SMOOTH_CROSSING_CM = 500;
+    
+    double UNACCEPTABLE_PATH_QUALITY_RATIO = 3.0;
+    
+    double UNACCEPTABLE_PATH_COST = 100000;
 
-    double zjazdny_teren=0.9;   // maximum number of problems found on a corridor from robot to some chosen point on planned trajectory that will be taken as the first to go to
-    double maximalna_vzdialenost=300.0;  // how far in dm can the first chosen point on trajectory be from current robot position
+    double zjazdny_teren=0.5;   // maximum number of problems found on a corridor from robot to some chosen point on planned trajectory that will be taken as the first to go to
+    double maximalna_vzdialenost=300.0;  // how far in cm can the first chosen point on trajectory be from current robot position
 
     //stredove_body_old v sebe obsahuju body zo slimak_trajektory a pametam si poslednych X bodov kde X je hodnota v premennej max_pocet_stredove_body_old
     vector<pair<int, int>> stredove_body_old; // vektor obsahuje vysledne body trajektorie konkretne X poslednych kde X je v hodnote max_pocet_stredove_body_old
@@ -43,8 +47,8 @@ private:
     int res_short = 1;  // shortening the planned trajectory to avoid too steep turning and the resulting slalom
 
     int cena_advanced = 1; // prepinac ci chceme pouzivat vylepsenu cenu cesty
-    int lidar_penalizacia = 10; // kazdy pixel na ceste ktory obsahuje prekazku z liradu je 10x drahsi na prejazd
-    double camera_penalizacia = 2.5; // kazdy pixel na ceste ktory obsahuje travu je pocitany (1-hodnota z matrix_cam) * X kde X je hodnota ktorou nasobime penalizaciu za prechod cez travu
+    int lidar_penalizacia = 25; // kazdy pixel na ceste ktory obsahuje prekazku z liradu je 10x drahsi na prejazd
+    double camera_penalizacia = 4; // kazdy pixel na ceste ktory obsahuje travu je pocitany (1-hodnota z matrix_cam) * X kde X je hodnota ktorou nasobime penalizaciu za prechod cez travu
 
     int bezier_switch = 1; // zapina a vypina kreslenie bezierovej kryvky na smoothing
     int bezier_number_of_points = 20; // pocet vrcholov od zaciatku pre ktore vytvaram krivku
@@ -68,7 +72,7 @@ private:
     void kontroluj_zjazdnost(int dvojice_nahodnych_bodov_na_okraji_mapy[pocet_priamok][2][2], int n,
                              vector<pair<Bod, Bod>> *dvojice);
 
-    void najdi_stredove_body_a_ceny(vector<pair<int, int>> *stredove_body, double **cena_cesty,
+    void najdi_stredove_body_a_ceny(vector<pair<int, int>> *stredove_body, double ***cena_cesty,
                                     vector<pair<Bod, Bod>> *pretnute_okraje_zjazdnej_casti);
 
     void napln_graf(Graph &graph, vector<pair<int, int>> *stredove_body, int size_stredove_body, double **cena_cesty);

@@ -10,6 +10,6 @@
 
 #define GRASS_BREAK_THRESHOLD 0.6
 
-#define GRASS_NOTICE_DELAY 1500
+#define GRASS_NOTICE_DELAY 300  // 1500
 
 #endif

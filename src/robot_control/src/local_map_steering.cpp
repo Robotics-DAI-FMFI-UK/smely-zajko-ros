@@ -69,6 +69,14 @@ void log_msg(const char *msg, double val1, double val2)
 	fclose(f);
 }
 
+void log_msg(const char *msg, double val1, double val2, double val3)
+{
+	FILE *f = fopen(log_file_name, "a+");
+	long long tm = msec();
+	fprintf(f, "%.2lf %s %.4lf %.4lf %.4lf\n", tm / 1000.0, msg, val1, val2, val3);
+	fclose(f);
+}
+
 void setup_log_file()
 {
     time_t tm;
@@ -150,6 +158,7 @@ void checkGrassBreak(unsigned char *data)
 	  }
 	double amount_of_grass_in_front_of_robot = count_grass / (double)total_checked;
 	int see_grass_now = amount_of_grass_in_front_of_robot > GRASS_BREAK_THRESHOLD;
+	log_msg("grass see", see_grass_now);
 	if (see_grass_now)
 	{
 		if (!saw_grass_last_time)
@@ -171,12 +180,15 @@ void checkGrassBreak(unsigned char *data)
     
     if (grass_change_pending && ((msec() - time_change_started) > GRASS_NOTICE_DELAY))
     {
+		log_msg("grass change (last,cnt)", saw_grass_last_time, grass_change_counter);
+		
 		if ((!saw_grass_last_time) && (grass_change_counter > 0))
         {
 			saw_grass_last_time = 1;
 			std_msgs::Byte msg;
             msg.data = 1;
-		    grass_publisher.publish(msg);		    
+		    grass_publisher.publish(msg);	
+		    log_msg("grass pub yes");
 		}
 		
 		if (saw_grass_last_time && (grass_change_counter > 0))
@@ -185,6 +197,7 @@ void checkGrassBreak(unsigned char *data)
   	        std_msgs::Byte msg;
             msg.data = 0;
 		    grass_publisher.publish(msg);
+		    log_msg("grass pub no");
 		}		
 		
 		grass_change_pending = 0;
@@ -212,7 +225,6 @@ void cameraCallback(const std_msgs::UInt8MultiArray::ConstPtr &array) {
         data[i] = *it;
         i++;
     }
-    checkGrassBreak(data);
     localMap->setImageData(data);
 }
 
@@ -307,6 +319,7 @@ void process_packet(uint8_t *buffer, int size)
           printf("unexpected packet size %d, expected: %d\n", size, 3604);
           return;
        }
+       checkGrassBreak(buffer + 4);
        localMap->setImageData(buffer + 4);
     }
 }

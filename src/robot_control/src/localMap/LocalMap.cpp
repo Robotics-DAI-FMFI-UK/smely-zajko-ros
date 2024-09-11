@@ -115,6 +115,10 @@ LocalMap::LocalMap(int guiWidth, int guiHeight, ros::Publisher publisher) {
 
     this->publisher = publisher;
 
+    for (int x = posX - 50; x < posX + 50; x += 10)
+      for (int y = posY - 50; y < posY + 50; y += 10)
+         matrix_cam[map2gridX(x)][map2gridY(y)] = 1;
+
     planner = new Planner(this);
 }
 
@@ -441,6 +445,10 @@ void LocalMap::clearAfterObstacleIsGone()
             matrix_cam[i][j] = 0;
         }
     }
+
+    for (int x = posX - 50; x < posX + 50; x += 10)
+      for (int y = posY - 50; y < posY + 50; y += 10)
+         matrix_cam[map2gridX(x)][map2gridY(y)] = 1;
 }
 
 void LocalMap::decayMapAndCalculateMinimumDrivable() {
