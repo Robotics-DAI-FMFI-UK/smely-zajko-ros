@@ -158,11 +158,14 @@ void checkGrassBreak(unsigned char *data)
 	  }
 	double amount_of_grass_in_front_of_robot = count_grass / (double)total_checked;
 	int see_grass_now = amount_of_grass_in_front_of_robot > GRASS_BREAK_THRESHOLD;
+        if (!grass_change_pending)
+        {
 	log_msg("grass see", see_grass_now);
 	if (see_grass_now)
 	{
 		if (!saw_grass_last_time)
 		{
+	                log_msg("grass see start", see_grass_now);
 			grass_change_pending = 1;
 			grass_change_counter = 1;
 			time_change_started = msec();
@@ -172,10 +175,12 @@ void checkGrassBreak(unsigned char *data)
     {
 		if (!saw_grass_last_time)
 		{
+	                log_msg("grass lost start", see_grass_now);
 			grass_change_pending = 1;
 			grass_change_counter = 1;
 			time_change_started = msec();
 		}
+    }
     }
     
     if (grass_change_pending && ((msec() - time_change_started) > GRASS_NOTICE_DELAY))
@@ -201,6 +206,7 @@ void checkGrassBreak(unsigned char *data)
 		}		
 		
 		grass_change_pending = 0;
+		log_msg("grass change cancel");
 	}
             
     if (grass_change_pending)

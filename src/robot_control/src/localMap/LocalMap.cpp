@@ -176,7 +176,7 @@ void LocalMap::updateRobotPosition_(long L, long R, bool force) {
 
     if (!force && (fabs(dL) + fabs(dR) < minUpdateDist)) 
     {
-      log_msg("minUpd");
+      //log_msg("minUpd");
       return; // don't update on small changes
     }
 

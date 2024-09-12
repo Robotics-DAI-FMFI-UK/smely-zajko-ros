@@ -331,6 +331,7 @@ void Planner::najdi_stredove_body_a_ceny(vector<pair<int, int>> *stredove_body, 
         }
     }
 
+    /*
     log_msg("***stredove body");
     for (int i = 0; i < size_stredove_body; i++)
        log_msg("b", i, localMap->map2gridX((*stredove_body)[i].first), localMap->map2gridY((*stredove_body)[i].second));
@@ -343,17 +344,18 @@ void Planner::najdi_stredove_body_a_ceny(vector<pair<int, int>> *stredove_body, 
        {
          double c = cena_cesty[i][j];
          if (c > UNACCEPTABLE_PATH_COST) 
-           sprintf(msg + strlen(msg) - 1, " (%d:x)", j);
+           sprintf(msg + strlen(msg), " (%d:x)", j);
          else if (c == UNACCEPTABLE_PATH_COST)
-           sprintf(msg + strlen(msg) - 1, " (%d:-)", j);
+           sprintf(msg + strlen(msg), " (%d:-)", j);
          else 
-         sprintf(msg + strlen(msg) - 1, " (%d:%.2lf)", j, c);
+         sprintf(msg + strlen(msg), " (%d:%.2lf)", j, c);
        }
        log_msg(msg);
     }
 
     log_msg("pruned paths", how_many_paths_pruned);
-    
+    */
+
     int n = stredove_body->size();
     int visited[n];
     int front[n];
@@ -412,6 +414,7 @@ void Planner::najdi_stredove_body_a_ceny(vector<pair<int, int>> *stredove_body, 
     log_msg("graph points remained, erased", m, n - m);    
 
     size_stredove_body = stredove_body->size();
+ /*
     log_msg("***nove stredove body");
     for (int i = 0; i < size_stredove_body; i++)
        log_msg("b", i, localMap->map2gridX((*stredove_body)[i].first), localMap->map2gridY((*stredove_body)[i].second));
@@ -424,14 +427,14 @@ void Planner::najdi_stredove_body_a_ceny(vector<pair<int, int>> *stredove_body, 
        {
          double c = nova_cena_cesty[i][j];
          if (c > UNACCEPTABLE_PATH_COST) 
-           sprintf(msg + strlen(msg) - 1, " (%d:x)", j);
+           sprintf(msg + strlen(msg), " (%d:x)", j);
          else if (c == UNACCEPTABLE_PATH_COST)
-           sprintf(msg + strlen(msg) - 1, " (%d:-)", j);
+           sprintf(msg + strlen(msg), " (%d:-)", j);
          else 
-         sprintf(msg + strlen(msg) - 1, " (%d:%.2lf)", j, c);
+         sprintf(msg + strlen(msg), " (%d:%.2lf)", j, c);
          log_msg(msg);
        }
-    }
+    } */
 }
 
 void
@@ -1029,8 +1032,8 @@ void Planner::findBestHeading_graph(int random) {
             printf("----------------> slimak trajectory length=%lu", localMap->slimak_trajectory.size());
         double x_prvy = localMap->slimak_trajectory[0].first;
         double y_prvy = localMap->slimak_trajectory[0].second;
-        double x_druhy = localMap->slimak_trajectory[2].first;
-        double y_druhy = localMap->slimak_trajectory[2].second;
+        double x_druhy = localMap->slimak_trajectory[1].first;
+        double y_druhy = localMap->slimak_trajectory[1].second;
 
         localMap->bestSlimakHeading = M_PI_2 - atan2((y_druhy - y_prvy), (x_druhy - x_prvy));
         if (localMap->bestSlimakHeading > M_PI) localMap->bestSlimakHeading -= 2 * M_PI;
